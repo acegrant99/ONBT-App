@@ -4,7 +4,7 @@ A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fun
 
 ## 🌟 Features
 
-- **ONBT (Omnichain Nabat Token)**: Immutable branded OFT with built-in logo and metadata
+- **ONBT (ONabat Token)**: Immutable branded OFT with 1 billion token supply, built-in logo and metadata
 - **OFT (Omnichain Fungible Token)**: Transfer tokens seamlessly across multiple blockchain networks
 - **ONFT (Omnichain Non-Fungible Token)**: Send NFTs across different chains while maintaining ownership
 - **Branding System**: Professional logo, website, and social media integration for tokens
@@ -139,9 +139,12 @@ LayerZero chain IDs and endpoints are defined in `constants/layerzero.mjs`. The 
 
 ## 🚀 Deployment
 
-### Deploy ONBT (Omnichain Nabat Token - Immutable Branded OFT)
+### Deploy ONBT (ONabat Token - Immutable Branded OFT)
 
-**Omnichain Nabat (ONBT)** is the flagship immutable token with built-in branding:
+**ONabat (ONBT)** is the flagship immutable token with built-in branding:
+- **Total Supply**: 1 billion ONBT (immutable)
+- **Website**: https://nabat.finance (Vercel deployment)
+- **Cross-Chain**: Peer-based configuration (no proxies needed on destination chains)
 
 1. **Prepare branding assets**:
    - Design your logo (512x512px minimum)
@@ -151,10 +154,10 @@ LayerZero chain IDs and endpoints are defined in `constants/layerzero.mjs`. The 
 2. **Update deployment configuration** in `scripts/deployONBT.mjs`:
    ```javascript
    const ONBT_CONFIG = {
-     totalSupply: "100000000", // 100 million ONBT
+     totalSupply: "1000000000", // 1 billion ONBT
      branding: {
        logoURI: "ipfs://QmYourLogoHash",
-       website: "https://omnichainabat.com",
+       website: "https://nabat.finance",
        description: "Your description",
        socialLinks: JSON.stringify({ /* social links */ })
      }
@@ -177,10 +180,11 @@ LayerZero chain IDs and endpoints are defined in `constants/layerzero.mjs`. The 
    ```
 
 4. **Verify deployment**:
-   - Total supply is immutable (100M ONBT)
+   - Total supply is immutable (1B ONBT)
    - No mint/burn functions exist
    - Branding metadata is set
    - All supply minted to deployer
+   - Deployed via peer configuration (no proxies on destination chains)
 
 5. **Update branding** (optional, after deployment):
    ```bash

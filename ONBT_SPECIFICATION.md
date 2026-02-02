@@ -1,8 +1,8 @@
-# Omnichain Nabat Token (ONBT) - Technical Specification
+# ONabat Token (ONBT) - Technical Specification
 
 ## Overview
 
-**Omnichain Nabat (ONBT)** is an immutable, branded omnichain fungible token built on the LayerZero protocol. It features a fixed supply, built-in branding metadata, and seamless cross-chain transfers across multiple blockchains.
+**ONabat (ONBT)** is an immutable, branded omnichain fungible token built on the LayerZero protocol. It features a fixed supply of 1 billion tokens, built-in branding metadata, and seamless cross-chain transfers via peer configuration (no proxies needed on destination chains). Website: https://nabat.finance (Vercel deployment).
 
 ## Token Details
 
@@ -10,13 +10,16 @@
 
 | Property | Value | Mutability |
 |----------|-------|------------|
-| **Name** | Omnichain Nabat | Immutable |
+| **Name** | ONabat | Immutable |
 | **Symbol** | ONBT | Immutable |
-| **Total Supply** | 100,000,000 ONBT | Immutable |
+| **Total Supply** | 1,000,000,000 ONBT | Immutable |
 | **Decimals** | 18 (native), 8 (shared) | Immutable |
 | **Supply Model** | Fixed at deployment | Immutable |
 | **Mint Function** | None | N/A |
 | **Burn Function** | None | N/A |
+| **Website** | https://nabat.finance | Configured |
+| **Deployment** | Vercel (nabat.finance) | Infrastructure |
+| **Cross-Chain** | Peer-based (no proxies) | Architecture |
 
 ### Branding Properties
 

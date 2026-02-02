@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Omnichain Nabat Token (ONBT)** is an immutable omnichain fungible token with built-in branding capabilities. This guide explains how to configure, update, and manage the branding metadata for your ONBT deployment.
+**Omnichain Nabat Token (ONBT / ONabat)** is an immutable omnichain fungible token with built-in branding capabilities. This guide explains how to configure, update, and manage the branding metadata for your ONBT deployment.
 
 ## Table of Contents
 
@@ -23,10 +23,12 @@
 
 The following properties are **immutable** and set at deployment:
 
-- **Name**: `Omnichain Nabat`
+- **Name**: `ONabat`
 - **Symbol**: `ONBT`
-- **Total Supply**: Set at deployment (e.g., 100,000,000 ONBT)
+- **Total Supply**: 1,000,000,000 ONBT (1 billion, immutable)
 - **Decimals**: 18 (native), 8 (shared for cross-chain)
+- **Website**: https://nabat.finance (Vercel deployment)
+- **Cross-Chain**: Peer-based configuration (no proxies needed)
 
 These values **cannot be changed** after deployment, ensuring consistency across all chains.
 
@@ -56,16 +58,19 @@ The logo URI can point to:
 
 Your project's main website:
 ```
-https://omnichainabat.com
+https://nabat.finance
 ```
+
+Deployed on Vercel with nabat.finance and www.nabat.finance domains.
 
 ### 3. Description
 
 A brief description of your token (max 500 characters recommended):
 ```
-Omnichain Nabat (ONBT) is an immutable omnichain fungible token 
-built on LayerZero. It enables seamless cross-chain transfers 
-across multiple blockchains with a fixed supply and professional branding.
+ONabat (ONBT) is an immutable omnichain fungible token with 1 billion 
+supply built on LayerZero. It enables seamless cross-chain transfers 
+across multiple blockchains via peer configuration with no proxies needed 
+on destination chains. Visit https://nabat.finance for more information.
 ```
 
 ### 4. Social Links
@@ -73,11 +78,12 @@ across multiple blockchains with a fixed supply and professional branding.
 JSON object containing social media links:
 ```json
 {
-  "twitter": "https://twitter.com/omnichainabat",
-  "telegram": "https://t.me/omnichainabat",
-  "discord": "https://discord.gg/omnichainabat",
+  "twitter": "https://twitter.com/nabatfinance",
+  "telegram": "https://t.me/nabatfinance",
+  "discord": "https://discord.gg/nabatfinance",
   "github": "https://github.com/acegrant99/ONBT-App",
-  "medium": "https://medium.com/@omnichainabat"
+  "medium": "https://medium.com/@nabatfinance",
+  "website": "https://nabat.finance"
 }
 ```
 
