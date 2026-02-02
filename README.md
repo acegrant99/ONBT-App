@@ -9,7 +9,8 @@ A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fun
 - **Multi-Chain Support**: Ethereum, Base, Polygon, Arbitrum, Optimism, Avalanche, BSC
 - **Coinbase Ecosystem Integration**: Full support for Base mainnet and testnet
 - **LayerZero Protocol**: Secure cross-chain messaging and asset transfers
-- **TypeScript Support**: Fully typed contracts and scripts
+- **Latest Dependencies**: Hardhat 3.x, Ethers.js 6.x, OpenZeppelin 4.9.6
+- **ESM Format**: Modern JavaScript with ES modules
 
 ## 📋 Table of Contents
 
@@ -26,9 +27,9 @@ A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fun
 
 ## 🔧 Prerequisites
 
-- Node.js v16+ (v18+ recommended)
+- Node.js v18+ (v22+ recommended for Hardhat 3.x)
 - npm or yarn
-- Hardhat
+- Hardhat 3.x
 - MetaMask or another Web3 wallet
 - RPC endpoints for target networks (Alchemy, Infura, etc.)
 - Private key with native tokens on networks you want to deploy to
@@ -68,16 +69,16 @@ ONBT-App/
 │       ├── NabatONFT.sol          # Main ONFT implementation
 │       └── NabatProxyONFT.sol     # Proxy ONFT for existing NFTs
 ├── scripts/
-│   ├── deployOFT.ts               # Deploy OFT contract
-│   ├── deployONFT.ts              # Deploy ONFT contract
-│   ├── setTrustedRemotes.ts       # Configure cross-chain trust
-│   ├── sendOFT.ts                 # Send tokens cross-chain
-│   └── sendONFT.ts                # Send NFTs cross-chain
+│   ├── deployOFT.mjs              # Deploy OFT contract
+│   ├── deployONFT.mjs             # Deploy ONFT contract
+│   ├── setTrustedRemotes.mjs      # Configure cross-chain trust
+│   ├── sendOFT.mjs                # Send tokens cross-chain
+│   └── sendONFT.mjs               # Send NFTs cross-chain
 ├── constants/
-│   └── layerzero.ts               # LayerZero chain IDs and endpoints
+│   └── layerzero.mjs              # LayerZero chain IDs and endpoints
 ├── test/                          # Test files
-├── hardhat.config.ts              # Hardhat configuration
-├── tsconfig.json                  # TypeScript configuration
+├── hardhat.config.js              # Hardhat configuration (ESM)
+├── DEPENDENCIES.md                # Dependency version guide
 └── README.md                      # This file
 ```
 
@@ -85,7 +86,7 @@ ONBT-App/
 
 ### Network Setup
 
-The project supports multiple networks configured in `hardhat.config.ts`:
+The project supports multiple networks configured in `hardhat.config.js`:
 
 - **Ethereum Mainnet** (Chain ID: 1)
 - **Base Mainnet** (Chain ID: 8453) - Coinbase L2
@@ -98,7 +99,7 @@ The project supports multiple networks configured in `hardhat.config.ts`:
 
 ### LayerZero Configuration
 
-LayerZero chain IDs and endpoints are defined in `constants/layerzero.ts`. The configuration includes:
+LayerZero chain IDs and endpoints are defined in `constants/layerzero.mjs`. The configuration includes:
 
 - Chain IDs for LayerZero protocol
 - Endpoint addresses for each network
@@ -136,7 +137,7 @@ npx hardhat run scripts/deployONFT.ts --network base
 
 After deploying on multiple chains, configure bidirectional trust:
 
-1. Update contract addresses in `scripts/setTrustedRemotes.ts`
+1. Update contract addresses in `scripts/setTrustedRemotes.mjs`
 2. Run on each chain:
 ```bash
 npx hardhat run scripts/setTrustedRemotes.ts --network ethereum
@@ -149,7 +150,7 @@ This allows contracts to communicate across chains securely.
 
 ### Send OFT Tokens
 
-1. Update configuration in `scripts/sendOFT.ts`:
+1. Update configuration in `scripts/sendOFT.mjs`:
    - Contract address
    - Destination chain
    - Recipient address

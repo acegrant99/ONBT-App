@@ -48,9 +48,15 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@coinbase/agentkit": "^0.10.4",
+    "@coinbase/agentkit-model-context-protocol": "^0.2.0",
+    "@coinbase/coinbase-sdk": "^0.25.0",
+    "@coinbase/onchainkit": "^1.1.2",
+    "@coinbase/wallet-sdk": "^4.3.7",
     "@layerzerolabs/lz-evm-sdk-v1": "^3.0.158",
     "@layerzerolabs/solidity-examples": "^1.1.0",
-    "@openzeppelin/contracts": "^4.9.6"
+    "@openzeppelin/contracts": "^4.9.6",
+    "coinbase-commerce-node": "^1.0.4"
   },
   "type": "module"
 }
