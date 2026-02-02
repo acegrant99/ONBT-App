@@ -1,12 +1,12 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+import hre from "hardhat";
+const { ethers } = hre;
 
 describe("NabatOFT", function () {
-  let nabatOFT: any;
-  let owner: SignerWithAddress;
-  let addr1: SignerWithAddress;
-  let addr2: SignerWithAddress;
+  let nabatOFT;
+  let owner;
+  let addr1;
+  let addr2;
   const mockEndpoint = "0x1234567890123456789012345678901234567890";
 
   beforeEach(async function () {

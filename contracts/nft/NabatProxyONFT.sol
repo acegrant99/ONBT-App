@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import "@layerzerolabs/solidity-examples/contracts/token/onft721/ProxyONFT721.sol";
 

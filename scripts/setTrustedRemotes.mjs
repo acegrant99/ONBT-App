@@ -1,5 +1,6 @@
-import { ethers } from "hardhat";
-import { LayerZeroChainIds } from "../constants/layerzero";
+import hre from "hardhat";
+const { ethers } = hre;
+import { LayerZeroChainIds } from "../constants/layerzero.mjs";
 
 /**
  * Set trusted remote addresses for cross-chain communication

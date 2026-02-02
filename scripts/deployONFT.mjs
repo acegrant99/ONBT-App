@@ -1,5 +1,6 @@
-import { ethers } from "hardhat";
-import { ChainConfig } from "../constants/layerzero";
+import hre from "hardhat";
+const { ethers } = hre;
+import { ChainConfig } from "../constants/layerzero.mjs";
 
 /**
  * Deploy NabatONFT on a specific chain
@@ -17,14 +18,14 @@ async function main() {
   console.log("Chain ID:", network.chainId);
 
   // Get LayerZero endpoint for this network
-  let lzEndpoint: string;
+  let lzEndpoint;
   
   if (networkName === "hardhat" || networkName === "localhost") {
     // For local testing, use a mock endpoint
     console.log("Using mock endpoint for local testing");
     lzEndpoint = "0x0000000000000000000000000000000000000000"; // Replace with mock if needed
   } else {
-    const config = ChainConfig[networkName as keyof typeof ChainConfig];
+    const config = ChainConfig[networkName ];
     if (!config) {
       throw new Error(`No LayerZero configuration found for network: ${networkName}`);
     }

@@ -1,3 +1,6 @@
+import hre from "hardhat";
+const { ethers } = hre;
+
 // LayerZero Chain IDs and Endpoint Addresses
 // Reference: https://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids
 
@@ -9,7 +12,7 @@ export const LayerZeroChainIds = {
   arbitrum: 110,
   optimism: 111,
   base: 184,
-} as const;
+};
 
 // LayerZero Endpoint addresses for each chain
 export const LayerZeroEndpoints = {
@@ -26,19 +29,15 @@ export const LayerZeroEndpoints = {
   baseSepolia: "0x6EDCE65403992e310A62460808c4b910D972f10f",
   goerli: "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
   mumbai: "0xf69186dfBa60DdB133E91E9A4B5673624293d8F8",
-} as const;
+};
 
 // Gas limits for cross-chain operations
 export const GasLimits = {
   send: 200000,
   sendAndCall: 400000,
-} as const;
+};
 
 // Trusted remote addresses (to be set after deployment)
-export interface TrustedRemote {
-  [chainId: number]: string;
-}
-
 export const ChainConfig = {
   ethereum: {
     lzChainId: LayerZeroChainIds.ethereum,
@@ -80,4 +79,4 @@ export const ChainConfig = {
     endpoint: LayerZeroEndpoints.avalanche,
     name: "Avalanche",
   },
-} as const;
+};

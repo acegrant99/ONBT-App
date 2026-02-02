@@ -1,36 +1,37 @@
-import { ethers } from "hardhat";
-import { LayerZeroChainIds } from "../constants/layerzero";
+import hre from "hardhat";
+const { ethers } = hre;
+import { LayerZeroChainIds } from "../constants/layerzero.mjs";
 
 /**
- * Send ONFT (NFT) from one chain to another
- * This demonstrates how to use LayerZero for cross-chain NFT transfers
+ * Send OFT tokens from one chain to another
+ * This demonstrates how to use LayerZero for cross-chain token transfers
  */
 async function main() {
   const [sender] = await ethers.getSigners();
-  console.log("Sending NFT with account:", sender.address);
+  console.log("Sending tokens with account:", sender.address);
 
   // ===== CONFIGURATION =====
-  const onftAddress = "0x0000000000000000000000000000000000000000"; // Replace with your ONFT address
+  const oftAddress = "0x0000000000000000000000000000000000000000"; // Replace with your OFT address
   const destinationChainId = LayerZeroChainIds.base; // Destination chain (Base)
   const recipientAddress = sender.address; // Recipient on destination chain
-  const tokenId = 1; // Token ID to send
+  const amountToSend = ethers.parseEther("100"); // Amount to send (100 tokens)
 
-  // ===== SEND NFT =====
-  const NabatONFT = await ethers.getContractFactory("NabatONFT");
-  const nabatONFT = NabatONFT.attach(onftAddress);
+  // ===== SEND TOKENS =====
+  const NabatOFT = await ethers.getContractFactory("NabatOFT");
+  const nabatOFT = NabatOFT.attach(oftAddress);
 
   console.log("\n=== Transfer Details ===");
-  console.log("ONFT Contract:", onftAddress);
+  console.log("OFT Contract:", oftAddress);
   console.log("Destination Chain ID:", destinationChainId);
   console.log("Recipient:", recipientAddress);
-  console.log("Token ID:", tokenId);
+  console.log("Amount:", ethers.formatEther(amountToSend), "tokens");
 
-  // Check NFT ownership
-  const owner = await nabatONFT.ownerOf(tokenId);
-  console.log("\nCurrent owner:", owner);
+  // Check sender balance
+  const balance = await nabatOFT.balanceOf(sender.address);
+  console.log("\nSender balance:", ethers.formatEther(balance), "tokens");
 
-  if (owner.toLowerCase() !== sender.address.toLowerCase()) {
-    throw new Error("Sender does not own this token");
+  if (balance < amountToSend) {
+    throw new Error("Insufficient balance");
   }
 
   // Estimate fees for the cross-chain transfer
@@ -40,10 +41,10 @@ async function main() {
     [1, 200000] // version 1, 200k gas for destination
   );
 
-  const [nativeFee, zroFee] = await nabatONFT.estimateSendFee(
+  const [nativeFee, zroFee] = await nabatOFT.estimateSendFee(
     destinationChainId,
     recipientAddress,
-    tokenId,
+    amountToSend,
     false,
     adapterParams
   );
@@ -51,17 +52,19 @@ async function main() {
   console.log("Native fee:", ethers.formatEther(nativeFee), "ETH");
   console.log("ZRO fee:", ethers.formatEther(zroFee), "ZRO");
 
-  // Send NFT
-  console.log("\nSending NFT...");
-  const tx = await nabatONFT.sendFrom(
+  // Send tokens
+  console.log("\nSending tokens...");
+  const tx = await nabatOFT.sendFrom(
     sender.address,           // from
     destinationChainId,       // destination chain
     recipientAddress,         // to address on destination
-    tokenId,                  // token ID
-    sender.address,           // refund address
-    ethers.ZeroAddress,       // zro payment address
-    adapterParams,            // adapter params
-    { value: nativeFee }      // pay native fee
+    amountToSend,            // amount
+    {
+      refundAddress: sender.address,
+      zroPaymentAddress: ethers.ZeroAddress,
+      adapterParams: adapterParams
+    },
+    { value: nativeFee }     // pay native fee
   );
 
   console.log("Transaction hash:", tx.hash);
@@ -71,13 +74,9 @@ async function main() {
   console.log("✅ Transaction confirmed!");
   console.log("Block number:", receipt?.blockNumber);
 
-  console.log("\n=== Important ===");
-  console.log("The NFT will be locked on this chain and unlocked on the destination chain.");
-  console.log("To bring it back, use the same process from the destination chain.");
-
   console.log("\n=== Next Steps ===");
   console.log("1. Wait 5-10 minutes for LayerZero to relay the message");
-  console.log("2. Check NFT ownership on destination chain");
+  console.log("2. Check recipient balance on destination chain");
   console.log("3. Track transaction on LayerZero Scan:");
   console.log(`   https://layerzeroscan.com/tx/${tx.hash}`);
 }
