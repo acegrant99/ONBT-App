@@ -1,2 +1,302 @@
-# ONBT-App
-New Repo for revamped efforts in deploying the new, the Nabat Omnichain Government ecosystem. The dApp, 
+# ONBT-App - Nabat Omnichain Ecosystem
+
+A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fungible Tokens) and ONFT (Omnichain Non-Fungible Tokens) implementations. Built from scratch for the Nabat Government ecosystem with full Coinbase/Base chain integration.
+
+## 🌟 Features
+
+- **OFT (Omnichain Fungible Token)**: Transfer tokens seamlessly across multiple blockchain networks
+- **ONFT (Omnichain Non-Fungible Token)**: Send NFTs across different chains while maintaining ownership
+- **Multi-Chain Support**: Ethereum, Base, Polygon, Arbitrum, Optimism, Avalanche, BSC
+- **Coinbase Ecosystem Integration**: Full support for Base mainnet and testnet
+- **LayerZero Protocol**: Secure cross-chain messaging and asset transfers
+- **TypeScript Support**: Fully typed contracts and scripts
+
+## 📋 Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Project Structure](#project-structure)
+- [Configuration](#configuration)
+- [Deployment](#deployment)
+- [Cross-Chain Operations](#cross-chain-operations)
+- [Testing](#testing)
+- [Smart Contracts](#smart-contracts)
+- [Scripts](#scripts)
+- [Network Configuration](#network-configuration)
+
+## 🔧 Prerequisites
+
+- Node.js v16+ (v18+ recommended)
+- npm or yarn
+- Hardhat
+- MetaMask or another Web3 wallet
+- RPC endpoints for target networks (Alchemy, Infura, etc.)
+- Private key with native tokens on networks you want to deploy to
+
+## 📦 Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/acegrant99/ONBT-App.git
+cd ONBT-App
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create environment file:
+```bash
+cp .env.example .env
+```
+
+4. Configure your `.env` file with:
+   - Private key for deployments
+   - RPC endpoints for each network
+   - Block explorer API keys (optional, for verification)
+
+## 📁 Project Structure
+
+```
+ONBT-App/
+├── contracts/
+│   ├── token/
+│   │   ├── NabatOFT.sol          # Main OFT implementation
+│   │   └── NabatProxyOFT.sol     # Proxy OFT for existing tokens
+│   └── nft/
+│       ├── NabatONFT.sol          # Main ONFT implementation
+│       └── NabatProxyONFT.sol     # Proxy ONFT for existing NFTs
+├── scripts/
+│   ├── deployOFT.ts               # Deploy OFT contract
+│   ├── deployONFT.ts              # Deploy ONFT contract
+│   ├── setTrustedRemotes.ts       # Configure cross-chain trust
+│   ├── sendOFT.ts                 # Send tokens cross-chain
+│   └── sendONFT.ts                # Send NFTs cross-chain
+├── constants/
+│   └── layerzero.ts               # LayerZero chain IDs and endpoints
+├── test/                          # Test files
+├── hardhat.config.ts              # Hardhat configuration
+├── tsconfig.json                  # TypeScript configuration
+└── README.md                      # This file
+```
+
+## ⚙️ Configuration
+
+### Network Setup
+
+The project supports multiple networks configured in `hardhat.config.ts`:
+
+- **Ethereum Mainnet** (Chain ID: 1)
+- **Base Mainnet** (Chain ID: 8453) - Coinbase L2
+- **Base Sepolia** (Chain ID: 84532) - Base Testnet
+- **Polygon** (Chain ID: 137)
+- **Arbitrum** (Chain ID: 42161)
+- **Optimism** (Chain ID: 10)
+- **Avalanche** (Chain ID: 43114)
+- **BSC** (Chain ID: 56)
+
+### LayerZero Configuration
+
+LayerZero chain IDs and endpoints are defined in `constants/layerzero.ts`. The configuration includes:
+
+- Chain IDs for LayerZero protocol
+- Endpoint addresses for each network
+- Gas limits for cross-chain operations
+
+## 🚀 Deployment
+
+### Deploy OFT (Omnichain Fungible Token)
+
+1. Deploy on source chain (e.g., Ethereum):
+```bash
+npx hardhat run scripts/deployOFT.ts --network ethereum
+```
+
+2. Deploy on destination chains (e.g., Base):
+```bash
+npx hardhat run scripts/deployOFT.ts --network base
+```
+
+3. Save all deployed contract addresses.
+
+### Deploy ONFT (Omnichain Non-Fungible Token)
+
+1. Deploy on source chain:
+```bash
+npx hardhat run scripts/deployONFT.ts --network ethereum
+```
+
+2. Deploy on destination chains:
+```bash
+npx hardhat run scripts/deployONFT.ts --network base
+```
+
+### Configure Trusted Remotes
+
+After deploying on multiple chains, configure bidirectional trust:
+
+1. Update contract addresses in `scripts/setTrustedRemotes.ts`
+2. Run on each chain:
+```bash
+npx hardhat run scripts/setTrustedRemotes.ts --network ethereum
+npx hardhat run scripts/setTrustedRemotes.ts --network base
+```
+
+This allows contracts to communicate across chains securely.
+
+## 🔄 Cross-Chain Operations
+
+### Send OFT Tokens
+
+1. Update configuration in `scripts/sendOFT.ts`:
+   - Contract address
+   - Destination chain
+   - Recipient address
+   - Amount to send
+
+2. Execute the transfer:
+```bash
+npx hardhat run scripts/sendOFT.ts --network ethereum
+```
+
+3. Monitor on LayerZero Scan: https://layerzeroscan.com
+
+### Send ONFT (NFT)
+
+1. Update configuration in `scripts/sendONFT.ts`:
+   - Contract address
+   - Destination chain
+   - Recipient address
+   - Token ID
+
+2. Execute the transfer:
+```bash
+npx hardhat run scripts/sendONFT.ts --network ethereum
+```
+
+## 🧪 Testing
+
+Compile contracts:
+```bash
+npx hardhat compile
+```
+
+Run tests:
+```bash
+npx hardhat test
+```
+
+## 📜 Smart Contracts
+
+### NabatOFT.sol
+Main OFT implementation for creating new omnichain tokens. Features:
+- Mint/burn functionality
+- Cross-chain transfers
+- ERC20 compatible
+- Configurable decimals
+
+### NabatProxyOFT.sol
+Proxy wrapper for existing ERC20 tokens to make them omnichain-compatible.
+
+### NabatONFT.sol
+Main ONFT implementation for creating new omnichain NFTs. Features:
+- Mint/batch mint
+- Cross-chain NFT transfers
+- ERC721 compatible
+- Configurable metadata URI
+- Max supply control
+
+### NabatProxyONFT.sol
+Proxy wrapper for existing ERC721 tokens to make them omnichain-compatible.
+
+## 📝 Scripts
+
+### Deployment Scripts
+- `deployOFT.ts` - Deploy OFT token contract
+- `deployONFT.ts` - Deploy ONFT (NFT) contract
+
+### Configuration Scripts
+- `setTrustedRemotes.ts` - Set up cross-chain trust relationships
+
+### Operational Scripts
+- `sendOFT.ts` - Transfer tokens across chains
+- `sendONFT.ts` - Transfer NFTs across chains
+
+## 🌐 Network Configuration
+
+### Base (Coinbase L2)
+
+**Mainnet:**
+- RPC: https://mainnet.base.org
+- Chain ID: 8453
+- LayerZero Chain ID: 184
+- Explorer: https://basescan.org
+
+**Testnet (Sepolia):**
+- RPC: https://sepolia.base.org
+- Chain ID: 84532
+- LayerZero Chain ID: 10245
+- Explorer: https://sepolia.basescan.org
+
+### Key Features of Base Integration
+- Low transaction costs
+- Fast finality
+- Full EVM compatibility
+- Native USDC support
+- Seamless bridging with other chains
+
+## 🔐 Security Considerations
+
+1. **Never commit private keys** - Use environment variables
+2. **Test on testnets first** - Validate all functionality before mainnet
+3. **Verify contracts** - Use block explorer verification
+4. **Audit smart contracts** - Consider professional audits for production
+5. **Set appropriate gas limits** - Ensure sufficient gas for cross-chain ops
+6. **Monitor transactions** - Use LayerZero Scan for tracking
+
+## 📚 Resources
+
+- [LayerZero Documentation](https://layerzero.gitbook.io/docs/)
+- [Base Documentation](https://docs.base.org/)
+- [Hardhat Documentation](https://hardhat.org/docs)
+- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+For questions and support:
+- Open an issue on GitHub
+- Check LayerZero documentation
+- Review Base developer resources
+
+## 🚦 Getting Started Quick Guide
+
+1. **Install dependencies**: `npm install`
+2. **Configure environment**: Copy `.env.example` to `.env` and fill in values
+3. **Deploy on testnet**: Start with Base Sepolia
+4. **Test cross-chain**: Use small amounts first
+5. **Monitor transactions**: Track on LayerZero Scan
+6. **Scale to mainnet**: Deploy on production networks
+
+## ⚡ Advanced Features
+
+### Custom Adapter Parameters
+Adjust gas limits and other parameters for cross-chain transfers in the send scripts.
+
+### Multiple Chain Support
+Deploy on any LayerZero-supported chain by adding configuration to `hardhat.config.ts`.
+
+### Proxy Contracts
+Use Proxy OFT/ONFT contracts to make existing tokens omnichain-compatible without creating new tokens.
+
+---
+
+**Built with ❤️ for the Nabat Omnichain Government Ecosystem** 
