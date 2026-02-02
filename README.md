@@ -4,8 +4,10 @@ A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fun
 
 ## 🌟 Features
 
+- **ONBT (Omnichain Nabat Token)**: Immutable branded OFT with built-in logo and metadata
 - **OFT (Omnichain Fungible Token)**: Transfer tokens seamlessly across multiple blockchain networks
 - **ONFT (Omnichain Non-Fungible Token)**: Send NFTs across different chains while maintaining ownership
+- **Branding System**: Professional logo, website, and social media integration for tokens
 - **Multi-Chain Support**: Ethereum, Base, Polygon, Arbitrum, Optimism, Avalanche, BSC (7 chains)
 - **Multi-Chain SDKs**: Complete SDK integrations for all 7 supported chains
 - **Coinbase Ecosystem**: AgentKit, CDP SDK, OnchainKit, Wallet SDK
@@ -65,6 +67,7 @@ cp .env.example .env
 ONBT-App/
 ├── contracts/
 │   ├── token/
+│   │   ├── OmnichainNabatOFT.sol  # Immutable branded ONBT token
 │   │   ├── NabatOFT.sol          # Main OFT implementation
 │   │   └── NabatProxyOFT.sol     # Proxy OFT for existing tokens
 │   └── nft/
@@ -87,16 +90,21 @@ ONBT-App/
 │   ├── cdp-sdk-example.mjs        # CDP SDK usage
 │   └── multi-chain-example.mjs    # Multi-chain SDK demo
 ├── scripts/
+│   ├── deployONBT.mjs             # Deploy immutable ONBT token
 │   ├── deployOFT.mjs              # Deploy OFT contract
 │   ├── deployONFT.mjs             # Deploy ONFT contract
+│   ├── updateBranding.mjs         # Manage ONBT branding
 │   ├── setTrustedRemotes.mjs      # Configure cross-chain trust
 │   ├── sendOFT.mjs                # Send tokens cross-chain
 │   └── sendONFT.mjs               # Send NFTs cross-chain
 ├── constants/
 │   └── layerzero.mjs              # LayerZero chain IDs and endpoints
 ├── test/                          # Test files
+│   ├── OmnichainNabatOFT.test.mjs # ONBT tests
+│   └── NabatOFT.test.mjs          # OFT tests
 ├── docs/
 │   ├── README.md                  # Main documentation
+│   ├── BRANDING.md                # Logo and branding guide
 │   ├── QUICKSTART.md              # Quick start guide
 │   ├── DEPLOYMENT.md              # Deployment guide
 │   ├── ARCHITECTURE.md            # Technical architecture
@@ -131,16 +139,73 @@ LayerZero chain IDs and endpoints are defined in `constants/layerzero.mjs`. The 
 
 ## 🚀 Deployment
 
+### Deploy ONBT (Omnichain Nabat Token - Immutable Branded OFT)
+
+**Omnichain Nabat (ONBT)** is the flagship immutable token with built-in branding:
+
+1. **Prepare branding assets**:
+   - Design your logo (512x512px minimum)
+   - Upload logo to IPFS (see [BRANDING.md](BRANDING.md))
+   - Configure website and social links
+
+2. **Update deployment configuration** in `scripts/deployONBT.mjs`:
+   ```javascript
+   const ONBT_CONFIG = {
+     totalSupply: "100000000", // 100 million ONBT
+     branding: {
+       logoURI: "ipfs://QmYourLogoHash",
+       website: "https://omnichainabat.com",
+       description: "Your description",
+       socialLinks: JSON.stringify({ /* social links */ })
+     }
+   };
+   ```
+
+3. **Deploy on multiple chains**:
+   ```bash
+   # Deploy on Base mainnet
+   npm run deploy:onbt:base
+   
+   # Deploy on Ethereum
+   npm run deploy:onbt:ethereum
+   
+   # Deploy on Polygon
+   npm run deploy:onbt:polygon
+   
+   # Deploy on Base Sepolia (testnet)
+   npm run deploy:onbt:baseSepolia
+   ```
+
+4. **Verify deployment**:
+   - Total supply is immutable (100M ONBT)
+   - No mint/burn functions exist
+   - Branding metadata is set
+   - All supply minted to deployer
+
+5. **Update branding** (optional, after deployment):
+   ```bash
+   # View current branding
+   npm run branding:get <contract_address>
+   
+   # Update branding
+   export NEW_LOGO_URI="ipfs://NewHash"
+   npm run branding:update <contract_address> update
+   ```
+
+See [BRANDING.md](BRANDING.md) for complete branding guide.
+
 ### Deploy OFT (Omnichain Fungible Token)
+
+For custom OFT with mint/burn capabilities:
 
 1. Deploy on source chain (e.g., Ethereum):
 ```bash
-npx hardhat run scripts/deployOFT.ts --network ethereum
+npx hardhat run scripts/deployOFT.mjs --network ethereum
 ```
 
 2. Deploy on destination chains (e.g., Base):
 ```bash
-npx hardhat run scripts/deployOFT.ts --network base
+npx hardhat run scripts/deployOFT.mjs --network base
 ```
 
 3. Save all deployed contract addresses.
@@ -149,12 +214,12 @@ npx hardhat run scripts/deployOFT.ts --network base
 
 1. Deploy on source chain:
 ```bash
-npx hardhat run scripts/deployONFT.ts --network ethereum
+npx hardhat run scripts/deployONFT.mjs --network ethereum
 ```
 
 2. Deploy on destination chains:
 ```bash
-npx hardhat run scripts/deployONFT.ts --network base
+npx hardhat run scripts/deployONFT.mjs --network base
 ```
 
 ### Configure Trusted Remotes
@@ -164,8 +229,8 @@ After deploying on multiple chains, configure bidirectional trust:
 1. Update contract addresses in `scripts/setTrustedRemotes.mjs`
 2. Run on each chain:
 ```bash
-npx hardhat run scripts/setTrustedRemotes.ts --network ethereum
-npx hardhat run scripts/setTrustedRemotes.ts --network base
+npx hardhat run scripts/setTrustedRemotes.mjs --network ethereum
+npx hardhat run scripts/setTrustedRemotes.mjs --network base
 ```
 
 This allows contracts to communicate across chains securely.
