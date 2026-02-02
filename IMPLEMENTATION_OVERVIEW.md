@@ -2,11 +2,15 @@
 
 ## Problem Statement
 
-> "I want to create an immutable OFT named 'Omnichain Nabat, ONBT', and I want to brand it with its own logo etc at deployment so I would have to add branding features later"
+> "I want to create an immutable OFT named 'ONabat, ONBT' with 1 billion supply, brand it with its own logo at deployment. Using Vercel with nabat.finance/www.nabat.finance domain. No proxies needed on dst chains because we set peers."
 
 ## Solution Delivered ✅
 
-A complete, production-ready immutable omnichain fungible token with built-in branding system.
+A complete, production-ready immutable omnichain fungible token with:
+- **1 billion token supply** (immutable)
+- **Built-in branding system**
+- **Vercel deployment** configured for nabat.finance
+- **Peer-based architecture** (no proxies on destination chains)
 
 ---
 
@@ -17,14 +21,15 @@ A complete, production-ready immutable omnichain fungible token with built-in br
 **Location**: `contracts/token/OmnichainNabatOFT.sol` (6,957 bytes)
 
 **Key Features**:
-- Fixed token name: "Omnichain Nabat"
+- Fixed token name: "ONabat"
 - Fixed token symbol: "ONBT"
-- Immutable total supply: 100,000,000 tokens
+- Immutable total supply: 1,000,000,000 tokens (1 billion)
 - NO mint function (supply fixed forever)
 - NO burn function (supply fixed forever)
 - Built-in branding metadata storage
-- LayerZero cross-chain integration
+- LayerZero cross-chain integration (peer-based)
 - ERC20 full compliance
+- Website: https://nabat.finance (Vercel)
 
 **Branding System**:
 ```solidity
@@ -60,11 +65,11 @@ string public socialLinks;  // Social media (JSON)
 **Configuration**:
 ```javascript
 const ONBT_CONFIG = {
-  totalSupply: "100000000",
+  totalSupply: "1000000000",  // 1 billion ONBT
   sharedDecimals: 8,
   branding: {
     logoURI: "ipfs://...",
-    website: "https://...",
+    website: "https://nabat.finance",
     description: "...",
     socialLinks: JSON.stringify({...})
   }
