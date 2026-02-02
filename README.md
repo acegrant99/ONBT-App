@@ -6,8 +6,10 @@ A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fun
 
 - **OFT (Omnichain Fungible Token)**: Transfer tokens seamlessly across multiple blockchain networks
 - **ONFT (Omnichain Non-Fungible Token)**: Send NFTs across different chains while maintaining ownership
-- **Multi-Chain Support**: Ethereum, Base, Polygon, Arbitrum, Optimism, Avalanche, BSC
-- **Coinbase Ecosystem Integration**: Full support for Base mainnet and testnet
+- **Multi-Chain Support**: Ethereum, Base, Polygon, Arbitrum, Optimism, Avalanche, BSC (7 chains)
+- **Multi-Chain SDKs**: Complete SDK integrations for all 7 supported chains
+- **Coinbase Ecosystem**: AgentKit, CDP SDK, OnchainKit, Wallet SDK
+- **Chain-Specific Tools**: Native features for each blockchain (ENS, bridges, DeFi)
 - **LayerZero Protocol**: Secure cross-chain messaging and asset transfers
 - **Latest Dependencies**: Hardhat 3.x, Ethers.js 6.x, OpenZeppelin 4.9.6
 - **ESM Format**: Modern JavaScript with ES modules
@@ -68,6 +70,22 @@ ONBT-App/
 │   └── nft/
 │       ├── NabatONFT.sol          # Main ONFT implementation
 │       └── NabatProxyONFT.sol     # Proxy ONFT for existing NFTs
+├── integrations/
+│   ├── coinbase/                  # Coinbase/Base SDKs
+│   │   ├── agentkit.mjs
+│   │   ├── cdp-sdk.mjs
+│   │   ├── onchainkit.mjs
+│   │   └── wallet-sdk.mjs
+│   ├── ethereum/                  # Ethereum SDK (ENS, DeFi)
+│   ├── polygon/                   # Polygon SDK (PoS, zkEVM)
+│   ├── arbitrum/                  # Arbitrum SDK (Nitro, Stylus)
+│   ├── optimism/                  # Optimism SDK (Bedrock, Superchain)
+│   ├── avalanche/                 # Avalanche SDK (Subnets, C/P/X)
+│   └── bsc/                       # BSC SDK (opBNB, GameFi)
+├── examples/
+│   ├── agentkit-example.mjs       # Coinbase AgentKit usage
+│   ├── cdp-sdk-example.mjs        # CDP SDK usage
+│   └── multi-chain-example.mjs    # Multi-chain SDK demo
 ├── scripts/
 │   ├── deployOFT.mjs              # Deploy OFT contract
 │   ├── deployONFT.mjs             # Deploy ONFT contract
@@ -77,9 +95,15 @@ ONBT-App/
 ├── constants/
 │   └── layerzero.mjs              # LayerZero chain IDs and endpoints
 ├── test/                          # Test files
-├── hardhat.config.js              # Hardhat configuration (ESM)
-├── DEPENDENCIES.md                # Dependency version guide
-└── README.md                      # This file
+├── docs/
+│   ├── README.md                  # Main documentation
+│   ├── QUICKSTART.md              # Quick start guide
+│   ├── DEPLOYMENT.md              # Deployment guide
+│   ├── ARCHITECTURE.md            # Technical architecture
+│   ├── DEPENDENCIES.md            # Dependency management
+│   ├── COINBASE.md                # Coinbase integration guide
+│   └── CHAINS.md                  # Multi-chain SDK guide
+└── hardhat.config.js              # Hardhat configuration (ESM)
 ```
 
 ## ⚙️ Configuration

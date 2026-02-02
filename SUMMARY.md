@@ -51,7 +51,55 @@ A complete LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fungible
   - Gas-optimized transfers
   - Configurable adapter parameters
 
-### 3. Coinbase Ecosystem Integration
+### 3. Multi-Chain SDK Integrations
+
+#### Ethereum SDK (`integrations/ethereum/`)
+- ENS resolution (forward & reverse)
+- Gas price monitoring
+- ERC20/721 utilities
+- DeFi protocol addresses (Uniswap, Aave, Curve)
+- Network utilities and validation
+- **Files**: `eth-sdk.mjs`
+
+#### Polygon SDK (`integrations/polygon/`)
+- PoS Bridge integration
+- Gas Station API (live gas prices)
+- zkEVM support
+- Transaction finality checking
+- DeFi protocols (QuickSwap, Aave, Curve)
+- **Files**: `polygon-sdk.mjs`
+
+#### Arbitrum SDK (`integrations/arbitrum/`)
+- Nitro technology information
+- Stylus (WASM) contract support
+- L1/L2 bridge utilities
+- DeFi protocols (GMX, Camelot, Radiant)
+- Arbitrum One & Nova support
+- **Files**: `arbitrum-sdk.mjs`
+
+#### Optimism SDK (`integrations/optimism/`)
+- Bedrock upgrade features
+- Superchain network information
+- Attestation Station integration
+- DeFi protocols (Velodrome, Synthetix)
+- **Files**: `optimism-sdk.mjs`
+
+#### Avalanche SDK (`integrations/avalanche/`)
+- C/P/X chain support
+- Subnet information and utilities
+- Avalanche consensus details
+- Core Wallet integration
+- DeFi protocols (Trader Joe, Pangolin, Benqi)
+- **Files**: `avalanche-sdk.mjs`
+
+#### BSC SDK (`integrations/bsc/`)
+- opBNB Layer 2 support
+- BEP token standards (BEP20/721/1155)
+- GameFi ecosystem
+- DeFi protocols (PancakeSwap, Venus)
+- **Files**: `bsc-sdk.mjs`
+
+### 4. Coinbase Ecosystem Integration
 
 #### AgentKit (v0.10.4)
 - Build AI agents for blockchain operations
@@ -90,7 +138,7 @@ A complete LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fungible
 - **Files**:
   - `integrations/coinbase/wallet-sdk.mjs`
 
-### 4. Development Tools
+### 5. Development Tools
 
 #### Latest Dependencies
 - **Hardhat**: 3.1.6 (latest, ESM support)
@@ -111,7 +159,7 @@ A complete LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fungible
 - `constants/layerzero.mjs` - LayerZero chain IDs and endpoints
 - `.env.example` - Environment variables template
 
-### 5. Documentation
+### 6. Documentation
 
 #### Comprehensive Guides
 - **README.md**: Main project documentation
@@ -193,6 +241,11 @@ node examples/agentkit-example.mjs
 ### Use CDP SDK
 ```bash
 node examples/cdp-sdk-example.mjs
+```
+
+### Multi-Chain Balance Check
+```bash
+node examples/multi-chain-example.mjs
 ```
 
 ## 🏗️ Project Structure
