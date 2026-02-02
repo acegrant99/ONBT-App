@@ -10,24 +10,24 @@ import { ChainConfig } from "../constants/layerzero.mjs";
 // ============ ONBT Configuration ============
 const ONBT_CONFIG = {
   // Token parameters (immutable)
-  name: "Omnichain Nabat",
+  name: "ONabat",
   symbol: "ONBT",
   sharedDecimals: 8, // 8 decimals for cross-chain compatibility
   
-  // Total supply (100 million ONBT)
-  totalSupply: "100000000", // In ether units (will be 100M * 10^18)
+  // Total supply (1 billion ONBT)
+  totalSupply: "1000000000", // In ether units (will be 1B * 10^18)
   
   // Branding metadata
   branding: {
     logoURI: "ipfs://QmYourLogoHashHere", // Replace with actual IPFS hash after upload
-    website: "https://omnichainabat.com", // Your project website
-    description: "Omnichain Nabat (ONBT) is an immutable omnichain fungible token built on LayerZero. It enables seamless cross-chain transfers across multiple blockchains with a fixed supply and professional branding.",
+    website: "https://nabat.finance", // Official Nabat Finance website (Vercel deployment)
+    description: "ONabat (ONBT) is an immutable omnichain fungible token built on LayerZero. It enables seamless cross-chain transfers across multiple blockchains with a fixed supply of 1 billion tokens and professional branding. Deployed via peer configuration, no proxies needed.",
     socialLinks: JSON.stringify({
-      twitter: "https://twitter.com/omnichainabat",
-      telegram: "https://t.me/omnichainabat",
-      discord: "https://discord.gg/omnichainabat",
+      twitter: "https://twitter.com/nabatfinance",
+      telegram: "https://t.me/nabatfinance",
+      discord: "https://discord.gg/nabatfinance",
       github: "https://github.com/acegrant99/ONBT-App",
-      medium: "https://medium.com/@omnichainabat"
+      medium: "https://medium.com/@nabatfinance"
     })
   }
 };
@@ -39,7 +39,7 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   
   console.log("╔════════════════════════════════════════════════════════════╗");
-  console.log("║        Omnichain Nabat Token (ONBT) Deployment            ║");
+  console.log("║             ONabat Token (ONBT) Deployment                ║");
   console.log("╚════════════════════════════════════════════════════════════╝\n");
   
   console.log("Deploying with account:", deployer.address);
@@ -165,7 +165,8 @@ async function main() {
   console.log(`export ONBT_DEPLOYER="${deployer.address}"`);
   console.log(`export ONBT_SUPPLY="${ONBT_CONFIG.totalSupply}"`);
   
-  console.log("\n✨ Deployment complete! Your ONBT token is immutable and ready for omnichain use.");
+  console.log("\n✨ Deployment complete! Your ONBT token (1B supply) is immutable and ready for omnichain use via peer configuration.");
+  console.log("🌐 Visit: https://nabat.finance");
 }
 
 main()

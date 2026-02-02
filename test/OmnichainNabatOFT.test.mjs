@@ -9,14 +9,14 @@ describe("OmnichainNabatOFT (ONBT)", function () {
   let addr2;
   let lzEndpoint;
   
-  const TOTAL_SUPPLY = ethers.parseEther("100000000"); // 100 million
+  const TOTAL_SUPPLY = ethers.parseEther("1000000000"); // 1 billion
   const SHARED_DECIMALS = 8;
   const LOGO_URI = "ipfs://QmTest123";
-  const WEBSITE = "https://omnichainabat.com";
-  const DESCRIPTION = "Immutable omnichain token";
+  const WEBSITE = "https://nabat.finance";
+  const DESCRIPTION = "Immutable omnichain token with 1B supply";
   const SOCIAL_LINKS = JSON.stringify({
-    twitter: "https://twitter.com/onbt",
-    telegram: "https://t.me/onbt"
+    twitter: "https://twitter.com/nabatfinance",
+    telegram: "https://t.me/nabatfinance"
   });
 
   beforeEach(async function () {
@@ -41,7 +41,7 @@ describe("OmnichainNabatOFT (ONBT)", function () {
 
   describe("Deployment", function () {
     it("Should set the correct name and symbol", async function () {
-      expect(await onbt.name()).to.equal("Omnichain Nabat");
+      expect(await onbt.name()).to.equal("ONabat");
       expect(await onbt.symbol()).to.equal("ONBT");
     });
 

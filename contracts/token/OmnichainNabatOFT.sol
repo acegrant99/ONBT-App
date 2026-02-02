@@ -8,12 +8,12 @@ import "@layerzerolabs/solidity-examples/contracts/token/oft/v2/OFTV2.sol";
  * @dev Immutable Omnichain Fungible Token with built-in branding
  * 
  * Key Features:
- * - Fixed name: "Omnichain Nabat"
+ * - Fixed name: "ONabat"
  * - Fixed symbol: "ONBT"
- * - Immutable total supply (minted at deployment)
+ * - Immutable total supply (1 billion tokens, minted at deployment)
  * - No mint/burn functions (true immutability)
  * - Built-in branding metadata (logo, website, social links)
- * - Cross-chain transfers via LayerZero
+ * - Cross-chain transfers via LayerZero (peer-based, no proxies needed)
  * 
  * This token represents a truly immutable omnichain asset with
  * professional branding capabilities for DeFi and ecosystem use.
@@ -69,7 +69,7 @@ contract OmnichainNabatOFT is OFTV2 {
         string memory _website,
         string memory _description,
         string memory _socialLinks
-    ) OFTV2("Omnichain Nabat", "ONBT", _sharedDecimals, _lzEndpoint) {
+    ) OFTV2("ONabat", "ONBT", _sharedDecimals, _lzEndpoint) {
         // Store immutable values
         TOTAL_SUPPLY = _initialSupply;
         DEPLOYMENT_TIME = block.timestamp;
