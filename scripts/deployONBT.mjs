@@ -5,7 +5,23 @@ import { ChainConfig } from "../constants/layerzero.mjs";
 /**
  * Deploy Omnichain Nabat Token (ONBT)
  * This script deploys the immutable branded OFT with fixed parameters
+ * 
+ * IMPORTANT: Supply Minting Strategy
+ * - Hub Chain (Source): Deploy with FULL supply (1B ONBT)
+ * - Destination Chains: Deploy with ZERO supply (0 ONBT)
+ * 
+ * Set DEPLOYMENT_TYPE environment variable:
+ * - "hub" = Mint full 1B supply (use for first deployment)
+ * - "destination" = Mint 0 supply (use for all other chains)
+ * 
+ * Examples:
+ *   DEPLOYMENT_TYPE=hub npm run deploy:onbt:base
+ *   DEPLOYMENT_TYPE=destination npm run deploy:onbt:ethereum
  */
+
+// ============ Deployment Type ============
+const DEPLOYMENT_TYPE = process.env.DEPLOYMENT_TYPE || "hub";
+const IS_HUB_CHAIN = DEPLOYMENT_TYPE === "hub";
 
 // ============ ONBT Configuration ============
 const ONBT_CONFIG = {
@@ -14,8 +30,8 @@ const ONBT_CONFIG = {
   symbol: "ONBT",
   sharedDecimals: 8, // 8 decimals for cross-chain compatibility
   
-  // Total supply (1 billion ONBT)
-  totalSupply: "1000000000", // In ether units (will be 1B * 10^18)
+  // Total supply - ONLY minted on hub chain!
+  totalSupply: IS_HUB_CHAIN ? "1000000000" : "0", // 1B on hub, 0 on destinations
   
   // Branding metadata
   branding: {
@@ -42,7 +58,11 @@ async function main() {
   console.log("║             ONabat Token (ONBT) Deployment                ║");
   console.log("╚════════════════════════════════════════════════════════════╝\n");
   
-  console.log("Deploying with account:", deployer.address);
+  console.log("--- Deployment Type ---");
+  console.log("Type:", DEPLOYMENT_TYPE.toUpperCase());
+  console.log("Hub Chain:", IS_HUB_CHAIN ? "YES (will mint full supply)" : "NO (will mint 0 tokens)");
+  
+  console.log("\nDeploying with account:", deployer.address);
   
   // Get deployer balance
   const balance = await ethers.provider.getBalance(deployer.address);
@@ -79,7 +99,16 @@ async function main() {
   console.log("Name:", ONBT_CONFIG.name);
   console.log("Symbol:", ONBT_CONFIG.symbol);
   console.log("Decimals:", 18, "(native) /", ONBT_CONFIG.sharedDecimals, "(shared)");
-  console.log("Total Supply:", ONBT_CONFIG.totalSupply, "ONBT");
+  
+  if (IS_HUB_CHAIN) {
+    console.log("Total Supply:", ONBT_CONFIG.totalSupply, "ONBT (FULL SUPPLY - HUB CHAIN)");
+    console.log("⚠️  This is the HUB chain - ALL 1B tokens will be minted here!");
+  } else {
+    console.log("Total Supply:", ONBT_CONFIG.totalSupply, "ONBT (DESTINATION CHAIN)");
+    console.log("ℹ️  This is a DESTINATION chain - 0 tokens will be minted.");
+    console.log("ℹ️  Tokens will arrive via cross-chain transfers from hub chain.");
+  }
+  
   console.log("Total Supply (wei):", totalSupplyWei.toString());
   
   console.log("\n--- Branding Information ---");
@@ -143,30 +172,55 @@ async function main() {
   console.log("\n╔════════════════════════════════════════════════════════════╗");
   console.log("║                   Deployment Summary                       ║");
   console.log("╚════════════════════════════════════════════════════════════╝");
+  console.log("Deployment Type:", DEPLOYMENT_TYPE.toUpperCase());
+  console.log("Hub Chain:", IS_HUB_CHAIN ? "YES" : "NO");
   console.log("Network:", networkName);
   console.log("Contract:", address);
   console.log("Token:", ONBT_CONFIG.name, "(" + ONBT_CONFIG.symbol + ")");
-  console.log("Total Supply:", ONBT_CONFIG.totalSupply, "ONBT (immutable)");
+  console.log("Total Supply:", ONBT_CONFIG.totalSupply, "ONBT", IS_HUB_CHAIN ? "(immutable)" : "(awaiting bridge transfers)");
   console.log("Deployer:", deployer.address);
   console.log("LayerZero Endpoint:", lzEndpoint);
   
   console.log("\n╔════════════════════════════════════════════════════════════╗");
   console.log("║                      Next Steps                            ║");
   console.log("╚════════════════════════════════════════════════════════════╝");
-  console.log("1. Upload logo to IPFS and update logoURI");
-  console.log("2. Deploy this contract on other chains");
-  console.log("3. Set trusted remotes for cross-chain transfers");
-  console.log("4. Update branding if needed: updateBranding()");
-  console.log("5. Transfer tokens to liquidity pools and users");
-  console.log("6. Verify contract on block explorer");
+  
+  if (IS_HUB_CHAIN) {
+    console.log("✅ Hub Chain Deployment Complete!");
+    console.log("1. Deploy on DESTINATION chains with DEPLOYMENT_TYPE=destination");
+    console.log("2. Set trusted remotes between all chains");
+    console.log("3. Bridge tokens from this hub chain to destinations");
+    console.log("4. Verify that global supply = 1B across all chains");
+  } else {
+    console.log("✅ Destination Chain Deployment Complete!");
+    console.log("1. Deploy on other destination chains (if needed)");
+    console.log("2. Set trusted remotes to connect with hub chain");
+    console.log("3. Bridge tokens FROM hub chain TO this chain");
+    console.log("4. This chain will receive tokens via burn/mint mechanism");
+  }
+  
+  console.log("\nGeneral next steps:");
+  console.log("- Upload logo to IPFS and update logoURI");
+  console.log("- Set trusted remotes: scripts/setTrustedRemotes.mjs");
+  console.log("- Update branding if needed: updateBranding()");
+  console.log("- Transfer tokens to liquidity pools and users");
+  console.log("- Verify contract on block explorer");
   
   console.log("\n📝 Save this deployment information:");
-  console.log(`export ONBT_ADDRESS_${networkName.toUpperCase()}="${address}"`);
+  console.log(`export ONBT_${IS_HUB_CHAIN ? 'HUB' : 'DEST'}_${networkName.toUpperCase()}="${address}"`);
   console.log(`export ONBT_DEPLOYER="${deployer.address}"`);
-  console.log(`export ONBT_SUPPLY="${ONBT_CONFIG.totalSupply}"`);
+  console.log(`export ONBT_SUPPLY_${networkName.toUpperCase()}="${ONBT_CONFIG.totalSupply}"`);
   
-  console.log("\n✨ Deployment complete! Your ONBT token (1B supply) is immutable and ready for omnichain use via peer configuration.");
+  if (IS_HUB_CHAIN) {
+    console.log("\n✨ Hub chain deployment complete! Your ONBT token (1B supply) is immutable.");
+    console.log("   Next: Deploy on destination chains with DEPLOYMENT_TYPE=destination");
+  } else {
+    console.log("\n✨ Destination chain deployment complete! This chain starts with 0 ONBT.");
+    console.log("   Next: Bridge tokens from hub chain to activate this deployment.");
+  }
+  
   console.log("🌐 Visit: https://nabat.finance");
+  console.log("📖 Read: SUPPLY_MODEL.md for hub/destination chain details");
 }
 
 main()

@@ -9,6 +9,14 @@ A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fun
 📖 **Read the complete explanation:** [BRIDGING_ARCHITECTURE.md](./BRIDGING_ARCHITECTURE.md)  
 💻 **See UI integration examples:** [UI_INTEGRATION_GUIDE.md](./UI_INTEGRATION_GUIDE.md)
 
+## ❓ How Does Supply Minting Work?
+
+**Hub Chain**: Deploy with full 1B supply (mints all tokens)  
+**Destination Chains**: Deploy with 0 supply (no minting)  
+**Cross-Chain**: Burn on source, mint on destination (total stays 1B)
+
+📖 **Read the complete explanation:** [SUPPLY_MODEL.md](./SUPPLY_MODEL.md)
+
 ## 🌟 Features
 
 - **ONBT (ONabat Token)**: Immutable branded OFT with 1 billion token supply, built-in logo and metadata
