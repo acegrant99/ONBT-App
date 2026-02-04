@@ -2,6 +2,16 @@
 
 A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fungible Tokens) and ONFT (Omnichain Non-Fungible Tokens) implementations. Built from scratch for the Nabat Government ecosystem with full Coinbase/Base chain integration.
 
+## 🚀 Ready to Get Started?
+
+### → [QUICK_SETUP.md](./QUICK_SETUP.md) - Deploy in 15 minutes! ⚡
+
+### → [NEXT_STEPS.md](./NEXT_STEPS.md) - Complete roadmap & recommendations 🗺️
+
+### → [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) - Track your progress ✅
+
+---
+
 ## 🚀 Quick Answer: Do I Need a Bridging Contract?
 
 **NO!** The OmnichainNabatOFT contract **already has built-in LayerZero bridging**. You do NOT need a separate bridge contract. You just need to build a UI that calls the existing `sendFrom()` function.
