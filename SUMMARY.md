@@ -9,16 +9,18 @@ A complete LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fungible
 ### 1. Smart Contracts
 
 #### OFT (Omnichain Fungible Token)
-- **NabatOFT.sol**: Main OFT implementation (Solidity 0.8.22)
+- **OmnichainNabatOFT.sol**: Immutable branded OFT (Solidity 0.8.22)
+  - Fixed name: "ONabat", Symbol: "ONBT"
+  - Total supply: 1 billion (immutable)
+  - Built-in branding system
+  - Peer-based cross-chain (no proxies)
+  - Website: https://nabat.finance
+
+- **NabatOFT.sol**: Generic OFT implementation (Solidity 0.8.22)
   - ERC20 compliant
   - Cross-chain transfers via LayerZero
   - Mint/burn functionality
   - Owner-controlled
-
-- **NabatProxyOFT.sol**: Proxy for existing ERC20 tokens
-  - Wrap existing tokens
-  - Make them omnichain-compatible
-  - No new token creation needed
 
 #### ONFT (Omnichain Non-Fungible Token)
 - **NabatONFT.sol**: Main ONFT implementation (Solidity 0.8.22)
@@ -27,11 +29,6 @@ A complete LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fungible
   - Batch minting support
   - Dynamic metadata URIs
   - Max supply control
-
-- **NabatProxyONFT.sol**: Proxy for existing ERC721 tokens
-  - Wrap existing NFTs
-  - Cross-chain functionality
-  - Preserve token IDs
 
 ### 2. LayerZero Integration
 
@@ -254,11 +251,10 @@ node examples/multi-chain-example.mjs
 ONBT-App/
 ├── contracts/
 │   ├── token/
-│   │   ├── NabatOFT.sol
-│   │   └── NabatProxyOFT.sol
+│   │   ├── OmnichainNabatOFT.sol
+│   │   └── NabatOFT.sol
 │   └── nft/
-│       ├── NabatONFT.sol
-│       └── NabatProxyONFT.sol
+│       └── NabatONFT.sol
 ├── scripts/
 │   ├── deployOFT.mjs
 │   ├── deployONFT.mjs

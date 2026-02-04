@@ -10,8 +10,8 @@ Your ONBT project is **production-ready** from a smart contract and SDK perspect
    - OmnichainNabatOFT.sol (immutable, branded, 1B supply)
    - NabatOFT.sol (generic OFT)
    - NabatONFT.sol (NFT version)
-   - Proxy contracts for existing tokens/NFTs
    - All contracts using latest Solidity 0.8.22
+   - Peer-based architecture (no proxies needed)
 
 2. **Multi-Chain Support** ✅
    - 7 blockchain integrations
