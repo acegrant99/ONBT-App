@@ -3,7 +3,7 @@ const { ethers } = hre;
 import { ChainConfig } from "../constants/layerzero.mjs";
 
 /**
- * Deploy Omnichain Nabat Token (ONBT)
+ * Deploy ONabat Token (ONBT)
  * This script deploys the immutable branded OFT with fixed parameters
  * 
  * IMPORTANT: Supply Minting Strategy

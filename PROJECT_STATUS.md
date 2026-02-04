@@ -100,12 +100,10 @@ Your ONBT (ONabat Token) project is **production-ready** from a technical standp
 ONBT-App/
 ├── contracts/                  # Smart contracts (100% complete)
 │   ├── token/
-│   │   ├── OmnichainNabatOFT.sol    ✅ Main ONBT contract
-│   │   ├── NabatOFT.sol             ✅ Generic OFT
-│   │   └── NabatProxyOFT.sol        ✅ Proxy for existing tokens
+│   │   ├── OmnichainNabatOFT.sol    ✅ Immutable ONBT (1B supply)
+│   │   └── NabatOFT.sol             ✅ Generic OFT
 │   └── nft/
-│       ├── NabatONFT.sol            ✅ Main ONFT
-│       └── NabatProxyONFT.sol       ✅ Proxy for existing NFTs
+│       └── NabatONFT.sol            ✅ Generic ONFT
 │
 ├── scripts/                    # Deployment scripts (100% complete)
 │   ├── deployONBT.mjs               ✅ Deploy ONBT token
