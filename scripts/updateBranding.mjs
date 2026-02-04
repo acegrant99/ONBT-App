@@ -90,7 +90,7 @@ async function updateBranding(contractAddress, newBranding) {
  */
 function generateMetadataJSON(branding, tokenInfo) {
   return JSON.stringify({
-    name: tokenInfo.name || "Omnichain Nabat",
+    name: tokenInfo.name || "ONabat",
     symbol: tokenInfo.symbol || "ONBT",
     decimals: tokenInfo.decimals || 18,
     description: branding.description,

@@ -263,7 +263,7 @@ npm run branding:get <contract_address> generate
 ```javascript
 // Get token info
 const onbt = new ethers.Contract(address, abi, provider);
-const name = await onbt.name(); // "Omnichain Nabat"
+const name = await onbt.name(); // "ONabat"
 const symbol = await onbt.symbol(); // "ONBT"
 const decimals = await onbt.decimals(); // 18
 

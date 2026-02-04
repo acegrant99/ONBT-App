@@ -92,12 +92,10 @@ cp .env.example .env
 ONBT-App/
 ├── contracts/
 │   ├── token/
-│   │   ├── OmnichainNabatOFT.sol  # Immutable branded ONBT token
-│   │   ├── NabatOFT.sol          # Main OFT implementation
-│   │   └── NabatProxyOFT.sol     # Proxy OFT for existing tokens
+│   │   ├── OmnichainNabatOFT.sol  # Immutable ONBT (1B supply, peer-based)
+│   │   └── NabatOFT.sol           # Generic OFT implementation
 │   └── nft/
-│       ├── NabatONFT.sol          # Main ONFT implementation
-│       └── NabatProxyONFT.sol     # Proxy ONFT for existing NFTs
+│       └── NabatONFT.sol          # Generic ONFT implementation
 ├── integrations/
 │   ├── coinbase/                  # Coinbase/Base SDKs
 │   │   ├── agentkit.mjs
@@ -308,26 +306,32 @@ npx hardhat test
 
 ## 📜 Smart Contracts
 
+### OmnichainNabatOFT.sol
+
+The immutable branded token for the Nabat ecosystem:
+- Fixed name: "ONabat"
+- Fixed symbol: "ONBT"
+- Total supply: 1 billion (immutable)
+- Built-in branding (logo, website, socials)
+- Peer-based cross-chain (no proxies needed)
+- Website: https://nabat.finance
+
 ### NabatOFT.sol
+
 Main OFT implementation for creating new omnichain tokens. Features:
 - Mint/burn functionality
 - Cross-chain transfers
 - ERC20 compatible
 - Configurable decimals
 
-### NabatProxyOFT.sol
-Proxy wrapper for existing ERC20 tokens to make them omnichain-compatible.
-
 ### NabatONFT.sol
+
 Main ONFT implementation for creating new omnichain NFTs. Features:
 - Mint/batch mint
 - Cross-chain NFT transfers
 - ERC721 compatible
 - Configurable metadata URI
 - Max supply control
-
-### NabatProxyONFT.sol
-Proxy wrapper for existing ERC721 tokens to make them omnichain-compatible.
 
 ## 📝 Scripts
 

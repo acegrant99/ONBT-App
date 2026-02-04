@@ -1,4 +1,4 @@
-# Bridging Architecture for Omnichain Nabat (ONBT)
+# Bridging Architecture for ONabat (ONBT)
 
 ## Quick Answer
 

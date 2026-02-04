@@ -7,8 +7,8 @@
 ## Changes Implemented ✅
 
 ### 1. Token Name Change
-- **Before**: "Omnichain Nabat"
-- **After**: "ONabat"
+- **Current**: "ONabat" (already correct in contract)
+- **Symbol**: "ONBT"
 - **Files**: `OmnichainNabatOFT.sol`
 
 ### 2. Total Supply Change
@@ -20,9 +20,8 @@
   - `OmnichainNabatOFT.test.mjs`
   - All documentation
 
-### 3. Website/Domain Update
-- **Before**: omnichainabat.com
-- **After**: nabat.finance
+### 3. Website/Domain
+- **Domain**: nabat.finance
 - **Deployment**: Vercel
 - **Domains**: nabat.finance + www.nabat.finance
 - **Files**:
@@ -31,8 +30,7 @@
   - All documentation
 
 ### 4. Social Media Handles
-- **Before**: @omnichainabat
-- **After**: @nabatfinance
+- **Handles**: @nabatfinance
 - **Platforms**: Twitter, Telegram, Discord, Medium
 - **Files**: `deployONBT.mjs`, `BRANDING.md`
 
@@ -102,22 +100,22 @@
 
 ## Configuration Changes
 
-### Before
+### Current Configuration
 ```javascript
 const ONBT_CONFIG = {
-  name: "Omnichain Nabat",
+  name: "ONabat",
   symbol: "ONBT",
-  totalSupply: "100000000", // 100M
+  totalSupply: "1000000000", // 1B
   branding: {
     logoURI: "ipfs://QmYourLogoHashHere",
-    website: "https://omnichainabat.com",
-    description: "Omnichain Nabat (ONBT)...",
+    website: "https://nabat.finance",
+    description: "ONabat (ONBT) is an immutable omnichain fungible token...",
     socialLinks: JSON.stringify({
-      twitter: "https://twitter.com/omnichainabat",
-      telegram: "https://t.me/omnichainabat",
-      discord: "https://discord.gg/omnichainabat",
+      twitter: "https://twitter.com/nabatfinance",
+      telegram: "https://t.me/nabatfinance",
+      discord: "https://discord.gg/nabatfinance",
       github: "https://github.com/acegrant99/ONBT-App",
-      medium: "https://medium.com/@omnichainabat"
+      medium: "https://medium.com/@nabatfinance"
     })
   }
 };

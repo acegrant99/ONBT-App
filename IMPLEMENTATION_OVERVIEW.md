@@ -283,12 +283,12 @@ npm run deploy:onbt:base
 
 # Output:
 # ╔════════════════════════════════════════════╗
-# ║   Omnichain Nabat Token (ONBT) Deployment ║
+# ║       ONabat Token (ONBT) Deployment      ║
 # ╚════════════════════════════════════════════╝
 # 
 # Deploying with account: 0x...
 # Network: base
-# Token: Omnichain Nabat (ONBT)
+# Token: ONabat (ONBT)
 # Total Supply: 100000000 ONBT (immutable)
 # Contract Address: 0x...
 ```
@@ -316,7 +316,7 @@ import { ethers } from 'ethers';
 const onbt = new ethers.Contract(address, abi, provider);
 
 // Get token info
-const name = await onbt.name();        // "Omnichain Nabat"
+const name = await onbt.name();        // "ONabat"
 const symbol = await onbt.symbol();    // "ONBT"
 const supply = await onbt.totalSupply(); // 100000000...
 

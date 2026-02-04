@@ -41,10 +41,11 @@ This document provides a technical overview of the Nabat Omnichain Ecosystem arc
   - Supports minting and burning
   - Cross-chain transfer capabilities
 
-- **NabatProxyOFT.sol**: Proxy for existing tokens
-  - Wraps existing ERC20 tokens
-  - Makes them omnichain-compatible
-  - No need to create new tokens
+- **OmnichainNabatOFT.sol**: Immutable branded OFT (ONBT)
+  - Fixed supply (1 billion tokens)
+  - Built-in branding system
+  - No mint/burn functions (immutable)
+  - Peer-based cross-chain (no proxies needed)
 
 #### ONFT (Omnichain Non-Fungible Token)
 - **NabatONFT.sol**: Main ONFT implementation
@@ -53,11 +54,7 @@ This document provides a technical overview of the Nabat Omnichain Ecosystem arc
   - Batch minting support
   - Dynamic metadata URIs
   - Max supply control
-
-- **NabatProxyONFT.sol**: Proxy for existing NFTs
-  - Wraps existing ERC721 tokens
-  - Cross-chain NFT transfers
-  - Preserves token IDs
+  - Peer-based cross-chain transfers
 
 ### 2. LayerZero Integration
 

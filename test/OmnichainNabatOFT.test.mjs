@@ -123,7 +123,7 @@ describe("OmnichainNabatOFT (ONBT)", function () {
 
     it("Should return tokenURI with metadata", async function () {
       const uri = await onbt.tokenURI();
-      expect(uri).to.include("Omnichain Nabat");
+      expect(uri).to.include("ONabat");
       expect(uri).to.include("ONBT");
       expect(uri).to.include(LOGO_URI);
       expect(uri).to.include(WEBSITE);

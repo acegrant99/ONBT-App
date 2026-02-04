@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Omnichain Nabat Token (ONBT / ONabat)** is an immutable omnichain fungible token with built-in branding capabilities. This guide explains how to configure, update, and manage the branding metadata for your ONBT deployment.
+**ONabat (ONBT)** is an immutable omnichain fungible token with built-in branding capabilities. This guide explains how to configure, update, and manage the branding metadata for your ONBT deployment.
 
 ## Table of Contents
 
@@ -234,20 +234,20 @@ ONBT follows standard token metadata format:
 
 ```json
 {
-  "name": "Omnichain Nabat",
+  "name": "ONabat",
   "symbol": "ONBT",
   "decimals": 18,
   "description": "Immutable omnichain fungible token",
   "image": "ipfs://QmYourLogoHash",
-  "external_url": "https://omnichainabat.com",
+  "external_url": "https://nabat.finance",
   "properties": {
-    "totalSupply": "100000000",
+    "totalSupply": "1000000000",
     "immutable": true,
     "omnichain": true,
     "layerzero": true,
     "socialMedia": {
-      "twitter": "https://twitter.com/omnichainabat",
-      "telegram": "https://t.me/omnichainabat"
+      "twitter": "https://twitter.com/nabatfinance",
+      "telegram": "https://t.me/nabatfinance"
     }
   }
 }
@@ -307,7 +307,7 @@ import { NFTStorage, File } from 'nft.storage';
 
 const client = new NFTStorage({ token: 'YOUR_API_KEY' });
 const metadata = await client.store({
-  name: 'Omnichain Nabat',
+  name: 'ONabat',
   description: 'Token logo',
   image: new File([/* your file */], 'logo.png', { type: 'image/png' })
 });

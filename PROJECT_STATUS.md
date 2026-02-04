@@ -7,7 +7,7 @@
 
 ## 🎯 Executive Summary
 
-Your ONBT (Omnichain Nabat Token) project is **production-ready** from a technical standpoint. All smart contracts, SDK integrations, and documentation are complete. What remains is configuration, deployment, UI development, and launch activities.
+Your ONBT (ONabat Token) project is **production-ready** from a technical standpoint. All smart contracts, SDK integrations, and documentation are complete. What remains is configuration, deployment, UI development, and launch activities.
 
 **Bottom Line**: You can deploy to testnet TODAY and be on mainnet within 4-6 weeks.
 
@@ -19,9 +19,9 @@ Your ONBT (Omnichain Nabat Token) project is **production-ready** from a technic
 - **OmnichainNabatOFT.sol** - Main immutable branded token (1B supply)
 - **NabatOFT.sol** - Generic omnichain fungible token
 - **NabatONFT.sol** - Omnichain non-fungible token
-- **Proxy contracts** - For wrapping existing tokens/NFTs
 - **All using Solidity 0.8.22** - Latest stable version
-- **LayerZero OFTV2 integration** - Built-in cross-chain
+- **LayerZero OFTV2 integration** - Peer-based cross-chain (no proxies needed)
+- **Built for nabat.finance** - Vercel deployment ready
 
 ### Multi-Chain Support ✅ 100%
 - **7 blockchain SDKs** complete:
