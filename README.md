@@ -2,6 +2,18 @@
 
 New Repo for revamped efforts in deploying the new, the Nabat Omnichain Government ecosystem. The dApp.
 
+## 🚀 Try Faucet Now
+
+**Need testnet ETH? Get it free here:**
+
+### Ethereum Sepolia
+👉 **[Try Alchemy Sepolia Faucet](https://sepoliafaucet.com/)** - Get 0.5 ETH instantly (recommended)
+
+### Base Sepolia  
+👉 **[Try Coinbase Base Sepolia Faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet)** - Get 0.1 ETH instantly
+
+> **Note**: Make sure your wallet is on the correct testnet network, not mainnet!
+
 ## Getting Started
 
 ### Prerequisites
@@ -21,6 +33,8 @@ New Repo for revamped efforts in deploying the new, the Nabat Omnichain Governme
 ### Getting Testnet ETH (For Faucets)
 
 **IMPORTANT**: This application uses testnets, NOT mainnet. You need testnet ETH, which is free.
+
+📚 **For complete faucet guide with all options, see [FAUCETS.md](FAUCETS.md)**
 
 #### Ethereum Sepolia Testnet Faucets
 

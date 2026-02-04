@@ -1,5 +1,18 @@
 # Quick Reference Guide
 
+## 🚀 TRY FAUCETS NOW
+
+### Get Free Testnet ETH in 2 Minutes:
+
+1. **[🎯 Ethereum Sepolia → Click Here](https://sepoliafaucet.com/)** (Get 0.5 ETH)
+2. **[🎯 Base Sepolia → Click Here](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet)** (Get 0.1 ETH)
+
+> ⚠️ **Important**: Switch your wallet to Sepolia testnet first!
+
+📚 **See [FAUCETS.md](FAUCETS.md) for all faucet options**
+
+---
+
 ## I Need Testnet ETH - Where Do I Get It?
 
 ### Fastest Options (No Mining Required)
