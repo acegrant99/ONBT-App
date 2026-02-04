@@ -4,6 +4,8 @@ A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fun
 
 ## 🚀 Ready to Get Started?
 
+### → [WALLET_SETUP.md](./WALLET_SETUP.md) - Add your deployer wallet (5 minutes) 🔐
+
 ### → [QUICK_SETUP.md](./QUICK_SETUP.md) - Deploy in 15 minutes! ⚡
 
 ### → [NEXT_STEPS.md](./NEXT_STEPS.md) - Complete roadmap & recommendations 🗺️
