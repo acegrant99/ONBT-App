@@ -10,6 +10,12 @@ A comprehensive LayerZero-based omnichain ecosystem featuring OFT (Omnichain Fun
 
 ### → [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) - Track your progress ✅
 
+## 📱 What Can Our Ecosystem Do?
+
+### → [MINIAPP_CAPABILITIES.md](./MINIAPP_CAPABILITIES.md) - Complete miniapp features & use cases 🎯
+
+Learn about all the DeFi capabilities including staking, swapping, liquidity pools, yield distribution, cross-chain operations, AI integration, and more!
+
 ---
 
 ## 🚀 Quick Answer: Do I Need a Bridging Contract?
