@@ -1,0 +1,37 @@
+{
+  "name": "onabat-app",
+  "version": "1.0.0",
+  "description": "Nabat Omnichain Government Ecosystem - A decentralized application for omnichain governance that enables transparent and efficient decision-making across multiple blockchain networks",
+  "author": "ONabat Team",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://nabat.finance",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/acegrant99/ONBT-App.git"
+  },
+  "bugs": {
+    "url": "https://github.com/acegrant99/ONBT-App/issues"
+  },
+  "keywords": [
+    "onabat",
+    "nabat",
+    "omnichain",
+    "governance",
+    "blockchain",
+    "dapp",
+    "decentralized"
+  ],
+  "social": {
+    "twitter": "https://x.com/NBT_V2",
+    "telegram": "https://t.me/NabatOmnichainGenesisGovernment",
+    "discord": "https://discord.gg/Tug6F8H8C",
+    "website": "https://nabat.finance"
+  },
+  "branding": {
+    "logo": "https://share.icloud.com/photos/05b2OQFlv5lYFnJHoHDfqgfcg",
+    "colors": {
+      "primary": "TBD",
+      "secondary": "TBD"
+    }
+  }
+}
