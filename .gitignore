@@ -1,0 +1,38 @@
+# Hardhat
+node_modules
+cache
+artifacts
+typechain
+typechain-types
+coverage
+coverage.json
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist
+build
+out
+
+# Testing
+test-results
+
+# Temporary files
+tmp
+temp

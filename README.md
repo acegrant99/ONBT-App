@@ -6,6 +6,44 @@ New repository for revamped efforts in deploying the Nabat Omnichain Government 
 
 Nabat is an innovative omnichain governance ecosystem that enables decentralized decision-making and coordination across multiple blockchain networks. The platform provides a unified governance framework that seamlessly operates across different chains, empowering communities to participate in transparent and efficient governance processes.
 
+## Smart Contracts
+
+### OmnichainNabatOFT - No Proxy Architecture
+
+The `OmnichainNabatOFT.sol` contract implements LayerZero V2 OFT (Omnichain Fungible Token) standard **WITHOUT proxies**, as recommended by LayerZero documentation.
+
+**Why No Proxies?**
+- ✅ LayerZero V2 OFT contracts don't require proxies
+- ✅ Simpler, more secure architecture
+- ✅ Direct inheritance from OFT.sol provides all omnichain functionality
+- ✅ Eliminates proxy-related vulnerabilities (storage collisions, upgrade risks)
+- ✅ Native burn/mint mechanics for cross-chain transfers
+
+**Key Features:**
+- ERC20-compatible token with omnichain capabilities
+- Burns tokens on source chain, mints on destination chain
+- Maintains unified global supply across all chains
+- Owner-controlled minting for initial supply
+- No intermediate contracts or adapters needed
+
+For detailed documentation, see [contracts/README.md](contracts/README.md).
+
+### Development
+
+```bash
+# Install dependencies
+npm install
+
+# Compile contracts
+npm run compile
+
+# Run tests
+npm test
+
+# Deploy (configure .env first)
+npm run deploy
+```
+
 ## Website
 
 🌐 [nabat.finance](https://nabat.finance)

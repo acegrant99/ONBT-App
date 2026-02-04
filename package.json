@@ -19,8 +19,24 @@
     "governance",
     "blockchain",
     "dapp",
-    "decentralized"
+    "decentralized",
+    "layerzero",
+    "oft"
   ],
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.0"
+  },
+  "dependencies": {
+    "@layerzerolabs/oft-evm": "^2.0.0",
+    "@layerzerolabs/lz-evm-protocol-v2": "^2.0.0",
+    "@openzeppelin/contracts": "^5.0.0"
+  },
   "social": {
     "twitter": "https://x.com/NBT_V2",
     "telegram": "https://t.me/NabatOmnichainGenesisGovernment",
