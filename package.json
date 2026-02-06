@@ -1,0 +1,109 @@
+{
+  "name": "onbt-app",
+  "version": "1.0.0",
+  "description": "Nabat Omnichain Government Ecosystem - LayerZero OFT and ONFT Implementation with DeFi and Coinbase Integration",
+  "main": "index.js",
+  "type": "module",
+  "author": "acegrant99",
+  "license": "MIT",
+  "homepage": "https://nabat.finance",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/acegrant99/ONBT-App.git"
+  },
+  "bugs": {
+    "url": "https://github.com/acegrant99/ONBT-App/issues"
+  },
+  "keywords": [
+    "onabat",
+    "nabat",
+    "onbt",
+    "layerzero",
+    "omnichain",
+    "oft",
+    "onft",
+    "cross-chain",
+    "base",
+    "coinbase",
+    "ethereum",
+    "polygon",
+    "arbitrum",
+    "optimism",
+    "avalanche",
+    "bsc",
+    "defi",
+    "nft",
+    "governance",
+    "blockchain",
+    "dapp",
+    "decentralized"
+  ],
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js",
+    "deploy:oft:ethereum": "hardhat run scripts/deployOFT.mjs --network ethereum",
+    "deploy:oft:base": "hardhat run scripts/deployOFT.mjs --network base",
+    "deploy:oft:baseSepolia": "hardhat run scripts/deployOFT.mjs --network baseSepolia",
+    "deploy:onft:ethereum": "hardhat run scripts/deployONFT.mjs --network ethereum",
+    "deploy:onft:base": "hardhat run scripts/deployONFT.mjs --network base",
+    "deploy:onft:baseSepolia": "hardhat run scripts/deployONFT.mjs --network baseSepolia",
+    "deploy:onbt:ethereum": "hardhat run scripts/deployONBT.mjs --network ethereum",
+    "deploy:onbt:base": "hardhat run scripts/deployONBT.mjs --network base",
+    "deploy:onbt:baseSepolia": "hardhat run scripts/deployONBT.mjs --network baseSepolia",
+    "deploy:onbt:polygon": "hardhat run scripts/deployONBT.mjs --network polygon",
+    "deploy:onbt:arbitrum": "hardhat run scripts/deployONBT.mjs --network arbitrum",
+    "deploy:defi:base": "hardhat run scripts/deployDeFiEcosystem.mjs --network base",
+    "deploy:defi:baseSepolia": "hardhat run scripts/deployDeFiEcosystem.mjs --network baseSepolia",
+    "deploy:enhanced:base": "hardhat run scripts/deployEnhancedEcosystem.mjs --network base",
+    "deploy:enhanced:baseSepolia": "hardhat run scripts/deployEnhancedEcosystem.mjs --network baseSepolia",
+    "branding:get": "node scripts/updateBranding.mjs",
+    "branding:update": "node scripts/updateBranding.mjs",
+    "setup:remotes:ethereum": "hardhat run scripts/setTrustedRemotes.mjs --network ethereum",
+    "setup:remotes:base": "hardhat run scripts/setTrustedRemotes.mjs --network base",
+    "send:oft": "hardhat run scripts/sendOFT.mjs",
+    "send:onft": "hardhat run scripts/sendONFT.mjs",
+    "clean": "hardhat clean",
+    "node": "hardhat node"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
+    "@nomicfoundation/hardhat-ethers": "^4.0.4",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.2.0",
+    "chai": "^6.2.2",
+    "dotenv": "^17.2.3",
+    "ethers": "^6.16.0",
+    "hardhat": "^3.1.6",
+    "hardhat-deploy": "^1.0.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@coinbase/agentkit": "^0.10.4",
+    "@coinbase/agentkit-model-context-protocol": "^0.2.0",
+    "@coinbase/coinbase-sdk": "^0.25.0",
+    "@coinbase/onchainkit": "^1.1.2",
+    "@coinbase/wallet-sdk": "^4.3.7",
+    "@layerzerolabs/lz-evm-sdk-v1": "^3.0.158",
+    "@layerzerolabs/oft-evm": "^2.0.0",
+    "@layerzerolabs/lz-evm-protocol-v2": "^2.0.0",
+    "@layerzerolabs/solidity-examples": "^1.1.0",
+    "@openzeppelin/contracts": "^4.9.6",
+    "coinbase-commerce-node": "^1.0.4"
+  },
+  "social": {
+    "twitter": "https://x.com/NBT_V2",
+    "telegram": "https://t.me/NabatOmnichainGenesisGovernment",
+    "discord": "https://discord.gg/Tug6F8H8C",
+    "website": "https://nabat.finance"
+  },
+  "branding": {
+    "logo": "https://share.icloud.com/photos/05b2OQFlv5lYFnJHoHDfqgfcg",
+    "colors": {
+      "primary": "TBD",
+      "secondary": "TBD"
+    }
+  }
+}
