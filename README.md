@@ -39,6 +39,13 @@
 Get started with ONBT in 5 minutes! Choose your path:
 
 ### 🚀 Fast Track (Testnet)
+
+**Need testnet ETH?** Get it free:
+- 👉 **[Ethereum Sepolia Faucet](https://sepoliafaucet.com/)** (Get 0.5 ETH instantly)
+- 👉 **[Base Sepolia Faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet)** (Get 0.1 ETH instantly)
+
+📚 **For complete faucet guide, see [FAUCETS.md](FAUCETS.md)**
+
 ```bash
 # 1. Clone and install
 git clone https://github.com/acegrant99/ONBT-App.git
@@ -49,8 +56,7 @@ npm install
 cp .env.example .env
 # Edit .env with your private key and RPC URLs
 
-# 3. Get testnet tokens
-# Base Sepolia: https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet
+# 3. Get testnet tokens (see faucet links above)
 
 # 4. Deploy on Base Sepolia (hub chain)
 export DEPLOYMENT_TYPE=hub
@@ -62,7 +68,10 @@ npm run deploy:onbt:ethereum
 ```
 
 ### 📖 Guided Setup
-For detailed setup with explanations, see [QUICK_SETUP.md](QUICK_SETUP.md) (15-minute guide).
+For detailed setup with explanations, see:
+- [SETUP.md](SETUP.md) - Complete setup guide with testnet instructions
+- [QUICK_START.md](QUICK_START.md) - Quick reference for common tasks
+- [QUICK_SETUP.md](QUICK_SETUP.md) - 15-minute guided setup
 
 ### 🎓 Full Documentation
 For complete deployment roadmap, see [NEXT_STEPS.md](NEXT_STEPS.md).
