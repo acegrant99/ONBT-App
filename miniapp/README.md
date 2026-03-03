@@ -1,171 +1,106 @@
-# ONBT DeFi Miniapp
+# ONabat Miniapp
 
-OnchainKit-powered miniapp for the Omnichain Nabat Token (ONBT) DeFi ecosystem on Base.
+ONabat is a Next.js 15 miniapp for interacting with ONBT across Base and Arbitrum.
 
 ## Features
 
-- 🔐 **Staking**: Stake ONBT with lockup bonuses up to 3x
-- 🔄 **Swapping**: Trade ONBT/ETH with low fees
-- 💧 **Liquidity**: Provide liquidity and earn fees
-- 💰 **Yield**: Automatic yield distribution
-- 🎨 **OnchainKit**: Built with Coinbase's OnchainKit components
-- ⚡ **Base**: Native Base chain integration
+- Token transfers on selected chain
+- Private sale purchases (ETH, USDC, USDT)
+- Governance proposal reads and on-chain voting
+- LayerZero bridge transfers between Base and Arbitrum
+- Staking, rewards, claim, compound, and delegation
+- Per-use-case chain selector on every contract page
+- Automatic wallet chain-switch prompt before write operations
 
-## Quick Start
+## Tech Stack
 
-### Prerequisites
+- Next.js 15 (App Router)
+- React 18 + TypeScript
+- wagmi + viem
+- @tanstack/react-query
+- @coinbase/onchainkit
+- Tailwind CSS
 
-- Node.js 18+
-- npm or yarn
-- Base RPC access
+## Project Structure
 
-### Installation
+```
+miniapp/
+├── app/                  # Next.js app router
+├── components/           # UI and contract interfaces
+├── config/               # Contracts, wagmi setup, ABIs
+├── lib/                  # Utilities (tx status, helpers)
+├── providers.tsx         # Wagmi + Query + OnchainKit providers
+└── App.tsx               # Main tabbed miniapp shell
+```
+
+## Setup
+
+1) Install dependencies
 
 ```bash
 cd miniapp
 npm install
 ```
 
-### Configuration
-
-1. Create `.env.local`:
+2) Create `.env.local`
 
 ```env
 NEXT_PUBLIC_ONCHAINKIT_API_KEY=your_onchainkit_api_key
-NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_wallet_connect_id
-NEXT_PUBLIC_ONBT_TOKEN=0x...
-NEXT_PUBLIC_STAKING=0x...
-NEXT_PUBLIC_POOL=0x...
-NEXT_PUBLIC_DISTRIBUTOR=0x...
-NEXT_PUBLIC_FACTORY=0x...
+NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
+NEXT_PUBLIC_URL=https://your-app-domain.example
 ```
 
-2. Update contract addresses in `config/contracts.ts`
-
-### Development
+3) Start dev server
 
 ```bash
 npm run dev
 ```
 
-Visit `http://localhost:3000`
-
-### Build
+4) Build and run production locally
 
 ```bash
 npm run build
 npm start
 ```
 
-### Deploy to Vercel
+## Chain Selection Model
 
-```bash
-vercel
-```
+Each feature page has its own chain selection state:
 
-## Components
+- Reads pass `chainId: selectedChainId` to target the selected chain
+- Writes verify connected wallet chain matches selected chain
+- If mismatch, UI calls `switchChain({ chainId: selectedChainId })`
+- User confirms switch in wallet, then retries action
 
-### StakingInterface
+## Key Files
 
-Comprehensive staking interface with:
-- Multiple lockup periods (0-365 days)
-- Bonus multipliers (1x-3x)
-- Real-time rewards display
-- Compound functionality
-- Withdraw controls
+- `App.tsx` - Main tab shell and feature navigation
+- `components/ChainSelector.tsx` - Shared Base/Arbitrum switcher
+- `components/TokenInterface.tsx`
+- `components/PrivateSaleInterface.tsx`
+- `components/GovernanceInterface.tsx`
+- `components/BridgeInterface.tsx`
+- `components/StakingInterface.tsx`
+- `config/contracts.ts` - Contract addresses and ABI exports
+- `config/wagmi.ts` - Multi-chain wagmi config and connectors
 
-### SwapInterface
+## Documentation
 
-AMM swap interface featuring:
-- ONBT ↔ ETH swaps
-- Real-time price calculation
-- Slippage protection
-- Price impact display
-- Transaction tracking
+- `ARCHITECTURE.md` - System architecture and design decisions
+- `DEVELOPMENT.md` - Contributor workflow, coding patterns, and verification
 
-### LiquidityInterface (Coming Soon)
+## Deployment
 
-Liquidity provision with:
-- Add/remove liquidity
-- LP token management
-- Fee earnings display
-- Position tracking
+Deploy from repo `main` branch on Vercel.
 
-## Tech Stack
+Required Vercel env vars:
 
-- **React** 18 + **TypeScript**
-- **Next.js** 14
-- **OnchainKit** 1.1+ (Coinbase)
-- **wagmi** 2.0+ (React Hooks)
-- **viem** 2.0+ (Ethereum library)
-- **Tailwind CSS** 3.3+
+- `NEXT_PUBLIC_ONCHAINKIT_API_KEY`
+- `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` (optional but recommended)
+- `NEXT_PUBLIC_URL`
 
-## Architecture
+## Notes
 
-```
-miniapp/
-├── components/
-│   ├── StakingInterface.tsx    # Staking UI
-│   ├── SwapInterface.tsx        # Swap UI
-│   └── [more components]
-├── config/
-│   └── contracts.ts             # Contract addresses & ABIs
-├── hooks/
-│   └── [custom hooks]
-├── utils/
-│   └── [utility functions]
-├── App.tsx                      # Main app component
-└── package.json
-```
-
-## Usage Examples
-
-### Stake ONBT
-
-```typescript
-import { StakingInterface } from './components/StakingInterface';
-
-function MyApp() {
-  return <StakingInterface />;
-}
-```
-
-### Swap Tokens
-
-```typescript
-import { SwapInterface } from './components/SwapInterface';
-
-function MyApp() {
-  return <SwapInterface />;
-}
-```
-
-## Smart Contracts
-
-| Contract | Purpose |
-|----------|---------|
-| ONBTStaking | Stake ONBT, earn rewards |
-| ONBTLiquidityPool | AMM for ONBT/ETH |
-| ONBTYieldDistributor | Distribute yield |
-| ONBTDeFiFactory | Deploy ecosystem |
-
-See [DEFI_ECOSYSTEM.md](../DEFI_ECOSYSTEM.md) for complete documentation.
-
-## Security
-
-- ✅ All contracts audited (recommended)
-- ✅ ReentrancyGuard on state changes
-- ✅ SafeERC20 for transfers
-- ✅ Pausable mechanisms
-- ✅ Access control
-
-## Support
-
-- **Website**: https://nabat.finance
-- **GitHub**: https://github.com/acegrant99/ONBT-App
-- **Twitter**: @nabatfinance
-- **Discord**: [Join Server]
-
-## License
-
-MIT License
+- Contract addresses and supported chains are defined in `config/contracts.ts`
+- Keep ABI changes and address changes together in the same PR
+- Run type-check before pushing changes
