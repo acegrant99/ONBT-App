@@ -1,1 +1,56 @@
-404: Not Found
+{
+	"name": "onbt-app",
+	"version": "1.0.0",
+	"private": true,
+	"description": "ONBT App root workspace scripts and security tooling",
+	"scripts": {
+		"verify:status": "node scripts/check-verification-status.mjs",
+		"hardhat:clean": "hardhat clean",
+		"hardhat:compile": "hardhat compile",
+		"hardhat:compile:stack": "hardhat compile --show-stack-traces",
+		"quality:gate": "node scripts/quality-gate.cjs",
+		"quality:gate:fast": "node scripts/quality-gate.cjs --fast",
+		"workspace:guard": "node scripts/workspace-guard.mjs",
+		"workspace:guard:strict": "node scripts/workspace-guard.mjs --strict",
+		"integrity:generate": "node scripts/generate-integrity-foundation.mjs",
+		"integrity:validate": "node scripts/validate-integrity-foundation.mjs",
+		"whitepapers:generate": "node scripts/generate-contract-whitepapers.mjs --all --force --clean",
+		"security:scan-secrets": "node scripts/security-scan-secrets.cjs",
+		"security:scan-secrets:all": "node scripts/security-scan-secrets.cjs --all",
+		"security:audit-deps:soft": "node scripts/security-audit-deps.cjs --soft --fail-on=high",
+		"security:audit-deps:critical": "node scripts/security-audit-deps.cjs --fail-on=critical",
+		"security:hardhat3:readiness": "node scripts/security-hardhat3-readiness.cjs",
+		"security:hardhat3:matrix": "node scripts/security-build-remediation-matrix.cjs",
+		"security:hardhat3:callsites": "node scripts/security-hardhat3-callsites.cjs",
+		"hardhat3:migration:compile": "hardhat compile --config config/hardhat3-migration/hardhat3.migration.config.cjs",
+		"hardhat3:migration:compile:strict": "hardhat compile --config config/hardhat3-migration/hardhat3.migration.strict.config.cjs --show-stack-traces"
+	},
+	"engines": {
+		"node": ">=20 <22",
+		"npm": ">=9.0.0"
+	},
+	"devDependencies": {
+		"@axelar-network/axelar-gmp-sdk-solidity": "^5.6.4",
+		"@chainlink/contracts-ccip": "^0.7.6",
+		"@eth-optimism/contracts": "^0.6.0",
+		"@arbitrum/nitro-contracts": "^1.1.0",
+		"@layerzerolabs/lz-definitions": "^3.0.164",
+		"@layerzerolabs/lz-evm-messagelib-v2": "^3.0.164",
+		"@layerzerolabs/lz-evm-protocol-v2": "^3.0.164",
+		"@layerzerolabs/lz-evm-v1-0.7": "^3.0.164",
+		"@layerzerolabs/oapp-evm": "^0.4.1",
+		"@layerzerolabs/oft-evm": "^4.0.1",
+		"@layerzerolabs/solidity-examples": "^1.1.0",
+		"@nomicfoundation/hardhat-ethers": "^3.0.5",
+		"@nomicfoundation/hardhat-verify": "^2.0.8",
+		"dotenv": "^17.3.1",
+		"ethers": "^6.13.5",
+		"hardhat": "^2.22.2",
+		"hardhat-deploy": "^0.12.4",
+		"hardhat-gas-reporter": "^2.3.0",
+		"solidity-bytes-utils": "^0.8.4",
+		"solidity-coverage": "^0.8.16",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.9.3"
+	}
+}
