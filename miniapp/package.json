@@ -15,7 +15,7 @@
     "verify": "npm run check && npm run rate:app:quick",
     "minikit:manifest": "create-onchain --manifest",
     "minikit:scaffold": "create-onchain --mini",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --incremental false",
     "type-check:watch": "tsc --noEmit --watch",
     "rate:app": "node scripts/rate-app.mjs",
     "rate:app:quick": "node scripts/rate-app.mjs --quick",
