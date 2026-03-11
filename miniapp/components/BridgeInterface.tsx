@@ -300,12 +300,16 @@ export function BridgeInterface() {
   const destinationChainName = destinationChain === 'arbitrum' ? 'Arbitrum' : 'Base';
 
   return (
-    <div className="brand-card max-w-2xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
+    <div className="brand-card module-shell module-grid-bg max-w-2xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
       {/* Header */}
       <div className="mb-6 border-b border-[color:var(--brand-leaf)]/30 pb-4">
         <h2 className="text-2xl font-semibold brand-display mb-2">
           🌉 Omnichain Bridge
         </h2>
+        <span className="module-accent-chip mb-2">Bridge Routing</span>
+        <div className="module-banner module-banner-bridge text-xs text-[color:var(--brand-ink)]/85">
+          Route intelligence: dual-chain transfer pathing with fee-awareness and achievement tracking.
+        </div>
         <ChainSelector
           label="Source chain"
           selectedChainId={selectedSourceChainId}
@@ -319,7 +323,7 @@ export function BridgeInterface() {
         </div>
         
         {/* Achievements Summary */}
-        <div className="flex items-center justify-between bg-[color:var(--brand-cream)] rounded-lg p-3 border border-[color:var(--brand-sun)]/40">
+        <div className="glass-tile motion-card flex items-center justify-between p-3 border border-[color:var(--brand-sun)]/40">
           <div className="flex items-center gap-2">
             <span className="text-sm text-[color:var(--brand-ink)]/70">
               🏆 {unlockedAchievements.length}/{achievements.length} Achievements

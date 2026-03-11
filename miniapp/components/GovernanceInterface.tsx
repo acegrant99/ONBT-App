@@ -184,12 +184,16 @@ export function GovernanceInterface() {
   })();
 
   return (
-    <div className="brand-card max-w-4xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
+    <div className="brand-card module-shell module-grid-bg max-w-4xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
       {/* Header */}
       <div className="mb-6 border-b border-[color:var(--brand-leaf)]/30 pb-4">
         <h2 className="text-2xl font-semibold brand-display mb-2">
           🏛️ DAO Governance
         </h2>
+        <span className="module-accent-chip mb-2">Governance Rail</span>
+        <div className="module-banner module-banner-governance text-xs text-[color:var(--brand-ink)]/85">
+          Decision layer: proposal intelligence, vote execution, and omnichain governance telemetry.
+        </div>
         <ChainSelector
           label="Use case chain"
           selectedChainId={selectedChainId}
@@ -211,7 +215,7 @@ export function GovernanceInterface() {
 
       {/* Governance Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="p-4 bg-[color:var(--brand-cream)] rounded-xl border border-[color:var(--brand-leaf)]/20">
+        <div className="glass-tile motion-card p-4 rounded-xl">
           <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Your Voting Power</p>
           <p className="text-2xl font-bold text-[color:var(--brand-forest)]">
             {votingPower ? `${Number(formatEther(votingPower)).toLocaleString(undefined, { maximumFractionDigits: 4 })} ONBT` : '0 ONBT'}
@@ -220,7 +224,7 @@ export function GovernanceInterface() {
             Stake tokens to gain voting power
           </p>
         </div>
-        <div className="p-4 bg-[color:var(--brand-cream)] rounded-xl border border-[color:var(--brand-leaf)]/20">
+        <div className="glass-tile motion-card p-4 rounded-xl">
           <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Governor Contract</p>
           <p className="text-2xl font-bold text-[color:var(--brand-sun)]">
             {governorName || 'Governor'}
@@ -229,7 +233,7 @@ export function GovernanceInterface() {
             {`${governorAddress.slice(0, 6)}...${governorAddress.slice(-4)}`}
           </p>
         </div>
-        <div className="p-4 bg-[color:var(--brand-cream)] rounded-xl border border-[color:var(--brand-leaf)]/20">
+        <div className="glass-tile motion-card p-4 rounded-xl">
           <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Network</p>
           <p className="text-2xl font-bold text-[color:var(--brand-ink)]">
             {selectedChainId === 8453 ? 'Base' : 'Arbitrum'}
@@ -237,7 +241,7 @@ export function GovernanceInterface() {
         </div>
       </div>
 
-      <div className="p-4 bg-[color:var(--brand-cream)] rounded-xl border border-[color:var(--brand-leaf)]/20 mb-6">
+      <div className="glass-tile motion-card p-4 rounded-xl mb-6">
         <h3 className="font-medium text-[color:var(--brand-ink)] mb-2">Vote on Proposal</h3>
         {!isSupportedChain && (
           <p className="text-sm text-red-700">Connect wallet to Base (8453) or Arbitrum (42161) to vote.</p>

@@ -317,11 +317,11 @@ export function StakingInterface() {
   // If staking not deployed, show coming soon
   if (!isStakingDeployed) {
     return (
-      <div className="brand-card max-w-2xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
+      <div className="brand-card module-shell module-grid-bg max-w-2xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
         <div className="mb-6 border-b border-[color:var(--brand-leaf)]/30 pb-4">
           <h2 className="text-2xl font-semibold brand-display mb-4">🎯 ONBT Staking</h2>
         </div>
-        <div className="p-8 bg-[color:var(--brand-cream)] rounded-xl border border-[color:var(--brand-sun)]/40 text-center">
+        <div className="glass-tile motion-card p-8 text-center border border-[color:var(--brand-sun)]/40">
           <div className="text-4xl mb-4">🚧</div>
           <h3 className="text-xl font-semibold text-[color:var(--brand-ink)] mb-3">
             Staking Contract Deploying Soon
@@ -335,12 +335,16 @@ export function StakingInterface() {
   }
 
   return (
-    <div className="brand-card max-w-4xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
+    <div className="brand-card module-shell module-grid-bg max-w-4xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
       {/* Header */}
       <div className="mb-6 border-b border-[color:var(--brand-leaf)]/30 pb-4">
         <h2 className="text-2xl font-semibold brand-display mb-2">
           🎯 Omnichain Staking
         </h2>
+        <span className="module-accent-chip mb-2">Yield Engine</span>
+        <div className="module-banner module-banner-staking text-xs text-[color:var(--brand-ink)]/85">
+          Reward engine: lockup-aware staking, compounding, and delegated voting operations.
+        </div>
         <ChainSelector
           label="Use case chain"
           selectedChainId={selectedChainId}

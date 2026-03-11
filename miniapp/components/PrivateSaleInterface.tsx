@@ -312,9 +312,13 @@ export function PrivateSaleInterface() {
   }, [writeError, isPending, isConfirming, isConfirmed, txHash, explorerBaseUrl]);
 
   return (
-    <div className="brand-card max-w-3xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
+    <div className="brand-card module-shell module-grid-bg max-w-3xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
       <div className="mb-6 border-b border-[color:var(--brand-leaf)]/30 pb-4">
         <h2 className="text-2xl font-semibold brand-display mb-2">🛡️ ONBT Private Sale OApp</h2>
+        <span className="module-accent-chip mb-2">Sale Window</span>
+        <div className="module-banner module-banner-sale text-xs text-[color:var(--brand-ink)]/85">
+          Entry lane: guarded sale windows, multi-asset rails, and recipient-verified purchase flow.
+        </div>
         <ChainSelector
           label="Use case chain"
           selectedChainId={selectedChainId}
@@ -371,7 +375,7 @@ export function PrivateSaleInterface() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-leaf)]/20">
+        <div className="glass-tile motion-card p-4 rounded-lg">
           <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Sale Status</p>
           <p className="font-semibold text-[color:var(--brand-forest)]">
             {isPaused ? '⏸️ Paused' : saleNotStarted ? 'Not Started' : saleEnded ? 'Ended' : saleActive ? 'Active' : 'Unknown'}

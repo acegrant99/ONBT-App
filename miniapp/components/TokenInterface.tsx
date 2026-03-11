@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   useAccount,
   useReadContract,
@@ -8,22 +8,37 @@ import {
 } from 'wagmi';
 import { parseEther, formatEther, isAddress } from 'viem';
 import { Avatar, Name, Identity, Address } from '@coinbase/onchainkit/identity';
-import { ONBT_TOKEN_ABI, TOKEN_INFO, CHAIN_CONFIG } from '../config/contracts';
+import {
+  ONBT_TOKEN_ABI,
+  TOKEN_INFO,
+  CHAIN_CONFIG,
+  ONBT_STAKING_ADDRESS,
+  ONBT_STAKING_ARBITRUM_ADDRESS,
+  ONBT_STAKING_ROUTER_BASE_ADDRESS,
+  ONBT_STAKING_ROUTER_ARBITRUM_ADDRESS,
+} from '../config/contracts';
 import { publishGlobalTxStatus } from '../lib/txStatus';
 import { ChainSelector } from './ChainSelector';
+
+type TokenInterfaceProps = {
+  quantumSignal?: 'risk-on' | 'caution';
+  quantumConfidence?: number;
+};
 
 /**
  * TokenInterface Component
  * OnchainKit-powered token interface for ONBT
  * View balance, transfer tokens, and check allowances
  */
-export function TokenInterface() {
+export function TokenInterface({ quantumSignal = 'caution', quantumConfidence }: TokenInterfaceProps) {
   const { address, chain } = useAccount();
   const { switchChain } = useSwitchChain();
   const [transferTo, setTransferTo] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [activeTab, setActiveTab] = useState<'transfer' | 'info'>('transfer');
   const [selectedChainId, setSelectedChainId] = useState<8453 | 42161>(chain?.id === 42161 ? 42161 : 8453);
+  const [reviewArmedKey, setReviewArmedKey] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const isArbitrum = selectedChainId === 42161;
   const isWalletOnSelectedChain = chain?.id === selectedChainId;
@@ -32,6 +47,13 @@ export function TokenInterface() {
     : CHAIN_CONFIG.base.tokenAddress) as `0x${string}`;
   const explorerBase = isArbitrum ? CHAIN_CONFIG.arbitrum.blockExplorer : CHAIN_CONFIG.base.blockExplorer;
   const chainName = isArbitrum ? CHAIN_CONFIG.arbitrum.name : CHAIN_CONFIG.base.name;
+  const cautionMode = quantumSignal === 'caution';
+  const selectedStakingAddress = (isArbitrum
+    ? ONBT_STAKING_ARBITRUM_ADDRESS
+    : ONBT_STAKING_ADDRESS) as `0x${string}`;
+  const selectedStakingRouterAddress = (isArbitrum
+    ? ONBT_STAKING_ROUTER_ARBITRUM_ADDRESS
+    : ONBT_STAKING_ROUTER_BASE_ADDRESS) as `0x${string}`;
 
   // Read user's balance
   const { data: balance, refetch: refetchBalance } = useReadContract({
@@ -52,6 +74,24 @@ export function TokenInterface() {
     query: { refetchInterval: 60_000 },
   });
 
+  const { data: stakingAllowance } = useReadContract({
+    chainId: selectedChainId,
+    address: activeTokenAddress,
+    abi: ONBT_TOKEN_ABI,
+    functionName: 'allowance',
+    args: address ? [address, selectedStakingAddress] : undefined,
+    query: { refetchInterval: 30_000 },
+  });
+
+  const { data: stakingRouterAllowance } = useReadContract({
+    chainId: selectedChainId,
+    address: activeTokenAddress,
+    abi: ONBT_TOKEN_ABI,
+    functionName: 'allowance',
+    args: address ? [address, selectedStakingRouterAddress] : undefined,
+    query: { refetchInterval: 30_000 },
+  });
+
   // Write functions
   const { data: txHash, writeContract: transfer, isPending, error } = useWriteContract();
 
@@ -60,8 +100,28 @@ export function TokenInterface() {
     hash: txHash,
   });
 
+  const normalizedRecipient = transferTo.trim();
+  const isRecipientValid = normalizedRecipient ? isAddress(normalizedRecipient) : false;
+  const isSelfTransfer = Boolean(
+    address && isRecipientValid && address.toLowerCase() === normalizedRecipient.toLowerCase()
+  );
+  const reviewContextKey = `${selectedChainId}:${normalizedRecipient.toLowerCase()}:${transferAmount}`;
+  const reviewArmed = cautionMode && reviewArmedKey === reviewContextKey;
+  const numericTransferAmount = Number(transferAmount);
+  const hasValidAmount = Number.isFinite(numericTransferAmount) && numericTransferAmount > 0;
+  const availableBalance = Number(balance ? formatEther(balance) : '0');
+  const hasSufficientBalance = hasValidAmount && numericTransferAmount <= availableBalance;
+  const suggestedTestAmount = useMemo(() => {
+    if (!Number.isFinite(availableBalance) || availableBalance <= 0) return '0.1';
+    const candidate = Math.min(Math.max(availableBalance * 0.02, 0.1), 10);
+    return candidate.toFixed(2);
+  }, [availableBalance]);
+
   const handleTransfer = () => {
-    if (!transferTo || !transferAmount || parseFloat(transferAmount) <= 0) {
+    setValidationError(null);
+
+    if (!normalizedRecipient || !hasValidAmount) {
+      setValidationError('Enter a valid recipient and transfer amount before continuing.');
       return;
     }
 
@@ -70,33 +130,49 @@ export function TokenInterface() {
       return;
     }
 
-    if (!isAddress(transferTo)) {
-      alert('Invalid recipient address');
+    if (!isRecipientValid) {
+      setValidationError('Recipient address format is invalid. Check the destination carefully.');
       return;
     }
+
+    if (isSelfTransfer) {
+      setValidationError('Recipient is your connected wallet. Use a different destination address.');
+      return;
+    }
+
+    if (!hasSufficientBalance) {
+      setValidationError('Amount exceeds your available ONBT balance on this chain.');
+      return;
+    }
+
+    if (cautionMode && !reviewArmed) {
+      setReviewArmedKey(reviewContextKey);
+      return;
+    }
+
+    setReviewArmedKey(null);
 
     try {
       transfer({
         address: activeTokenAddress,
         abi: ONBT_TOKEN_ABI,
         functionName: 'transfer',
-        args: [transferTo as `0x${string}`, parseEther(transferAmount)],
+        args: [normalizedRecipient as `0x${string}`, parseEther(transferAmount)],
       });
     } catch (err) {
       console.error('Transfer error:', err);
+      setValidationError(err instanceof Error ? err.message : 'Failed to submit transfer.');
     }
   };
 
   // Refetch balance after successful transaction
-  React.useEffect(() => {
+  useEffect(() => {
     if (isConfirmed) {
       refetchBalance();
-      setTransferTo('');
-      setTransferAmount('');
     }
   }, [isConfirmed, refetchBalance]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (error) {
       publishGlobalTxStatus({
         source: 'token',
@@ -140,12 +216,18 @@ export function TokenInterface() {
 
   const userBalance = balance ? formatEther(balance) : '0';
   const supply = totalSupply ? formatEther(totalSupply) : TOKEN_INFO.totalSupply;
+  const formattedStakingAllowance = stakingAllowance ? formatEther(stakingAllowance) : '0';
+  const formattedStakingRouterAllowance = stakingRouterAllowance ? formatEther(stakingRouterAllowance) : '0';
 
   return (
-    <div className="brand-card max-w-2xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
+    <div className="brand-card module-shell module-grid-bg max-w-2xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
       {/* Header with Identity */}
       <div className="mb-6 border-b border-[color:var(--brand-leaf)]/30 pb-4">
         <h2 className="text-2xl font-semibold brand-display mb-4">ONBT Token</h2>
+        <span className="module-accent-chip mb-3">Token Operations</span>
+        <div className="module-banner module-banner-token text-xs text-[color:var(--brand-ink)]/85">
+          Transfer lane: caution-aware recipient checks, staged confirmations, and allowance visibility.
+        </div>
         <ChainSelector
           label="Use case chain"
           selectedChainId={selectedChainId}
@@ -164,7 +246,7 @@ export function TokenInterface() {
       </div>
 
       {/* Balance Card */}
-      <div className="p-6 bg-[color:var(--brand-cream)] rounded-xl border border-[color:var(--brand-leaf)]/20 mb-6">
+      <div className="glass-tile motion-card p-6 mb-6">
         <p className="text-sm text-[color:var(--brand-ink)]/60 mb-1">Your Balance</p>
         <p className="text-4xl font-semibold text-[color:var(--brand-forest)] mb-2">
           {parseFloat(userBalance).toFixed(4)} ONBT
@@ -194,6 +276,20 @@ export function TokenInterface() {
       {/* Transfer Tab */}
       {activeTab === 'transfer' && (
         <div className="space-y-4">
+          <div
+            className={`rounded-lg border px-3 py-2 text-xs ${
+              cautionMode
+                ? 'border-amber-300 bg-amber-50 text-amber-900'
+                : 'border-emerald-300 bg-emerald-50 text-emerald-900'
+            }`}
+          >
+            Quantum posture: <span className="font-semibold">{quantumSignal}</span>
+            {typeof quantumConfidence === 'number' ? ` (${(quantumConfidence * 100).toFixed(1)}% confidence)` : ''}.
+            {cautionMode
+              ? ' Caution mode is active: review recipient and start with a smaller test transfer before confirming.'
+              : ' Risk-on posture allows normal transfer flow with standard validation checks.'}
+          </div>
+
           {!isWalletOnSelectedChain && (
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
               Wallet is on {chain?.id === 42161 ? 'Arbitrum' : chain?.id === 8453 ? 'Base' : 'an unsupported chain'}.
@@ -207,10 +303,23 @@ export function TokenInterface() {
             <input
               type="text"
               value={transferTo}
-              onChange={(e) => setTransferTo(e.target.value)}
+              onChange={(e) => {
+                setTransferTo(e.target.value);
+                setValidationError(null);
+              }}
               placeholder="0x..."
               className="brand-input w-full px-4 py-3 border border-[color:var(--brand-leaf)]/40 rounded-lg focus:ring-2 focus:ring-[color:var(--brand-forest)] focus:border-transparent bg-[color:var(--brand-cream)]/80"
             />
+            <div className="mt-2 rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/70 px-2.5 py-2 text-xs text-[color:var(--brand-ink)]/80">
+              {!normalizedRecipient && <p>Enter the full destination address to validate recipient safety.</p>}
+              {normalizedRecipient && !isRecipientValid && <p className="text-rose-700">Recipient format is invalid.</p>}
+              {isRecipientValid && isSelfTransfer && <p className="text-amber-700">Recipient matches your connected wallet.</p>}
+              {isRecipientValid && !isSelfTransfer && (
+                <p className="text-emerald-700">
+                  Recipient format is valid: {normalizedRecipient.slice(0, 6)}...{normalizedRecipient.slice(-4)}
+                </p>
+              )}
+            </div>
           </div>
 
           <div>
@@ -220,7 +329,10 @@ export function TokenInterface() {
             <input
               type="number"
               value={transferAmount}
-              onChange={(e) => setTransferAmount(e.target.value)}
+              onChange={(e) => {
+                setTransferAmount(e.target.value);
+                setValidationError(null);
+              }}
               placeholder="0.0"
               className="brand-input w-full px-4 py-3 border border-[color:var(--brand-leaf)]/40 rounded-lg focus:ring-2 focus:ring-[color:var(--brand-forest)] focus:border-transparent bg-[color:var(--brand-cream)]/80"
             />
@@ -233,13 +345,52 @@ export function TokenInterface() {
                 Max
               </button>
             </div>
+            {!hasSufficientBalance && transferAmount && (
+              <p className="mt-2 text-xs text-rose-700">Amount exceeds available balance on {chainName}.</p>
+            )}
           </div>
+
+          <div className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/70 px-3 py-2 text-xs text-[color:var(--brand-ink)]/85">
+            <p className="font-semibold">Allowance Visibility</p>
+            <p className="mt-1">Staking contract allowance: {Number(formattedStakingAllowance).toFixed(4)} ONBT</p>
+            <p>Staking router allowance: {Number(formattedStakingRouterAllowance).toFixed(4)} ONBT</p>
+            <p className="mt-1 text-[color:var(--brand-ink)]/70">Transfer does not consume allowance, but high allowances to spenders increase delegated spending risk.</p>
+          </div>
+
+          {cautionMode && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <p className="font-semibold">Caution Transfer Staging</p>
+              <p className="mt-1">Step 1: Validate recipient and set a small test amount (suggested {suggestedTestAmount} ONBT).</p>
+              <p>Step 2: Use &quot;Review Transfer Safety&quot; to arm confirmation.</p>
+              <p>Step 3: Submit only after reviewing destination and amount details.</p>
+              <button
+                type="button"
+                onClick={() => setTransferAmount(suggestedTestAmount)}
+                className="mt-2 rounded-md border border-amber-400 bg-white px-2 py-1 text-xs font-medium hover:bg-amber-100"
+              >
+                Use Suggested Test Amount
+              </button>
+            </div>
+          )}
+
+          {reviewArmed && cautionMode && (
+            <div className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-xs text-orange-900">
+              Review armed: confirming will submit {transferAmount || '0'} ONBT to{' '}
+              {isRecipientValid ? `${normalizedRecipient.slice(0, 6)}...${normalizedRecipient.slice(-4)}` : 'invalid recipient'} on {chainName}.
+            </div>
+          )}
+
+          {validationError && (
+            <div className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+              {validationError}
+            </div>
+          )}
 
           <button
             type="button"
             className="brand-button w-full text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50"
             onClick={handleTransfer}
-            disabled={!transferTo || !transferAmount || parseFloat(transferAmount) <= 0 || isPending || isConfirming || !address}
+            disabled={!normalizedRecipient || !hasValidAmount || isPending || isConfirming || !address}
           >
             {isPending
               ? 'Confirming...'
@@ -247,7 +398,11 @@ export function TokenInterface() {
                 ? 'Processing...'
                 : !isWalletOnSelectedChain
                   ? `Switch to ${chainName}`
-                  : 'Transfer ONBT'}
+                  : cautionMode
+                    ? reviewArmed
+                      ? 'Confirm Reviewed Transfer'
+                      : 'Review Transfer Safety'
+                    : 'Transfer ONBT'}
           </button>
 
           {txHash && (
