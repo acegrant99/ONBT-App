@@ -1,0 +1,1 @@
+﻿export { GovernanceInterface } from './GovernanceInterface';

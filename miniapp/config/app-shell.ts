@@ -1,14 +1,8 @@
 import type { GlobalTxStatus } from '@/lib/txStatus';
+import { FEATURE_TABS } from '@/features';
 import type { TabMeta } from '@/types/app-shell';
 
-export const APP_TABS: TabMeta[] = [
-  { key: 'token', label: 'Token', icon: '💰' },
-  { key: 'bridge', label: 'Bridge', icon: '🌉' },
-  { key: 'staking', label: 'Staking', icon: '🔒' },
-  { key: 'governance', label: 'Governance', icon: '🏛️' },
-  { key: 'private-sale', label: 'Private Sale', icon: '🛡️' },
-  { key: 'about', label: 'About', icon: 'ℹ️' },
-];
+export const APP_TABS: TabMeta[] = [...FEATURE_TABS, { key: 'about', label: 'About', icon: 'ℹ️' }];
 
 export const TX_LABEL_BY_SOURCE: Record<GlobalTxStatus['source'], string> = {
   token: 'Token transfer',

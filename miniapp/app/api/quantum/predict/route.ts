@@ -4,13 +4,14 @@ import { promisify } from 'node:util';
 import os from 'node:os';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
+import { cacheControlFor, withBackendCache } from '@/lib/backend/adapters/cache';
 import { getOverviewPayload } from '@/lib/backend/overview';
 
 const execFileAsync = promisify(execFile);
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const dynamic = 'force-static';
+export const revalidate = 30;
 
 type QuantumPayload = {
   source: string;
@@ -112,79 +113,88 @@ function recommendation(signal: SignalType, modelConfidence: number): string {
 }
 
 export async function GET() {
-  const repoRoot = path.resolve(process.cwd(), '..');
-  const pythonExe = path.join(repoRoot, '.venv312', 'Scripts', 'python.exe');
-  const scriptPath = path.join(repoRoot, 'scripts', 'quantum-ai', 'nabat_quantum_ai.py');
-  const modelPath = path.join(repoRoot, 'reports', 'quantum-ai', 'nabat_quantum_ai_model.npz');
-  const reportPath = path.join(os.tmpdir(), `nabat_quantum_predict_${Date.now()}.json`);
-
   try {
-    const overview = await getOverviewPayload();
-    const features = mapOverviewToFeatures(overview);
-
-    const args = [
-      scriptPath,
-      '--predict',
-      '--from-features',
-      '--feature-liquidity-health',
-      String(features.liquidity_health),
-      '--feature-bridge-reliability',
-      String(features.bridge_reliability),
-      '--feature-governance-participation',
-      String(features.governance_participation),
-      '--model',
-      modelPath,
-      '--prediction-report',
-      reportPath,
-    ];
-
-    const { stdout, stderr } = await execFileAsync(pythonExe, args, {
-      cwd: repoRoot,
-      timeout: 25_000,
-      windowsHide: true,
-      maxBuffer: 2 * 1024 * 1024,
-    });
-
-    const raw = await readFile(reportPath, 'utf-8');
-    const parsed = JSON.parse(raw) as QuantumPayload;
-
-    const signal = classify(parsed.probability_healthy);
-    const modelConfidence = confidence(parsed.probability_healthy);
-    const nowIso = new Date().toISOString();
-
-    quantumHistory.push({
-      generatedAt: nowIso,
-      probabilityHealthy: parsed.probability_healthy,
-      signal,
-    });
-    if (quantumHistory.length > HISTORY_MAX) {
-      quantumHistory.splice(0, quantumHistory.length - HISTORY_MAX);
-    }
-
-    const payload = {
-      generatedAt: new Date().toISOString(),
-      source: parsed.source,
-      mode: parsed.mode,
-      probabilityHealthy: parsed.probability_healthy,
-      confidence: modelConfidence,
-      signal,
-      recommendation: recommendation(signal, modelConfidence),
-      label: parsed.label,
-      features: parsed.features,
-      recent: quantumHistory.slice(-8),
-      backend: {
-        healthyChains: overview.summary.healthyChains,
-        totalChains: overview.summary.totalChains,
+    const payload = await withBackendCache(
+      {
+        key: 'quantum-predict',
+        revalidateSeconds: 30,
+        tags: ['quantum-predict', 'chains-overview'],
       },
-      diagnostics: {
-        stdout: stdout.trim(),
-        stderr: stderr.trim(),
-      },
-    };
+      async () => {
+        const repoRoot = path.resolve(process.cwd(), '..');
+        const pythonExe = path.join(repoRoot, '.venv312', 'Scripts', 'python.exe');
+        const scriptPath = path.join(repoRoot, 'scripts', 'quantum-ai', 'nabat_quantum_ai.py');
+        const modelPath = path.join(repoRoot, 'reports', 'quantum-ai', 'nabat_quantum_ai_model.npz');
+        const reportPath = path.join(os.tmpdir(), `nabat_quantum_predict_${Date.now()}.json`);
+
+        const overview = await getOverviewPayload();
+        const features = mapOverviewToFeatures(overview);
+
+        const args = [
+          scriptPath,
+          '--predict',
+          '--from-features',
+          '--feature-liquidity-health',
+          String(features.liquidity_health),
+          '--feature-bridge-reliability',
+          String(features.bridge_reliability),
+          '--feature-governance-participation',
+          String(features.governance_participation),
+          '--model',
+          modelPath,
+          '--prediction-report',
+          reportPath,
+        ];
+
+        const { stdout, stderr } = await execFileAsync(pythonExe, args, {
+          cwd: repoRoot,
+          timeout: 25_000,
+          windowsHide: true,
+          maxBuffer: 2 * 1024 * 1024,
+        });
+
+        const raw = await readFile(reportPath, 'utf-8');
+        const parsed = JSON.parse(raw) as QuantumPayload;
+
+        const signal = classify(parsed.probability_healthy);
+        const modelConfidence = confidence(parsed.probability_healthy);
+        const nowIso = new Date().toISOString();
+
+        quantumHistory.push({
+          generatedAt: nowIso,
+          probabilityHealthy: parsed.probability_healthy,
+          signal,
+        });
+        if (quantumHistory.length > HISTORY_MAX) {
+          quantumHistory.splice(0, quantumHistory.length - HISTORY_MAX);
+        }
+
+        return {
+          generatedAt: new Date().toISOString(),
+          source: parsed.source,
+          mode: parsed.mode,
+          probabilityHealthy: parsed.probability_healthy,
+          confidence: modelConfidence,
+          signal,
+          recommendation: recommendation(signal, modelConfidence),
+          label: parsed.label,
+          features: parsed.features,
+          recent: quantumHistory.slice(-8),
+          backend: {
+            healthyChains: overview.summary.healthyChains,
+            totalChains: overview.summary.totalChains,
+          },
+          diagnostics: {
+            stdout: stdout.trim(),
+            stderr: stderr.trim(),
+          },
+        };
+      }
+    );
 
     return NextResponse.json(payload, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': cacheControlFor(30),
       },
     });
   } catch (error) {
@@ -196,7 +206,7 @@ export async function GET() {
       {
         status: 500,
         headers: {
-          'Cache-Control': 'no-store, max-age=0',
+          'Cache-Control': cacheControlFor(5),
         },
       }
     );

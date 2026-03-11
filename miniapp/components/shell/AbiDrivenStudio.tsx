@@ -6,6 +6,7 @@ import { arbitrum, base } from 'wagmi/chains';
 import type { Abi, AbiFunction, AbiParameter } from 'viem';
 import { isAddress, parseEther } from 'viem';
 import { ChainSelector } from '@/components/ChainSelector';
+import { runActionPreflight } from '@/lib/transactions/actionPreflight';
 import {
   ONBT_OFT_ABI,
   ONBT_STAKING_ABI,
@@ -490,6 +491,27 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
         return parseByParam(inputValues[key] || '', input as AbiParameter);
       });
 
+      const value = selectedFunction.stateMutability === 'payable' ? parseEther(payableValue || '0') : undefined;
+      const preflight = await runActionPreflight({
+        actionLabel: `ABI studio write (${selectedFunction.name})`,
+        account: address,
+        connectedChainId: chain?.id,
+        targetChainId: selectedChainId,
+        publicClient,
+        request: {
+          address: activeAddress,
+          abi: selectedContract.abi,
+          functionName: selectedFunction.name,
+          args,
+          value,
+        },
+      });
+
+      if (!preflight.ok) {
+        setStatusText(preflight.copy);
+        return;
+      }
+
       const hash = await walletClient.writeContract({
         account: address,
         chain: selectedChainId === 8453 ? base : arbitrum,
@@ -497,7 +519,7 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
         abi: selectedContract.abi,
         functionName: selectedFunction.name,
         args,
-        value: selectedFunction.stateMutability === 'payable' ? parseEther(payableValue || '0') : undefined,
+        value,
       });
 
       setWriteHash(hash);

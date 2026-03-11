@@ -1,15 +1,24 @@
 import { NextResponse } from 'next/server';
 import { getOverviewPayload } from '@/lib/backend/overview';
+import { cacheControlFor, withBackendCache } from '@/lib/backend/adapters/cache';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const dynamic = 'force-static';
+export const revalidate = 20;
 
 export async function GET() {
   try {
-    const payload = await getOverviewPayload();
+    const payload = await withBackendCache(
+      {
+        key: 'chains-overview',
+        revalidateSeconds: 20,
+        tags: ['chains-overview'],
+      },
+      () => getOverviewPayload()
+    );
+
     return NextResponse.json(payload, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': cacheControlFor(20),
       },
     });
   } catch (error) {
@@ -22,7 +31,7 @@ export async function GET() {
       {
         status: 500,
         headers: {
-          'Cache-Control': 'no-store, max-age=0',
+          'Cache-Control': cacheControlFor(5),
         },
       }
     );

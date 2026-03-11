@@ -2,13 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  TokenInterface,
-  PrivateSaleInterface,
-  GovernanceInterface,
-  BridgeInterface,
-  StakingInterface,
-} from './components';
-import {
   AppHeader,
   AboutPanel,
   HeroSection,
@@ -21,6 +14,7 @@ import {
 } from '@/components/shell';
 import { APP_TABS } from '@/config/app-shell';
 import { CHAIN_CONFIG, ONBT_ARBITRUM_ADDRESS, ONBT_TOKEN_ADDRESS } from '@/config/contracts';
+import { FEATURE_SLICES } from '@/features';
 import { useBackendOverview } from '@/hooks/useBackendOverview';
 import { useQuantumPrediction } from '@/hooks/useQuantumPrediction';
 import {
@@ -153,18 +147,13 @@ export function ONBTMiniApp() {
   const explorerArbitrum = CHAIN_CONFIG.arbitrum.blockExplorer;
 
   const renderActivePanel = () => {
-    if (activeTab === 'token') {
-      return (
-        <TokenInterface
-          quantumSignal={quantumPrediction?.signal}
-          quantumConfidence={quantumPrediction?.confidence}
-        />
-      );
+    const activeSlice = FEATURE_SLICES.find((slice) => slice.key === activeTab);
+    if (activeSlice) {
+      return activeSlice.render({
+        quantumPrediction,
+      });
     }
-    if (activeTab === 'bridge') return <BridgeInterface />;
-    if (activeTab === 'staking') return <StakingInterface />;
-    if (activeTab === 'governance') return <GovernanceInterface />;
-    if (activeTab === 'private-sale') return <PrivateSaleInterface />;
+
     return (
       <AboutPanel
         baseExplorer={explorerBase}
