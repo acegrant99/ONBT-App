@@ -12,6 +12,12 @@ export const revalidate = 0;
 type Signal = 'risk-on' | 'caution';
 type ActiveTab = 'token' | 'bridge' | 'staking' | 'governance' | 'private-sale' | 'about' | 'quantum-ai' | 'wallet';
 
+type QuantumFeatures = {
+  liquidity_health?: number;
+  bridge_reliability?: number;
+  governance_participation?: number;
+};
+
 type RequestBody = {
   prompt: string;
   activeTab: ActiveTab;
@@ -19,6 +25,7 @@ type RequestBody = {
     signal?: Signal;
     confidence?: number;
     recommendation?: string;
+    features?: QuantumFeatures;
   };
   history?: Array<{
     role: 'user' | 'assistant';
@@ -637,23 +644,23 @@ export async function POST(request: Request) {
     if (!quantum?.signal) {
       try {
         const baseOrigin = request.headers.get('origin') || new URL(request.url).origin;
-        const quantumResponse = await fetch(`${baseOrigin}/api/quantum/prediction`, {
+        const quantumResponse = await fetch(`${baseOrigin}/api/quantum/predict`, {
           method: 'GET',
           cache: 'no-store',
         });
         if (quantumResponse.ok) {
           const q = await quantumResponse.json() as {
-            prediction?: {
-              signal?: Signal;
-              confidence?: number;
-              recommendation?: string;
-            };
+            signal?: Signal;
+            confidence?: number;
+            recommendation?: string;
+            features?: QuantumFeatures;
           };
-          if (q?.prediction?.signal) {
+          if (q?.signal) {
             quantum = {
-              signal: q.prediction.signal,
-              confidence: q.prediction.confidence,
-              recommendation: q.prediction.recommendation,
+              signal: q.signal,
+              confidence: q.confidence,
+              recommendation: q.recommendation,
+              features: q.features,
             };
           }
         }
@@ -716,13 +723,23 @@ export async function POST(request: Request) {
 
     if (isOriginPilotConfigured()) {
       try {
+        const vqnetFeatureLines = quantum?.features
+          ? [
+              `VQNet features (from pyvqnet VQC classifier):`,
+              `  liquidity health: ${((quantum.features.liquidity_health ?? 0) * 100).toFixed(1)}%`,
+              `  bridge reliability: ${((quantum.features.bridge_reliability ?? 0) * 100).toFixed(1)}%`,
+              `  governance participation: ${((quantum.features.governance_participation ?? 0) * 100).toFixed(1)}%`,
+            ]
+          : [];
+
         const systemPrompt = [
-          'You are the Quantum AI Advisor for the ONBT Mini App — an onchain DeFi and governance mini-application on Base.',
+          'You are RAYAY — the Quantum AI Advisor for the ONBT Mini App, an onchain DeFi and governance mini-application on Base.',
           `Current active tab: ${activeTab}.`,
-          `Quantum signal: ${signal ?? 'unknown'}.`,
+          `Quantum signal (VQNet VQC model): ${signal ?? 'unknown'}.`,
           typeof confidence === 'number'
             ? `Model confidence: ${(confidence * 100).toFixed(1)}%.`
             : 'Model confidence: unavailable.',
+          ...vqnetFeatureLines,
           agentkitLive
             ? `AgentKit is LIVE on ${networkId}. ${capabilities.actionCount || 0} actions loaded.`
             : 'AgentKit is in advisory/compatibility mode.',

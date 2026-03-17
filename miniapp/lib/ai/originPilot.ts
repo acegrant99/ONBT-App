@@ -1,25 +1,16 @@
 /**
- * Origin Pilot — Python-subprocess LLM client for the Quantum AI advisor.
+ * Origin Brain — TypeScript HTTP client for OriginQC's LLM service.
  *
- * Delegates LLM calls to scripts/quantum-ai/pyvqnet_llm.py via execFile,
- * following the same pattern as qpandaClient.ts → qpanda_task.py.
- *
- * This allows pyvqnet's native LLM module to be dropped in when OriginQC
- * ships one, without touching the TypeScript API layer.
+ * Calls the Origin Brain OpenAI-compatible API directly via fetch.
+ * Quantum ML signals are produced separately by nabat_quantum_ai.py
+ * (VQNet/pyvqnet VQC classifier) via /api/quantum/predict — that is the
+ * correct use of pyvqnet in this stack.
  *
  * Env vars:
- *   ORIGIN_PILOT_API   – OriginQC bearer token (required)
+ *   ORIGIN_PILOT_API   – OriginQC Origin Brain bearer token (required)
  *   ORIGIN_PILOT_URL   – API base URL (default: https://qcloud.originqc.com.cn/api/v1)
  *   ORIGIN_PILOT_MODEL – Model name (default: Qwen2.5-72B-Instruct)
  */
-
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import os from 'node:os';
-import path from 'node:path';
-import { readFile, writeFile, unlink } from 'node:fs/promises';
-
-const execFileAsync = promisify(execFile);
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -33,7 +24,7 @@ export interface OriginPilotOptions {
   maxTokens?: number;
   /** Sampling temperature 0–2. Default: 0.7. */
   temperature?: number;
-  // signal is not forwarded to the subprocess but kept for API compatibility.
+  /** Optional AbortSignal for request cancellation. */
   signal?: AbortSignal;
 }
 
@@ -42,7 +33,7 @@ export function isOriginPilotConfigured(): boolean {
   return Boolean(process.env.ORIGIN_PILOT_API?.trim());
 }
 
-/** The base URL used by the Python script. */
+/** The API base URL for Origin Brain requests. */
 export function originPilotBaseUrl(): string {
   return (
     process.env.ORIGIN_PILOT_URL?.trim() ||
@@ -55,59 +46,11 @@ export function originPilotModel(): string {
   return process.env.ORIGIN_PILOT_MODEL?.trim() || 'Qwen2.5-72B-Instruct';
 }
 
-// ---------------------------------------------------------------------------
-// Python subprocess helpers (mirrors qpandaClient.ts)
-// ---------------------------------------------------------------------------
-
-function pythonCandidates(repoRoot: string): string[] {
-  return [
-    path.join(repoRoot, '.venv312', 'Scripts', 'python.exe'),
-    path.join(repoRoot, '.venv', 'Scripts', 'python.exe'),
-    path.join(repoRoot, '.venv313', 'Scripts', 'python.exe'),
-    'python',
-  ];
-}
-
-async function runPyvqnetLlm(
-  repoRoot: string,
-  scriptArgs: string[]
-): Promise<{ stdout: string; stderr: string }> {
-  const scriptPath = path.join(
-    repoRoot,
-    'scripts',
-    'quantum-ai',
-    'pyvqnet_llm.py'
-  );
-  const candidates = pythonCandidates(repoRoot);
-  let lastError: unknown = null;
-
-  for (const pythonExe of candidates) {
-    try {
-      return await execFileAsync(pythonExe, [scriptPath, ...scriptArgs], {
-        cwd: repoRoot,
-        timeout: 120_000,
-        windowsHide: true,
-        maxBuffer: 4 * 1024 * 1024,
-      });
-    } catch (err) {
-      lastError = err;
-    }
-  }
-
-  throw lastError instanceof Error
-    ? lastError
-    : new Error('Unable to run python for OriginPilot LLM task');
-}
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
 /**
- * Call the Origin Pilot LLM via the pyvqnet Python script.
+ * Call the Origin Brain LLM API directly via fetch.
  *
  * @throws When ORIGIN_PILOT_API is not set.
- * @throws When the Python script exits with an error.
+ * @throws When the API returns a non-2xx response.
  */
 export async function callOriginPilot(
   messages: ChatMessage[],
@@ -118,64 +61,35 @@ export async function callOriginPilot(
     throw new Error('ORIGIN_PILOT_API is not configured');
   }
 
-  const repoRoot = path.resolve(process.cwd(), '..');
-  const ts = Date.now();
-  const msgsFile = path.join(os.tmpdir(), `onbt_llm_msgs_${ts}.json`);
-  const reportFile = path.join(os.tmpdir(), `onbt_llm_report_${ts}.json`);
+  const url = `${originPilotBaseUrl()}/chat/completions`;
 
-  // Write messages to a temp file to avoid shell-quoting issues.
-  await writeFile(msgsFile, JSON.stringify(messages), 'utf-8');
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: options.model ?? originPilotModel(),
+      messages,
+      max_tokens: options.maxTokens ?? 1400,
+      temperature: options.temperature ?? 0.7,
+    }),
+    signal: options.signal,
+  });
 
-  const scriptArgs = [
-    '--report',
-    reportFile,
-    '--api-key',
-    apiKey,
-    '--base-url',
-    originPilotBaseUrl(),
-    '--model',
-    options.model || originPilotModel(),
-    '--messages-file',
-    msgsFile,
-    '--max-tokens',
-    String(options.maxTokens ?? 1400),
-    '--temperature',
-    String(options.temperature ?? 0.7),
-  ];
-
-  let stdout = '';
-  let stderr = '';
-  try {
-    ({ stdout, stderr } = await runPyvqnetLlm(repoRoot, scriptArgs));
-  } finally {
-    // Clean up messages temp file regardless of outcome.
-    unlink(msgsFile).catch(() => undefined);
-  }
-
-  const raw = await readFile(reportFile, 'utf-8').catch(() => null);
-  unlink(reportFile).catch(() => undefined);
-
-  if (!raw) {
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
     throw new Error(
-      `pyvqnet_llm.py produced no report. stderr: ${stderr.slice(0, 400)}`
+      `Origin Brain API ${response.status}: ${errText.slice(0, 300)}`
     );
   }
 
-  interface LlmReport {
-    ok: boolean;
-    text?: string;
-    error?: string;
-  }
+  const data = (await response.json()) as {
+    choices: Array<{ message: { content: string } }>;
+  };
 
-  const result = JSON.parse(raw) as LlmReport;
-
-  if (!result.ok) {
-    throw new Error(
-      `OriginPilot LLM error: ${result.error ?? 'unknown'} | stderr: ${stderr.slice(0, 300)}`
-    );
-  }
-
-  return result.text?.trim() ?? '';
+  return data.choices?.[0]?.message?.content?.trim() ?? '';
 }
 
 /**
