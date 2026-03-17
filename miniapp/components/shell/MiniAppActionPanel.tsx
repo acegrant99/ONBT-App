@@ -5,8 +5,21 @@ import { useMutation } from '@tanstack/react-query';
 import { useComposeCast, useMiniKit, useOpenUrl, useViewProfile } from '@coinbase/onchainkit/minikit';
 import { useAccount } from 'wagmi';
 import { WalletIdentityBadge } from '@/components/WalletIdentityBadge';
+import type { BackendOverview } from '@/types/app-shell';
 
-export function MiniAppActionPanel() {
+type MiniAppActionPanelProps = {
+  backendOverview?: BackendOverview;
+  backendRefreshing?: boolean;
+};
+
+function formatBlockNumber(value?: string) {
+  if (!value) return '--';
+  const block = Number(value);
+  if (!Number.isFinite(block)) return value;
+  return block.toLocaleString();
+}
+
+export function MiniAppActionPanel({ backendOverview, backendRefreshing = false }: MiniAppActionPanelProps) {
   const { context } = useMiniKit();
   const { composeCast, isPending: isComposingCast } = useComposeCast();
   const openUrl = useOpenUrl();
@@ -24,11 +37,15 @@ export function MiniAppActionPanel() {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() || '')
     .join('') || 'ON';
-  const safeArea = client?.safeAreaInsets || { top: 0, right: 0, bottom: 0, left: 0 };
   const hasContext = Boolean(context);
   const hasNotificationDetails = Boolean(client?.notificationDetails);
   const isAdded = Boolean(client?.added || hasNotificationDetails);
   const shareUrl = 'https://www.nabat.finance';
+  const baseHealthy = backendOverview?.chains.base.healthy;
+  const arbitrumHealthy = backendOverview?.chains.arbitrum.healthy;
+  const backendAgeSeconds = backendOverview?.generatedAt
+    ? Math.max(Math.floor((Date.now() - Date.parse(backendOverview.generatedAt)) / 1000), 0)
+    : null;
 
   const statusPills = useMemo(
     () => [
@@ -120,10 +137,22 @@ export function MiniAppActionPanel() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <button type="button" className="metric-card rounded-2xl border border-slate-900/10 bg-slate-50/85 px-3 py-3 text-left text-sm font-semibold text-slate-900">Safe Top {safeArea.top}px</button>
-            <button type="button" className="metric-card rounded-2xl border border-slate-900/10 bg-slate-50/85 px-3 py-3 text-left text-sm font-semibold text-slate-900">Safe Bottom {safeArea.bottom}px</button>
-            <button type="button" className="metric-card rounded-2xl border border-slate-900/10 bg-slate-50/85 px-3 py-3 text-left text-sm font-semibold text-slate-900">Notifications {hasNotificationDetails ? 'Ready' : 'Pending'}</button>
-            <button type="button" className="metric-card rounded-2xl border border-slate-900/10 bg-slate-50/85 px-3 py-3 text-left text-sm font-semibold text-slate-900">Miniapp {isAdded ? 'Added' : 'Not Added'}</button>
+            <button type="button" className="metric-card rounded-2xl border border-slate-900/10 bg-slate-50/85 px-3 py-3 text-left text-sm font-semibold text-slate-900">
+              Base {baseHealthy === false ? 'Unhealthy' : baseHealthy === true ? 'Healthy' : 'Awaiting'}
+              <div className="mt-1 text-xs text-slate-600">Block {formatBlockNumber(backendOverview?.chains.base.blockNumber)}</div>
+            </button>
+            <button type="button" className="metric-card rounded-2xl border border-slate-900/10 bg-slate-50/85 px-3 py-3 text-left text-sm font-semibold text-slate-900">
+              Arbitrum {arbitrumHealthy === false ? 'Unhealthy' : arbitrumHealthy === true ? 'Healthy' : 'Awaiting'}
+              <div className="mt-1 text-xs text-slate-600">Block {formatBlockNumber(backendOverview?.chains.arbitrum.blockNumber)}</div>
+            </button>
+            <button type="button" className="metric-card rounded-2xl border border-slate-900/10 bg-slate-50/85 px-3 py-3 text-left text-sm font-semibold text-slate-900">
+              Notifications {hasNotificationDetails ? 'Ready' : 'Pending'}
+              <div className="mt-1 text-xs text-slate-600">{backendRefreshing ? 'Refreshing telemetry…' : backendAgeSeconds === null ? 'Telemetry not loaded' : `Updated ${backendAgeSeconds}s ago`}</div>
+            </button>
+            <button type="button" className="metric-card rounded-2xl border border-slate-900/10 bg-slate-50/85 px-3 py-3 text-left text-sm font-semibold text-slate-900">
+              Miniapp {isAdded ? 'Added' : 'Not Added'}
+              <div className="mt-1 text-xs text-slate-600">{hasContext ? 'MiniKit runtime active' : 'Browser preview mode'}</div>
+            </button>
           </div>
         </div>
 

@@ -117,7 +117,10 @@ export function ONBTMiniApp() {
           isAdded={isMiniAppAdded}
           hasNotificationDetails={hasNotificationDetails}
         />
-        <MiniAppActionPanel />
+        <MiniAppActionPanel
+          backendOverview={backendOverview}
+          backendRefreshing={backendRefreshing}
+        />
         <WalletPanel />
       </div>
     );
