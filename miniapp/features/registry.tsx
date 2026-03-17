@@ -5,6 +5,9 @@ import { governanceFeatureSlice } from '@/features/governance/slice';
 import { privateSaleFeatureSlice } from '@/features/privateSale/slice';
 import { stakingFeatureSlice } from '@/features/staking/slice';
 import { tokenFeatureSlice } from '@/features/token/slice';
+import { defiFactoryFeatureSlice } from '@/features/defiFactory/slice';
+import { yieldDistributorFeatureSlice } from '@/features/yieldDistributor/slice';
+import { vaultFeatureSlice } from '@/features/vault/slice';
 import { walletFeatureSlice } from '@/features/wallet/slice';
 
 export const FEATURE_SLICES: FeatureSlice[] = [
@@ -13,6 +16,9 @@ export const FEATURE_SLICES: FeatureSlice[] = [
   stakingFeatureSlice,
   governanceFeatureSlice,
   privateSaleFeatureSlice,
+  defiFactoryFeatureSlice,
+  yieldDistributorFeatureSlice,
+  vaultFeatureSlice,
   walletFeatureSlice,
 ];
 

@@ -13,10 +13,8 @@ import {
   AppFooter,
   AppHeader,
   AboutPanel,
-  CdpCliPanel,
   HeroSection,
   MiniAppActionPanel,
-  AbiDrivenStudio,
   MiniAppNotificationCard,
   QuantumAgentKitPanel,
   QuantumAiLauncher,
@@ -33,6 +31,9 @@ import { useMiniApp } from '@/hooks/useMiniApp';
 import { useGlobalTxStatus } from '@/hooks/useGlobalTxStatus';
 import { publishGlobalTxStatus } from '@/lib/txStatus';
 import { WalletPanel } from '@/features/wallet/ui/WalletPanel';
+import { DefiFactoryInterface } from '@/features/defiFactory/ui/DefiFactoryInterface';
+import { YieldDistributorInterface } from '@/features/yieldDistributor/ui/YieldDistributorInterface';
+import { VaultInterface } from '@/features/vault/ui/VaultInterface';
 import type { TabType } from '@/types/app-shell';
 
 /**
@@ -81,16 +82,15 @@ export function ONBTMiniApp() {
   const isMiniAppAdded = Boolean(miniAppContext?.client.added || hasNotificationDetails);
   const miniAppFid = miniAppContext?.user.fid;
 
-  // Tabs that show the AbiDrivenStudio contract sidebar alongside content
-  const DEFI_TABS: TabType[] = ['token', 'bridge', 'staking', 'governance', 'private-sale'];
-  const showStudioSidebar = DEFI_TABS.includes(activeTab);
-
   const renderActivePanel = () => {
     if (activeTab === 'token') return <TokenInterface />;
     if (activeTab === 'bridge') return <BridgeInterface />;
     if (activeTab === 'staking') return <StakingInterface />;
     if (activeTab === 'governance') return <GovernanceInterface />;
     if (activeTab === 'private-sale') return <PrivateSaleInterface />;
+    if (activeTab === 'defi-factory') return <DefiFactoryInterface />;
+    if (activeTab === 'yield-distributor') return <YieldDistributorInterface />;
+    if (activeTab === 'vault') return <VaultInterface />;
     if (activeTab === 'quantum-ai') return (
       <div className="space-y-6">
         <QuantumSignalPanel
@@ -123,15 +123,12 @@ export function ONBTMiniApp() {
     );
     // about (default)
     return (
-      <div className="space-y-6">
-        <AboutPanel
-          baseExplorer={explorerBase}
-          arbitrumExplorer={explorerArbitrum}
-          baseTokenAddress={ONBT_TOKEN_ADDRESS}
-          arbitrumTokenAddress={ONBT_ARBITRUM_ADDRESS}
-        />
-        <CdpCliPanel />
-      </div>
+      <AboutPanel
+        baseExplorer={explorerBase}
+        arbitrumExplorer={explorerArbitrum}
+        baseTokenAddress={ONBT_TOKEN_ADDRESS}
+        arbitrumTokenAddress={ONBT_ARBITRUM_ADDRESS}
+      />
     );
   };
 
@@ -171,6 +168,9 @@ export function ONBTMiniApp() {
     staking: { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
     'private-sale': { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
     governance: { ageMs: quantumAgeMs, refreshing: quantumRefreshing, staleAfterMs: 35_000 },
+    'defi-factory': { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
+    'yield-distributor': { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
+    vault: { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
     about: { ageMs: Math.max(backendAgeMs, quantumAgeMs), refreshing: backendRefreshing || quantumRefreshing, staleAfterMs: 45_000 },
   };
 
@@ -209,16 +209,7 @@ export function ONBTMiniApp() {
           </div>
         )}
 
-        <section className={`grid gap-6 xl:items-start ${showStudioSidebar ? 'xl:grid-cols-[0.8fr_1.2fr]' : ''}`}>
-          {showStudioSidebar && (
-            <div className="space-y-6 xl:sticky xl:top-28">
-              <AbiDrivenStudio
-                activeTab={activeTab}
-                prediction={quantumPrediction}
-              />
-            </div>
-          )}
-
+        <section className="grid gap-6 xl:items-start">
           <div className="space-y-6">
             <TabsSection
               tabs={APP_TABS}

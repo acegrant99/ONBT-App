@@ -137,6 +137,14 @@ export const ONBT_REVENUE_ROUTER_ARBITRUM_ADDRESS =
   (process.env.NEXT_PUBLIC_ONBT_REVENUE_ROUTER_ARBITRUM_ADDRESS as `0x${string}`) ||
   '0xa66CA14df740B142d8E2DE515A8743ad1eE25850';
 
+// Optional DeFi factory deployments
+export const ONBT_DEFI_FACTORY_BASE_ADDRESS =
+  (process.env.NEXT_PUBLIC_ONBT_DEFI_FACTORY_BASE_ADDRESS as `0x${string}`) ||
+  '0x0000000000000000000000000000000000000000';
+export const ONBT_DEFI_FACTORY_ARBITRUM_ADDRESS =
+  (process.env.NEXT_PUBLIC_ONBT_DEFI_FACTORY_ARBITRUM_ADDRESS as `0x${string}`) ||
+  '0x0000000000000000000000000000000000000000';
+
 // LayerZero Endpoint IDs
 export const LZ_ENDPOINT_ID = {
   BASE: 30184,
@@ -342,6 +350,194 @@ export const ONBT_GOVERNOR_ABI = [
     stateMutability: 'nonpayable',
     type: 'function'
   }
+] as const;
+
+// ONBTDeFiFactory ABI (minimal live-data + deployment interface)
+export const ONBT_DEFI_FACTORY_ABI = [
+  {
+    inputs: [],
+    name: 'onbtToken',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getDeploymentCounts',
+    outputs: [
+      { name: 'stakingCount', type: 'uint256' },
+      { name: 'poolCount', type: 'uint256' },
+      { name: 'distributorCount', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getStakingContracts',
+    outputs: [{ name: '', type: 'address[]' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getLiquidityPools',
+    outputs: [{ name: '', type: 'address[]' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getYieldDistributors',
+    outputs: [{ name: '', type: 'address[]' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'deployYieldDistributor',
+    outputs: [{ name: 'distributor', type: 'address' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;
+
+// ONBTYieldDistributor ABI (minimal live-data + claim interface)
+export const ONBT_YIELD_DISTRIBUTOR_ABI = [
+  {
+    inputs: [],
+    name: 'onbtToken',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'totalShares',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'accRewardsPerShare',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'pendingRewards',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'getUserInfo',
+    outputs: [
+      { name: 'shares', type: 'uint256' },
+      { name: 'pending', type: 'uint256' },
+      { name: 'totalClaimed', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'depositor', type: 'address' }],
+    name: 'rewardDepositors',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'claimRewards',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;
+
+// ONBTOmnichainVault ABI (minimal live-data + user deposit interface)
+export const ONBT_VAULT_ABI = [
+  {
+    inputs: [],
+    name: 'localEid',
+    outputs: [{ name: '', type: 'uint32' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'hubChainEid',
+    outputs: [{ name: '', type: 'uint32' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'isHub',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'governance',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'treasuryManager',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'paused',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'token', type: 'address' }],
+    name: 'getBalance',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'token', type: 'address' }],
+    name: 'getAvailableBalance',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'token', type: 'address' }],
+    name: 'whitelistedTokens',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'depositNative',
+    outputs: [],
+    stateMutability: 'payable',
+    type: 'function',
+  },
 ] as const;
 
 // Lockup Period Enum

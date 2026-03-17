@@ -1,4 +1,15 @@
-export type TabType = 'token' | 'bridge' | 'staking' | 'governance' | 'private-sale' | 'about' | 'quantum-ai' | 'wallet';
+export type TabType =
+  | 'token'
+  | 'bridge'
+  | 'staking'
+  | 'governance'
+  | 'private-sale'
+  | 'defi-factory'
+  | 'yield-distributor'
+  | 'vault'
+  | 'about'
+  | 'quantum-ai'
+  | 'wallet';
 
 export type AiWalletRole = 'user' | 'deployer' | 'cdp';
 export type AiWalletMode = 'auto' | AiWalletRole;
