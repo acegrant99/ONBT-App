@@ -34,8 +34,9 @@ export default function APYCalculator() {
                 <span className="text-lg font-bold text-green-400">{baseAPY.toFixed(2)}%</span>
               </div>
               <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                {/* stylelint-disable-next-line */}
-                <div className="h-full bg-green-500" style={{ width: `${Math.min(baseAPY * 2, 100)}%` }} />
+                <svg className="h-full w-full" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
+                  <rect x="0" y="0" width={Math.min(baseAPY * 2, 100)} height="8" fill="#22c55e" rx="4" />
+                </svg>
               </div>
             </div>
 
@@ -45,8 +46,9 @@ export default function APYCalculator() {
                 <span className="text-lg font-bold text-blue-400">{incentiveAPY.toFixed(2)}%</span>
               </div>
               <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                {/* stylelint-disable-next-line */}
-                <div className="h-full bg-blue-500" style={{ width: `${Math.min(incentiveAPY * 2, 100)}%` }} />
+                <svg className="h-full w-full" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
+                  <rect x="0" y="0" width={Math.min(incentiveAPY * 2, 100)} height="8" fill="#3b82f6" rx="4" />
+                </svg>
               </div>
             </div>
 

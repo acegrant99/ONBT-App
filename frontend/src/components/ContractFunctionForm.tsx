@@ -441,7 +441,11 @@ export const ContractFunctionForm: React.FC<ContractFunctionFormProps> = ({
                   <Dialog.Title className="text-lg font-semibold">Success</Dialog.Title>
                 </div>
                 <Dialog.Close asChild>
-                  <button className="p-1 hover:bg-gray-100 rounded-md transition-colors">
+                  <button
+                    className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                    aria-label="Close result modal"
+                    title="Close"
+                  >
                     <XIcon className="w-5 h-5" />
                   </button>
                 </Dialog.Close>

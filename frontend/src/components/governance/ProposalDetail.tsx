@@ -63,11 +63,11 @@ export default function ProposalDetail({ proposal, onClose }: ProposalDetailProp
               </span>
             </span>
           </div>
-          {/* stylelint-disable */}
           <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
-            <div className="h-full bg-green-500" style={{ width: `${forPercentage}%` }} />
+            <svg className="h-full w-full" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+              <rect x="0" y="0" width={forPercentage} height="12" fill="#22c55e" rx="6" />
+            </svg>
           </div>
-          {/* stylelint-enable */}
         </div>
 
         <div>
@@ -83,11 +83,11 @@ export default function ProposalDetail({ proposal, onClose }: ProposalDetailProp
               </span>
             </span>
           </div>
-          {/* stylelint-disable */}
           <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
-            <div className="h-full bg-red-500" style={{ width: `${againstPercentage}%` }} />
+            <svg className="h-full w-full" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+              <rect x="0" y="0" width={againstPercentage} height="12" fill="#ef4444" rx="6" />
+            </svg>
           </div>
-          {/* stylelint-enable */}
         </div>
 
         <div>
@@ -103,11 +103,11 @@ export default function ProposalDetail({ proposal, onClose }: ProposalDetailProp
               </span>
             </span>
           </div>
-          {/* stylelint-disable */}
           <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
-            <div className="h-full bg-amber-500" style={{ width: `${abstainPercentage}%` }} />
+            <svg className="h-full w-full" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+              <rect x="0" y="0" width={abstainPercentage} height="12" fill="#f59e0b" rx="6" />
+            </svg>
           </div>
-          {/* stylelint-enable */}
         </div>
       </div>
 

@@ -131,7 +131,6 @@
   }
 
   html, :host {
-    -webkit-text-size-adjust: 100%;
     tab-size: 4;
     line-height: 1.5;
     font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
@@ -2098,7 +2097,7 @@
   }
 
   .ock\:text-nowrap {
-    text-wrap: nowrap;
+    white-space: nowrap;
   }
 
   .ock\:text-ellipsis {
@@ -2656,13 +2655,11 @@
   }
 
   .ock\:scrollbar-hidden {
-    scrollbar-width: none;
     -ms-overflow-style: none;
   }
 
   .ock\:ock-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db #fff;
+    color: inherit;
   }
 
   .ock\:animate-enterRight {

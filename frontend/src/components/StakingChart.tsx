@@ -17,8 +17,9 @@ export const StakingChart: FC<StakingChartProps> = ({ type = 'area' }) => {
           <p className="mb-2 text-xs font-semibold text-slate-300">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2 text-xs">
-              {/* stylelint-disable-next-line */}
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+              <svg className="h-2 w-2" viewBox="0 0 8 8" aria-hidden="true">
+                <circle cx="4" cy="4" r="4" fill={entry.color} />
+              </svg>
               <span className="text-slate-400">{entry.name}:</span>
               <span className="font-semibold text-white">
                 {entry.value.toLocaleString()} ONBT

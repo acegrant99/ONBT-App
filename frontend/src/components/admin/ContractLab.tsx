@@ -113,6 +113,8 @@ const ContractLab: React.FC = () => {
             <select
               value={selectedContract}
               onChange={event => setSelectedContract(event.target.value as ContractOptionKey)}
+              aria-label="Select contract"
+              title="Select contract"
               className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 focus:border-purple-500 focus:outline-none"
             >
               {CONTRACT_OPTIONS.map(option => (
@@ -140,6 +142,8 @@ const ContractLab: React.FC = () => {
             <select
               value={selectedFunction}
               onChange={event => setSelectedFunction(event.target.value)}
+              aria-label="Select function"
+              title="Select function"
               className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 focus:border-purple-500 focus:outline-none"
             >
               {functionList.length === 0 && <option value="">No functions available</option>}

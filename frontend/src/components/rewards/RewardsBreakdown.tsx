@@ -59,8 +59,9 @@ export default function RewardsBreakdown() {
                 {sources.map((source, idx) => (
                   <div key={idx} className="flex items-center justify-between p-2">
                     <div className="flex items-center gap-2">
-                      {/* stylelint-disable-next-line */}
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                      <svg className="h-3 w-3" viewBox="0 0 12 12" aria-hidden="true">
+                        <circle cx="6" cy="6" r="6" fill={COLORS[idx % COLORS.length]} />
+                      </svg>
                       <span className="text-sm text-slate-300">{source.name}</span>
                     </div>
                     <div className="text-right">

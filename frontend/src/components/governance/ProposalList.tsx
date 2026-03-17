@@ -67,11 +67,9 @@ export default function ProposalList({ proposals, isLoading }: ProposalListProps
                           votes
                         </span>
                       </div>
-                      {/* stylelint-disable */}
                       <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500" style={{ width: '45%' }} />
+                        <div className="h-full w-[45%] bg-green-500" />
                       </div>
-                      {/* stylelint-enable */}
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-center mb-1">
@@ -81,11 +79,9 @@ export default function ProposalList({ proposals, isLoading }: ProposalListProps
                           votes
                         </span>
                       </div>
-                      {/* stylelint-disable */}
                       <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-red-500" style={{ width: '30%' }} />
+                        <div className="h-full w-[30%] bg-red-500" />
                       </div>
-                      {/* stylelint-enable */}
                     </div>
                   </div>
                 </div>

@@ -83,8 +83,9 @@ export default function RewardsClaimPanel() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-1.5 flex-1 bg-slate-700 rounded-full overflow-hidden max-w-xs">
-                        {/* stylelint-disable-next-line */}
-                        <div className="h-full bg-purple-500" style={{ width: `${tier.percentage}%` }} />
+                        <svg className="h-full w-full" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true">
+                          <rect x="0" y="0" width={tier.percentage} height="6" fill="#a855f7" rx="3" />
+                        </svg>
                       </div>
                       <span className="text-xs text-slate-400">{tier.percentage}%</span>
                     </div>

@@ -205,6 +205,7 @@ export const Achievements: React.FC = () => {
   const earnedCount = achievements.filter((a) => a.earned).length
   const totalCount = achievements.length
   const mintedCount = tokenIds.length > 0 ? tokenIds.length : achievementCount
+  const earnedPercent = totalCount > 0 ? Math.round((earnedCount / totalCount) * 100) : 0
 
   return (
     <div className="space-y-8">
@@ -223,7 +224,7 @@ export const Achievements: React.FC = () => {
               {earnedCount} <span className="text-lg text-slate-500">/ {totalCount}</span>
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              {Math.round((earnedCount / totalCount) * 100)}% Complete
+              {earnedPercent}% Complete
             </p>
           </div>
           <div className="text-right">
@@ -238,14 +239,17 @@ export const Achievements: React.FC = () => {
           className="mt-4 h-2 overflow-hidden rounded-full bg-slate-700"
           role="progressbar"
           aria-label={`Progress: ${earnedCount} of ${totalCount} achievements earned`}
-          aria-valuenow={Math.round((earnedCount / totalCount) * 100)}
-          aria-valuemin={0}
-          aria-valuemax={100}
+          aria-valuetext={`${earnedPercent}% complete`}
         >
-          <div
-            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
-            style={{ width: `${(earnedCount / totalCount) * 100}%` }}
-          />
+          <svg className="h-full w-full" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="achievements-progress-gradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#a855f7" />
+                <stop offset="100%" stopColor="#3b82f6" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width={earnedPercent} height="8" fill="url(#achievements-progress-gradient)" rx="4" />
+          </svg>
         </div>
       </div>
 

@@ -57,8 +57,9 @@ export default function AllocationDisplay() {
                 </div>
               </div>
               <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                {/* stylelint-disable-next-line */}
-                <div className={`h-full ${alloc.color}`} style={{ width: `${alloc.percentage}%` }} />
+                <svg className="h-full w-full" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
+                  <rect x="0" y="0" width={alloc.percentage} height="8" className={alloc.color} rx="4" />
+                </svg>
               </div>
             </motion.div>
           ))}
