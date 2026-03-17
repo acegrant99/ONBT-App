@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useMutation } from '@tanstack/react-query';
 import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
 
 const CLI_COMMANDS = [
@@ -13,16 +15,22 @@ const CLI_COMMANDS = [
 const BENEFIT_BUTTONS = ['Scaffold Fast', 'Manifest Ready', 'CDP Wallet Rail', 'MiniKit Native'];
 
 export function CdpCliPanel() {
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [lastCopied, setLastCopied] = useState<string | null>(null);
 
-  const handleCopyCommand = async (command: string) => {
-    try {
+  const copyMutation = useMutation({
+    mutationFn: async (command: string) => {
       await navigator.clipboard.writeText(command);
-      setFeedback(`Copied: ${command}`);
-    } catch {
-      setFeedback('Copy failed in this browser session.');
-    }
-  };
+      return command;
+    },
+    onSuccess: (command) => {
+      setLastCopied(command);
+      setTimeout(() => setLastCopied(null), 2500);
+    },
+    onError: () => {
+      setLastCopied('__error__');
+      setTimeout(() => setLastCopied(null), 2500);
+    },
+  });
 
   return (
     <section className="brand-panel reveal-up stagger-3 p-4 sm:p-5">
@@ -65,10 +73,12 @@ export function CdpCliPanel() {
           </button>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {CLI_COMMANDS.map((entry) => (
-              <button
+              <motion.button
                 key={entry.command}
                 type="button"
-                onClick={() => void handleCopyCommand(entry.command)}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => copyMutation.mutate(entry.command)}
                 title={entry.command}
                 className="visual-icon-tile w-full justify-between text-left"
               >
@@ -76,10 +86,14 @@ export function CdpCliPanel() {
                   <span>{entry.icon}</span>
                   <span>{entry.label}</span>
                 </span>
-                <span className="rounded-full border border-slate-900/10 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-                  {entry.hint}
+                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors ${
+                  lastCopied === entry.command
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                    : 'border-slate-900/10 bg-slate-50 text-slate-700'
+                }`}>
+                  {lastCopied === entry.command ? 'copied!' : entry.hint}
                 </span>
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -90,21 +104,36 @@ export function CdpCliPanel() {
           </button>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {BENEFIT_BUTTONS.map((item) => (
-              <button
+              <motion.div
                 key={item}
-                type="button"
-                className="rounded-2xl border border-slate-900/10 bg-slate-50/90 px-3 py-3 text-left text-sm font-semibold text-slate-900"
+                whileHover={{ y: -1 }}
+                className="rounded-2xl border border-slate-900/10 bg-slate-50/90 px-3 py-3 text-sm font-semibold text-slate-900"
               >
                 {item}
-              </button>
+              </motion.div>
             ))}
           </div>
         </div>
       </div>
 
-      {feedback ? (
-        <button type="button" className="mt-4 rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">{feedback}</button>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {lastCopied ? (
+          <motion.div
+            key={lastCopied}
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+            className={`mt-4 rounded-2xl border px-3 py-2 text-sm font-semibold ${
+              lastCopied === '__error__'
+                ? 'border-rose-300 bg-rose-50 text-rose-800'
+                : 'border-emerald-300 bg-emerald-50 text-emerald-900'
+            }`}
+          >
+            {lastCopied === '__error__' ? 'Copy failed in this browser session.' : `Copied to clipboard`}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         <MiniAppExternalLink

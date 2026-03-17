@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   useAccount,
   usePublicClient,
@@ -149,30 +150,46 @@ export function VaultInterface() {
   };
 
   return (
-    <div className="brand-card module-shell max-w-3xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20 space-y-5">
+    <div className="brand-card module-shell max-w-3xl mx-auto p-4 sm:p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20 space-y-5">
       <div className="flex flex-wrap items-center gap-2 border-b border-sky-900/15 pb-3">
         <ChainSelector label="Vault chain" selectedChainId={selectedChainId} onSelectChain={setSelectedChainId} />
+        {isHub !== undefined && (
+          <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${
+            isHub
+              ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+              : 'border-slate-200 bg-slate-50 text-slate-600'
+          }`}>
+            {isHub ? 'Hub' : 'Spoke'}
+          </span>
+        )}
         {address && <WalletIdentityBadge address={address} className="ml-auto" label="Vault operator" />}
       </div>
 
       <div className="rounded-xl border border-slate-900/10 bg-white/90 p-4 text-sm space-y-2">
-        <p><strong>Chain:</strong> {chainName}</p>
-        <p><strong>Vault:</strong> {vaultAddress}</p>
-        <p><strong>Hub deployment:</strong> {isHub ? 'Yes' : 'No'}</p>
-        <p><strong>Local EID:</strong> {localEid ? String(localEid) : '—'}</p>
-        <p><strong>Governance:</strong> {governance ? String(governance) : '—'}</p>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="font-semibold text-slate-900">Vault state</span>
+          <span className="ml-auto text-[11px] text-slate-400 font-mono">{chainName} · EID {localEid ? String(localEid) : '—'}</span>
+        </div>
+        <p><strong>Vault:</strong> <span className="font-mono text-xs break-all">{vaultAddress}</span></p>
+        <p><strong>Governance:</strong> <span className="font-mono text-xs break-all">{governance ? String(governance) : '—'}</span></p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-        <button type="button" className="rounded-xl border border-slate-900/10 bg-white/90 px-3 py-3 text-left font-semibold text-slate-900">
-          Native {formatEther((nativeBalance ?? 0n) as bigint)}
-        </button>
-        <button type="button" className="rounded-xl border border-slate-900/10 bg-white/90 px-3 py-3 text-left font-semibold text-slate-900">
-          ONBT Balance {formatEther((tokenBalance ?? 0n) as bigint)}
-        </button>
-        <button type="button" className="rounded-xl border border-slate-900/10 bg-white/90 px-3 py-3 text-left font-semibold text-slate-900">
-          ONBT Available {formatEther((tokenAvailable ?? 0n) as bigint)}
-        </button>
+        {[
+          { label: 'Native Balance', value: `${parseFloat(formatEther((nativeBalance ?? 0n) as bigint)).toFixed(4)} ETH` },
+          { label: 'ONBT Balance', value: `${parseFloat(formatEther((tokenBalance ?? 0n) as bigint)).toFixed(4)}` },
+          { label: 'ONBT Available', value: `${parseFloat(formatEther((tokenAvailable ?? 0n) as bigint)).toFixed(4)}` },
+        ].map((card) => (
+          <motion.div
+            key={card.label}
+            whileHover={{ y: -2 }}
+            className="rounded-xl border border-slate-900/10 bg-white/90 px-3 py-3 shadow-[0_8px_18px_rgba(15,23,42,0.06)]"
+          >
+            <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">{card.label}</span>
+            <span className="block text-base font-bold text-slate-900">{card.value}</span>
+          </motion.div>
+        ))}
       </div>
 
       <div className="rounded-xl border border-slate-900/10 bg-slate-50 p-4 space-y-3">
@@ -184,16 +201,41 @@ export function VaultInterface() {
             placeholder="0.01"
             className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
-          <button
+          <motion.button
+            type="button"
+            whileHover={{ scale: address && !isPending && !isConfirming ? 1.02 : 1 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => void handleDepositNative()}
             disabled={!address || isPending || isConfirming}
             className="rounded-lg bg-[color:var(--brand-forest)] px-4 py-2 text-white text-sm font-semibold disabled:opacity-50"
           >
-            {isPending || isConfirming ? 'Depositing...' : 'Deposit Native'}
-          </button>
+            {isPending ? 'Broadcasting...' : isConfirming ? 'Confirming...' : 'Deposit Native'}
+          </motion.button>
         </div>
-        {isConfirmed && txHash && <p className="text-xs text-emerald-700">Deposit confirmed: {txHash}</p>}
-        {validationError && <p className="text-xs text-rose-700">{validationError}</p>}
+        <AnimatePresence initial={false}>
+          {isConfirmed && txHash ? (
+            <motion.div
+              key="confirmed"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 font-mono break-all"
+            >
+              Deposit confirmed: {txHash}
+            </motion.div>
+          ) : null}
+          {validationError ? (
+            <motion.div
+              key={validationError}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-700"
+            >
+              {validationError}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
     </div>
   );
