@@ -21,6 +21,12 @@ const FC_MINIAPP = JSON.stringify({
       splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
     },
   },
+  longDescription: minikitConfig.miniapp.description,
+  primaryCategory: minikitConfig.miniapp.primaryCategory,
+  tags: minikitConfig.miniapp.tags,
+  tagline: minikitConfig.miniapp.tagline,
+  subtitle: minikitConfig.miniapp.subtitle,
+  webhookUrl: minikitConfig.miniapp.webhookUrl,
 });
 
 export const metadata: Metadata = {
@@ -67,7 +73,7 @@ export const metadata: Metadata = {
     'fc:miniapp': FC_MINIAPP,
     'fc:frame': 'vNext',
     'fc:frame:image': minikitConfig.miniapp.ogImageUrl,
-    'fc:frame:post_url': `${ROOT_URL}/.well-known/farcaster.json`,
+    'fc:frame:post_url': `${ROOT_URL}/api/webhook`,
   },
 };
 
