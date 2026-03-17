@@ -267,8 +267,10 @@ export function QuantumAgentKitPanel({
 
   useEffect(() => {
     loadSavedWallets();
+    setGeneratedWallet(null);
+    setWalletSaved(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [connectedWallet]);
 
   useEffect(() => {
     const resolveAccessProfile = async () => {
@@ -966,21 +968,30 @@ export function QuantumAgentKitPanel({
   };
 
   // ─── Wallet creator helpers ─────────────────────────────────────────────────
+  const walletStorageKey = connectedWallet ? `rayay_named_wallets_${connectedWallet.toLowerCase()}` : null;
+
   const loadSavedWallets = () => {
+    if (!walletStorageKey) {
+      setSavedWallets([]);
+      return;
+    }
     try {
-      const raw = localStorage.getItem('rayay_named_wallets');
+      const raw = localStorage.getItem(walletStorageKey);
       if (raw) {
         const parsed = JSON.parse(raw) as Array<{ name: string; address: string; createdAt: string }>;
         if (Array.isArray(parsed)) {
           setSavedWallets(parsed);
+          return;
         }
       }
     } catch {
       // ignore parse errors
     }
+    setSavedWallets([]);
   };
 
   const generateNewWallet = () => {
+    if (!connectedWallet) return;
     const pk = generatePrivateKey();
     const account = privateKeyToAccount(pk);
     setGeneratedWallet({ address: account.address, privateKey: pk });
@@ -989,7 +1000,7 @@ export function QuantumAgentKitPanel({
   };
 
   const saveWallet = () => {
-    if (!generatedWallet || !walletName.trim()) return;
+    if (!generatedWallet || !walletName.trim() || !walletStorageKey) return;
     const entry = {
       name: walletName.trim(),
       address: generatedWallet.address,
@@ -997,13 +1008,13 @@ export function QuantumAgentKitPanel({
     };
     const existing: Array<{ name: string; address: string; createdAt: string }> = (() => {
       try {
-        const raw = localStorage.getItem('rayay_named_wallets');
+        const raw = localStorage.getItem(walletStorageKey);
         if (raw) return JSON.parse(raw) as Array<{ name: string; address: string; createdAt: string }>;
       } catch { /* empty */ }
       return [];
     })();
     const updated = [entry, ...existing];
-    localStorage.setItem('rayay_named_wallets', JSON.stringify(updated));
+    localStorage.setItem(walletStorageKey, JSON.stringify(updated));
     setSavedWallets(updated);
     setWalletSaved(true);
     setGeneratedWallet(null);
@@ -1012,8 +1023,9 @@ export function QuantumAgentKitPanel({
   };
 
   const forgetWallet = (address: string) => {
+    if (!walletStorageKey) return;
     const updated = savedWallets.filter((w) => w.address !== address);
-    localStorage.setItem('rayay_named_wallets', JSON.stringify(updated));
+    localStorage.setItem(walletStorageKey, JSON.stringify(updated));
     setSavedWallets(updated);
   };
 
@@ -1061,12 +1073,24 @@ export function QuantumAgentKitPanel({
           </div>
         </div>
 
+        {/* Require wallet connection */}
+        {!connectedWallet && (
+          <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <strong>Connect your wallet</strong> to create and manage named wallets. Your saved wallets are stored privately per connected address.
+          </div>
+        )}
+
         {/* Create new wallet */}
         <div className="mb-4 rounded-xl border border-[color:var(--brand-leaf)]/30 bg-white/70 p-4">
           <div className="mb-3 flex items-center gap-2">
             <span className="rounded-full border border-[color:var(--brand-leaf)]/40 bg-[color:var(--brand-cream)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand-ink)]/70">
               Create Wallet
             </span>
+            {connectedWallet && (
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] text-[color:var(--brand-ink)]/55">
+                Saved to: {connectedWallet.slice(0, 6)}…{connectedWallet.slice(-4)}
+              </span>
+            )}
           </div>
 
           <div className="mb-3">
@@ -1076,7 +1100,8 @@ export function QuantumAgentKitPanel({
               value={walletName}
               onChange={(e) => setWalletName(e.target.value)}
               placeholder="e.g. Trading Wallet, Savings, DeFi Pool..."
-              className="w-full rounded-md border border-[color:var(--brand-leaf)]/35 bg-white px-3 py-2 text-sm text-[color:var(--brand-ink)] placeholder:text-[color:var(--brand-ink)]/40 focus:outline-none focus:ring-1 focus:ring-[color:var(--brand-leaf)]/50"
+              disabled={!connectedWallet}
+              className="w-full rounded-md border border-[color:var(--brand-leaf)]/35 bg-white px-3 py-2 text-sm text-[color:var(--brand-ink)] placeholder:text-[color:var(--brand-ink)]/40 focus:outline-none focus:ring-1 focus:ring-[color:var(--brand-leaf)]/50 disabled:cursor-not-allowed disabled:opacity-50"
               maxLength={48}
             />
           </div>
@@ -1084,7 +1109,8 @@ export function QuantumAgentKitPanel({
           <button
             type="button"
             onClick={generateNewWallet}
-            className="rounded-lg border border-[color:var(--brand-leaf)]/50 bg-[color:var(--brand-cream)] px-4 py-2 text-sm font-semibold text-[color:var(--brand-forest)] hover:border-[color:var(--brand-forest)]/60 hover:bg-[color:var(--brand-cream)]/80"
+            disabled={!connectedWallet}
+            className="rounded-lg border border-[color:var(--brand-leaf)]/50 bg-[color:var(--brand-cream)] px-4 py-2 text-sm font-semibold text-[color:var(--brand-forest)] hover:border-[color:var(--brand-forest)]/60 hover:bg-[color:var(--brand-cream)]/80 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Generate New Wallet
           </button>
