@@ -255,7 +255,7 @@ export function GovernanceInterface() {
   }, [proposalError, isPropSubmitting, isPropConfirming, isPropConfirmed, proposalTxHash, explorerBaseUrl]);
 
   // Proposal list via React Query — refetches automatically when proposalCount changes
-  const { data: recentProposals = [], isLoading: loadingProposals } = useQuery({
+  const { data: recentProposals = [], isLoading: loadingProposals, refetch: refetchProposals } = useQuery({
     queryKey: ['governance-proposals', governorAddress, String(proposalCount), selectedChainId],
     enabled: !!publicClient && proposalCount !== undefined && isSupportedChain,
     staleTime: 30_000,
@@ -499,7 +499,7 @@ export function GovernanceInterface() {
           <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-semibold text-[color:var(--brand-ink)]">Recent Proposals</button>
           <button
             type="button"
-            onClick={loadRecentProposals}
+            onClick={() => { void refetchProposals(); }}
             disabled={loadingProposals || !isSupportedChain}
             className="rounded-full border border-[color:var(--brand-leaf)]/40 bg-white px-3 py-1 text-xs font-semibold text-[color:var(--brand-forest)] disabled:opacity-50"
           >
