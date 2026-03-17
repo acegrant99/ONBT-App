@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
 import { useAccount, useSignMessage } from 'wagmi';
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import type {
   AgentAccessProfileResult,
   AgentAdvisorMessage,
@@ -82,6 +83,18 @@ export function QuantumAgentKitPanel({
   const [accessLoading, setAccessLoading] = useState(false);
   const lastAutoTakeoverKey = useRef('');
   const lastAutoStrategyKey = useRef('');
+
+  // QPanda preset selector
+  const [qpandaPreset, setQpandaPreset] = useState('bell');
+
+  // Wallet creator state
+  const [showWalletCreator, setShowWalletCreator] = useState(false);
+  const [walletName, setWalletName] = useState('');
+  const [generatedWallet, setGeneratedWallet] = useState<{ address: string; privateKey: string } | null>(null);
+  const [privateKeyVisible, setPrivateKeyVisible] = useState(false);
+  const [walletSaved, setWalletSaved] = useState(false);
+  const [savedWallets, setSavedWallets] = useState<Array<{ name: string; address: string; createdAt: string }>>([]);
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const { address: connectedWallet } = useAccount();
   const { signMessageAsync } = useSignMessage();
 
@@ -251,6 +264,11 @@ export function QuantumAgentKitPanel({
     if (!autoTakeoverEnabled) return;
     autoApplyTakeover(githubScout, prediction);
   }, [autoTakeoverEnabled, githubScout, prediction, activeTab, autoApplyTakeover]);
+
+  useEffect(() => {
+    loadSavedWallets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const resolveAccessProfile = async () => {
@@ -916,6 +934,97 @@ export function QuantumAgentKitPanel({
     void runStrategyLab(true);
   }, [autoStrategyEnabled, activeTab, prediction]);
 
+  // ─── Circuit presets ────────────────────────────────────────────────────────
+  const CIRCUIT_PRESETS: Record<string, { label: string; ir: string }> = {
+    bell: {
+      label: 'Bell State (2-qubit entanglement)',
+      ir: 'QINIT 2\nCREG 2\nH q[0]\nCNOT q[0],q[1]\nMEASURE q[0],c[0]\nMEASURE q[1],c[1]',
+    },
+    ghz: {
+      label: 'GHZ State (3-qubit entanglement)',
+      ir: 'QINIT 3\nCREG 3\nH q[0]\nCNOT q[0],q[1]\nCNOT q[0],q[2]\nMEASURE q[0],c[0]\nMEASURE q[1],c[1]\nMEASURE q[2],c[2]',
+    },
+    rotation: {
+      label: 'Single Qubit Rotation (Ry π/2)',
+      ir: 'QINIT 1\nCREG 1\nRY(1.5707963) q[0]\nMEASURE q[0],c[0]',
+    },
+    grover: {
+      label: 'Grover Search (2-qubit)',
+      ir: 'QINIT 2\nCREG 2\nH q[0]\nH q[1]\nX q[0]\nX q[1]\nH q[1]\nCNOT q[0],q[1]\nH q[1]\nX q[0]\nX q[1]\nH q[0]\nH q[1]\nMEASURE q[0],c[0]\nMEASURE q[1],c[1]',
+    },
+    custom: { label: 'Custom OriginIR', ir: '' },
+  };
+
+  const applyCircuitPreset = (presetKey: string) => {
+    setQpandaPreset(presetKey);
+    const preset = CIRCUIT_PRESETS[presetKey];
+    if (preset && preset.ir) {
+      setQpandaOriginIr(preset.ir);
+    } else if (presetKey === 'custom') {
+      // keep existing IR for user editing
+    }
+  };
+
+  // ─── Wallet creator helpers ─────────────────────────────────────────────────
+  const loadSavedWallets = () => {
+    try {
+      const raw = localStorage.getItem('rayay_named_wallets');
+      if (raw) {
+        const parsed = JSON.parse(raw) as Array<{ name: string; address: string; createdAt: string }>;
+        if (Array.isArray(parsed)) {
+          setSavedWallets(parsed);
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
+  };
+
+  const generateNewWallet = () => {
+    const pk = generatePrivateKey();
+    const account = privateKeyToAccount(pk);
+    setGeneratedWallet({ address: account.address, privateKey: pk });
+    setPrivateKeyVisible(false);
+    setWalletSaved(false);
+  };
+
+  const saveWallet = () => {
+    if (!generatedWallet || !walletName.trim()) return;
+    const entry = {
+      name: walletName.trim(),
+      address: generatedWallet.address,
+      createdAt: new Date().toISOString(),
+    };
+    const existing: Array<{ name: string; address: string; createdAt: string }> = (() => {
+      try {
+        const raw = localStorage.getItem('rayay_named_wallets');
+        if (raw) return JSON.parse(raw) as Array<{ name: string; address: string; createdAt: string }>;
+      } catch { /* empty */ }
+      return [];
+    })();
+    const updated = [entry, ...existing];
+    localStorage.setItem('rayay_named_wallets', JSON.stringify(updated));
+    setSavedWallets(updated);
+    setWalletSaved(true);
+    setGeneratedWallet(null);
+    setWalletName('');
+    setPrivateKeyVisible(false);
+  };
+
+  const forgetWallet = (address: string) => {
+    const updated = savedWallets.filter((w) => w.address !== address);
+    localStorage.setItem('rayay_named_wallets', JSON.stringify(updated));
+    setSavedWallets(updated);
+  };
+
+  const copyToClipboard = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedAddress(id);
+      setTimeout(() => setCopiedAddress(null), 2000);
+    } catch { /* ignore */ }
+  };
+
   const activateTakeover = () => {
     if (!canUse.takeover) {
       denySensitiveAction('Takeover controls');
@@ -932,6 +1041,183 @@ export function QuantumAgentKitPanel({
       featuredTabs,
     });
   };
+
+  // ─── Wallet creator view (early return) ────────────────────────────────────
+  if (showWalletCreator) {
+    return (
+      <section className="mb-6 rounded-2xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/80 p-4 sm:p-5">
+        {/* Header */}
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowWalletCreator(false)}
+              className="flex items-center gap-1.5 rounded-full border border-slate-900/10 bg-white/90 px-3 py-1.5 text-xs font-semibold text-[color:var(--brand-ink)]/80 hover:border-slate-400"
+            >
+              ← Back to AI Advisor
+            </button>
+            <h2 className="mt-2 text-sm font-semibold text-[color:var(--brand-ink)]/90">My Quantum Wallets</h2>
+            <p className="text-[11px] text-[color:var(--brand-ink)]/60">Generate new wallets, name them, and keep track of your addresses right here.</p>
+          </div>
+        </div>
+
+        {/* Create new wallet */}
+        <div className="mb-4 rounded-xl border border-[color:var(--brand-leaf)]/30 bg-white/70 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="rounded-full border border-[color:var(--brand-leaf)]/40 bg-[color:var(--brand-cream)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand-ink)]/70">
+              Create Wallet
+            </span>
+          </div>
+
+          <div className="mb-3">
+            <label className="mb-1 block text-xs font-semibold text-[color:var(--brand-ink)]/75">Wallet Name</label>
+            <input
+              type="text"
+              value={walletName}
+              onChange={(e) => setWalletName(e.target.value)}
+              placeholder="e.g. Trading Wallet, Savings, DeFi Pool..."
+              className="w-full rounded-md border border-[color:var(--brand-leaf)]/35 bg-white px-3 py-2 text-sm text-[color:var(--brand-ink)] placeholder:text-[color:var(--brand-ink)]/40 focus:outline-none focus:ring-1 focus:ring-[color:var(--brand-leaf)]/50"
+              maxLength={48}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={generateNewWallet}
+            className="rounded-lg border border-[color:var(--brand-leaf)]/50 bg-[color:var(--brand-cream)] px-4 py-2 text-sm font-semibold text-[color:var(--brand-forest)] hover:border-[color:var(--brand-forest)]/60 hover:bg-[color:var(--brand-cream)]/80"
+          >
+            Generate New Wallet
+          </button>
+
+          {generatedWallet && (
+            <div className="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="rounded-full border border-emerald-400 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">New Wallet Generated</span>
+              </div>
+
+              {/* Address */}
+              <div className="mb-2">
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700/70">Wallet Address</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 rounded-md border border-emerald-200 bg-white px-2 py-1.5 text-xs text-emerald-900 break-all">
+                    {generatedWallet.address}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => void copyToClipboard(generatedWallet.address, `addr-${generatedWallet.address}`)}
+                    className="shrink-0 rounded-md border border-emerald-300 bg-white px-2 py-1.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100"
+                  >
+                    {copiedAddress === `addr-${generatedWallet.address}` ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Private key reveal */}
+              <div className="mb-3">
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700/70">Private Key</p>
+                <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-800">
+                  ⚠ Your private key controls this wallet. Store it safely and never share it. It will not be saved by RAYAY.
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  {privateKeyVisible ? (
+                    <code className="flex-1 rounded-md border border-emerald-200 bg-white px-2 py-1.5 text-xs text-emerald-900 break-all">
+                      {generatedWallet.privateKey}
+                    </code>
+                  ) : (
+                    <div className="flex-1 rounded-md border border-emerald-200 bg-white px-2 py-1.5 text-xs text-[color:var(--brand-ink)]/40 select-none">
+                      {'•'.repeat(64)}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPrivateKeyVisible((v) => !v)}
+                    className="shrink-0 rounded-md border border-emerald-300 bg-white px-2 py-1.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100"
+                  >
+                    {privateKeyVisible ? 'Hide' : 'Reveal'}
+                  </button>
+                  {privateKeyVisible && (
+                    <button
+                      type="button"
+                      onClick={() => void copyToClipboard(generatedWallet.privateKey, `pk-${generatedWallet.address}`)}
+                      className="shrink-0 rounded-md border border-emerald-300 bg-white px-2 py-1.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100"
+                    >
+                      {copiedAddress === `pk-${generatedWallet.address}` ? 'Copied!' : 'Copy Key'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Save */}
+              <button
+                type="button"
+                onClick={saveWallet}
+                disabled={!walletName.trim()}
+                className="rounded-lg border border-[color:var(--brand-forest)]/50 bg-[color:var(--brand-forest)]/10 px-4 py-2 text-sm font-semibold text-[color:var(--brand-forest)] hover:bg-[color:var(--brand-forest)]/15 disabled:opacity-50"
+              >
+                Save Wallet{walletName.trim() ? ` "${walletName.trim()}"` : ' (enter a name first)'}
+              </button>
+            </div>
+          )}
+
+          {walletSaved && !generatedWallet && (
+            <div className="mt-3 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+              Wallet saved! You can find it in your list below.
+            </div>
+          )}
+        </div>
+
+        {/* Saved wallets list */}
+        <div className="rounded-xl border border-[color:var(--brand-leaf)]/25 bg-white/60 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="rounded-full border border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand-ink)]/70">
+              Saved Wallets ({savedWallets.length})
+            </span>
+            <button
+              type="button"
+              onClick={loadSavedWallets}
+              className="text-[11px] font-semibold text-[color:var(--brand-ink)]/50 hover:text-[color:var(--brand-ink)]"
+            >
+              Refresh
+            </button>
+          </div>
+
+          {savedWallets.length === 0 ? (
+            <p className="text-xs text-[color:var(--brand-ink)]/50">No wallets saved yet. Generate one above to get started.</p>
+          ) : (
+            <div className="space-y-2">
+              {savedWallets.map((wallet) => (
+                <div key={wallet.address} className="rounded-lg border border-[color:var(--brand-leaf)]/20 bg-white px-3 py-2">
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-[color:var(--brand-ink)]/90">{wallet.name}</span>
+                    <span className="text-[10px] text-[color:var(--brand-ink)]/45">{new Date(wallet.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 truncate text-[11px] text-[color:var(--brand-ink)]/70">
+                      {wallet.address.slice(0, 10)}...{wallet.address.slice(-8)}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => void copyToClipboard(wallet.address, `saved-${wallet.address}`)}
+                      className="shrink-0 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      {copiedAddress === `saved-${wallet.address}` ? 'Copied!' : 'Copy'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => forgetWallet(wallet.address)}
+                      className="shrink-0 rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 hover:bg-rose-100"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mb-6 rounded-2xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/80 p-4 sm:p-5">
@@ -967,6 +1253,13 @@ export function QuantumAgentKitPanel({
               : 'No critical package updates'}
           </span>
         )}
+        <button
+          type="button"
+          onClick={() => { setShowWalletCreator(true); setGeneratedWallet(null); setWalletSaved(false); }}
+          className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--brand-leaf)]/40 bg-[color:var(--brand-cream)] px-3 py-1 text-xs font-semibold text-[color:var(--brand-forest)] hover:border-[color:var(--brand-forest)]/50"
+        >
+          My Wallets
+        </button>
       </div>
 
       <div className="mb-3 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/70 px-3 py-2 text-xs">
@@ -1132,105 +1425,168 @@ export function QuantumAgentKitPanel({
           {isRunningTask ? 'Loading...' : 'List Deployments'}
         </button>
 
-        <div className="col-span-full rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2">
-          <button type="button" className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800/80 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1">QPanda Controls</button>
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <div className="text-xs text-[color:var(--brand-ink)]/80">
-              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Shots</button>
-              <input
-                type="number"
-                aria-label="Shots"
-                title="Shots"
-                min={1}
-                step={1}
-                value={qpandaShots}
-                onChange={(event) => setQpandaShots(event.target.value)}
-                className="mt-1 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
-                placeholder="1024"
-              />
+        <div className="col-span-full rounded-xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-white px-4 py-3">
+          {/* Admin panel header */}
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-emerald-900">Quantum Circuit Lab</span>
+              <span className="rounded-full border border-emerald-400 bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
+                Admin Only
+              </span>
+            </div>
+            <span
+              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${
+                canUse.quantumTasks
+                  ? 'border-emerald-300 bg-emerald-100 text-emerald-800'
+                  : 'border-rose-300 bg-rose-100 text-rose-700'
+              }`}
+            >
+              {canUse.quantumTasks ? 'Deployer Access Active' : 'Deployer Access Required'}
+            </span>
+          </div>
+
+          {!canUse.quantumTasks && (
+            <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+              QPanda tasks require deployer-level access. Switch wallet mode to <strong>Deployer</strong> or connect an authorized deployer wallet.
+            </div>
+          )}
+
+          {/* Circuit preset selector */}
+          <div className="mb-3">
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-emerald-800/70">
+              Circuit Preset
+            </label>
+            <select
+              aria-label="Circuit preset"
+              value={qpandaPreset}
+              onChange={(e) => applyCircuitPreset(e.target.value)}
+              className="w-full rounded-md border border-emerald-200 bg-white px-3 py-2 text-xs text-[color:var(--brand-ink)] focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            >
+              {Object.entries(CIRCUIT_PRESETS).map(([key, preset]) => (
+                <option key={key} value={key}>{preset.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* Left: Circuit configuration */}
+            <div className="rounded-lg border border-emerald-200 bg-white/70 p-3">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-800/70">Circuit Configuration</p>
+
+              <div className="mb-2">
+                <label className="mb-1 block text-[11px] font-semibold text-[color:var(--brand-ink)]/70">OriginIR Code</label>
+                <textarea
+                  aria-label="OriginIR circuit code"
+                  title="OriginIR circuit code"
+                  value={qpandaOriginIr}
+                  onChange={(event) => { setQpandaOriginIr(event.target.value); setQpandaPreset('custom'); }}
+                  className="h-28 w-full rounded-md border border-emerald-200 bg-emerald-50/30 px-2 py-1.5 font-mono text-[11px] text-[color:var(--brand-ink)]/90 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  placeholder={'QINIT 2\nCREG 2\nH q[0]\nCNOT q[0],q[1]\nMEASURE q[0],c[0]\nMEASURE q[1],c[1]'}
+                  spellCheck={false}
+                />
+              </div>
+
+              <div className="mb-2">
+                <label className="mb-1 block text-[11px] font-semibold text-[color:var(--brand-ink)]/70">
+                  Shots <span className="font-normal text-[color:var(--brand-ink)]/50">(measurement runs)</span>
+                </label>
+                <input
+                  type="number"
+                  aria-label="Number of shots"
+                  title="Number of shots"
+                  min={1}
+                  step={1}
+                  value={qpandaShots}
+                  onChange={(event) => setQpandaShots(event.target.value)}
+                  className="w-full rounded-md border border-emerald-200 bg-white px-2 py-1.5 text-xs text-[color:var(--brand-ink)]/90 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  placeholder="1024"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold text-[color:var(--brand-ink)]/70">
+                  Chip ID <span className="font-normal text-[color:var(--brand-ink)]/50">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  aria-label="Quantum chip ID"
+                  title="Quantum chip ID"
+                  value={qpandaChipId}
+                  onChange={(event) => setQpandaChipId(event.target.value)}
+                  className="w-full rounded-md border border-emerald-200 bg-white px-2 py-1.5 text-xs text-[color:var(--brand-ink)]/90 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  placeholder="e.g. OriginQ-72"
+                />
+              </div>
             </div>
 
-            <div className="text-xs text-[color:var(--brand-ink)]/80">
-              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Chip ID (optional)</button>
-              <input
-                type="text"
-                aria-label="Chip ID optional"
-                title="Chip ID optional"
-                value={qpandaChipId}
-                onChange={(event) => setQpandaChipId(event.target.value)}
-                className="mt-1 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
-                placeholder="e.g. OriginQ-72"
-              />
-            </div>
+            {/* Right: Task management */}
+            <div className="rounded-lg border border-emerald-200 bg-white/70 p-3">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-800/70">Task Management</p>
 
-            <div className="text-xs text-[color:var(--brand-ink)]/80 sm:col-span-2">
-              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Task ID (for manual query)</button>
-              <input
-                type="text"
-                aria-label="Task ID for manual query"
-                title="Task ID for manual query"
-                value={qpandaTaskIdInput}
-                onChange={(event) => setQpandaTaskIdInput(event.target.value)}
-                className="mt-1 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
-                placeholder="Paste task id to query"
-              />
-            </div>
+              <div className="mb-2">
+                <label className="mb-1 block text-[11px] font-semibold text-[color:var(--brand-ink)]/70">Task Description</label>
+                <input
+                  type="text"
+                  aria-label="Task description"
+                  title="Task description"
+                  value={qpandaDescribe}
+                  onChange={(event) => setQpandaDescribe(event.target.value)}
+                  className="w-full rounded-md border border-emerald-200 bg-white px-2 py-1.5 text-xs text-[color:var(--brand-ink)]/90 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  placeholder="e.g. ONBT Bell-state check"
+                />
+              </div>
 
-            <div className="text-xs text-[color:var(--brand-ink)]/80 sm:col-span-2">
-              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Description</button>
-              <input
-                type="text"
-                aria-label="Description"
-                title="Description"
-                value={qpandaDescribe}
-                onChange={(event) => setQpandaDescribe(event.target.value)}
-                className="mt-1 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
-                placeholder="Task description"
-              />
-            </div>
+              <div className="mb-3">
+                <label className="mb-1 block text-[11px] font-semibold text-[color:var(--brand-ink)]/70">
+                  Query Task ID <span className="font-normal text-[color:var(--brand-ink)]/50">(for status check)</span>
+                </label>
+                <input
+                  type="text"
+                  aria-label="Task ID for query"
+                  title="Task ID for query"
+                  value={qpandaTaskIdInput}
+                  onChange={(event) => setQpandaTaskIdInput(event.target.value)}
+                  className="w-full rounded-md border border-emerald-200 bg-white px-2 py-1.5 text-xs text-[color:var(--brand-ink)]/90 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  placeholder="Paste task ID to check status"
+                />
+              </div>
 
-            <div className="text-xs text-[color:var(--brand-ink)]/80 sm:col-span-2">
-              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">OriginIR (optional, defaults to Bell circuit)</button>
-              <textarea
-                aria-label="OriginIR optional defaults to Bell circuit"
-                title="OriginIR optional defaults to Bell circuit"
-                value={qpandaOriginIr}
-                onChange={(event) => setQpandaOriginIr(event.target.value)}
-                className="mt-1 h-24 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
-                placeholder="QINIT 2&#10;CREG 2&#10;H q[0]&#10;CNOT q[0],q[1]&#10;MEASURE q[0],c[0]&#10;MEASURE q[1],c[1]"
-              />
-            </div>
+              <label className="mb-3 flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  aria-label="Wait for final result on submit"
+                  title="Sync mode: wait for result"
+                  checked={qpandaWaitResult}
+                  onChange={(event) => setQpandaWaitResult(event.target.checked)}
+                  className="h-4 w-4 rounded border-emerald-300 text-emerald-600"
+                />
+                <span className="text-[11px] font-semibold text-[color:var(--brand-ink)]/80">
+                  Sync mode — wait for final result on submit
+                </span>
+              </label>
 
-            <div className="flex items-center gap-2 text-xs text-[color:var(--brand-ink)]/85 sm:col-span-2">
-              <input
-                type="checkbox"
-                aria-label="Wait for final result on submit"
-                title="Wait for final result on submit"
-                checked={qpandaWaitResult}
-                onChange={(event) => setQpandaWaitResult(event.target.checked)}
-              />
-              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Wait for final result on submit (sync mode)</button>
+              {/* Action buttons */}
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => void runQpandaTask('submit')}
+                  disabled={isRunningTask || !canUse.quantumTasks}
+                  className="w-full rounded-lg border border-emerald-400 bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                >
+                  {isRunningTask ? '⏳ Submitting...' : 'Submit Circuit to QPanda'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void runQpandaTask('query')}
+                  disabled={isRunningTask || !canUse.quantumTasks || (!qpandaTask?.taskId && !qpandaTaskIdInput.trim())}
+                  className="w-full rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-800 hover:border-emerald-500 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isRunningTask ? '⏳ Querying...' : 'Query Task Status'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => void runQpandaTask('submit')}
-          disabled={isRunningTask || !canUse.quantumTasks}
-          className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-900 hover:border-emerald-500 disabled:opacity-60"
-        >
-          {isRunningTask ? 'Submitting...' : 'Submit Quantum Task'}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => void runQpandaTask('query')}
-          disabled={isRunningTask || !canUse.quantumTasks || !qpandaTask?.taskId}
-          className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-left text-xs font-semibold text-emerald-800 hover:border-emerald-400 disabled:opacity-60"
-        >
-          {isRunningTask ? 'Querying...' : 'Query Quantum Task'}
-        </button>
 
         <button
           type="button"
