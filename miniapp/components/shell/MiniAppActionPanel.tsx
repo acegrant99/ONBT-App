@@ -1,13 +1,17 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { useComposeCast, useMiniKit, useOpenUrl, useViewProfile } from '@coinbase/onchainkit/minikit';
+import { useAccount } from 'wagmi';
+import { WalletIdentityBadge } from '@/components/WalletIdentityBadge';
 
 export function MiniAppActionPanel() {
   const { context } = useMiniKit();
   const { composeCast, isPending: isComposingCast } = useComposeCast();
   const openUrl = useOpenUrl();
   const viewProfile = useViewProfile();
+  const { address } = useAccount();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<'neutral' | 'success' | 'error'>('neutral');
 
@@ -42,20 +46,26 @@ export function MiniAppActionPanel() {
         ? 'border-rose-300 bg-rose-50 text-rose-900'
         : 'border-slate-200 bg-slate-50 text-slate-700';
 
+    const composeCastMutation = useMutation({
+      mutationFn: async () => {
+        composeCast({
+          text: 'Tracking ONBT across Base and Arbitrum inside ONabat. Omnichain trading, bridging, staking, and governance in one miniapp.',
+          embeds: [shareUrl],
+        });
+      },
+      onSuccess: () => {
+        setFeedbackTone('success');
+        setFeedback('Cast composer opened with an ONabat share draft.');
+      },
+      onError: (error) => {
+        setFeedbackTone('error');
+        setFeedback(error instanceof Error ? error.message : 'Unable to open the cast composer.');
+      },
+    });
+
   const handleComposeCast = () => {
     setFeedback(null);
-
-    try {
-      composeCast({
-        text: 'Tracking ONBT across Base and Arbitrum inside ONabat. Omnichain trading, bridging, staking, and governance in one miniapp.',
-        embeds: [shareUrl],
-      });
-      setFeedbackTone('success');
-      setFeedback('Cast composer opened with an ONabat share draft.');
-    } catch (error) {
-      setFeedbackTone('error');
-      setFeedback(error instanceof Error ? error.message : 'Unable to open the cast composer.');
-    }
+    composeCastMutation.mutate();
   };
 
   return (
@@ -84,6 +94,8 @@ export function MiniAppActionPanel() {
             <div className="mini-orb flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 via-cyan-700 to-cyan-400 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-[0_14px_24px_rgba(14,116,144,0.22)]">
               {initials}
             </div>
+
+            {address && <WalletIdentityBadge address={address} label="Wallet" />}
 
             <div className="min-w-0 flex flex-wrap gap-2">
               <button
@@ -127,10 +139,10 @@ export function MiniAppActionPanel() {
           <button
             type="button"
             onClick={handleComposeCast}
-            disabled={!hasContext || isComposingCast}
+            disabled={!hasContext || isComposingCast || composeCastMutation.isPending}
             className="cta-button rounded-2xl border border-cyan-300/55 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-950 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
           >
-            {isComposingCast ? 'Opening Cast Composer...' : 'Share ONabat in a Cast'}
+            {isComposingCast || composeCastMutation.isPending ? 'Opening Cast Composer...' : 'Share ONabat in a Cast'}
           </button>
           <button
             type="button"

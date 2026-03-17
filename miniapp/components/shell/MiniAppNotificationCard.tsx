@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useAddFrame, useNotification } from '@coinbase/onchainkit/minikit';
+import { useMutation } from '@tanstack/react-query';
 
 type MiniAppNotificationCardProps = {
   isInMiniApp: boolean;
@@ -18,8 +19,6 @@ export function MiniAppNotificationCard({
 }: MiniAppNotificationCardProps) {
   const addFrame = useAddFrame();
   const sendNotification = useNotification();
-  const [isAdding, setIsAdding] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<'neutral' | 'success' | 'error'>('neutral');
 
@@ -58,12 +57,12 @@ export function MiniAppNotificationCard({
         ? 'border-rose-300 bg-rose-50 text-rose-900'
         : 'border-slate-200 bg-slate-50 text-slate-700';
 
-  const handleAddFrame = async () => {
-    setIsAdding(true);
-    setFeedback(null);
-
-    try {
-      const details = await addFrame();
+  const addFrameMutation = useMutation({
+    mutationFn: async () => addFrame(),
+    onMutate: () => {
+      setFeedback(null);
+    },
+    onSuccess: (details) => {
       if (details) {
         setFeedbackTone('success');
         setFeedback('ONabat was added successfully. Notification delivery is ready to test.');
@@ -71,24 +70,23 @@ export function MiniAppNotificationCard({
         setFeedbackTone('neutral');
         setFeedback('Add flow completed without notification details. Farcaster may require a permission refresh.');
       }
-    } catch (error) {
+    },
+    onError: (error) => {
       setFeedbackTone('error');
       setFeedback(error instanceof Error ? error.message : 'Failed to add the miniapp.');
-    } finally {
-      setIsAdding(false);
-    }
-  };
+    },
+  });
 
-  const handleSendTest = async () => {
-    setIsSending(true);
-    setFeedback(null);
-
-    try {
-      const delivered = await sendNotification({
+  const sendTestMutation = useMutation({
+    mutationFn: async () =>
+      sendNotification({
         title: 'ONabat alert',
         body: 'Notifications are live for this miniapp session.',
-      });
-
+      }),
+    onMutate: () => {
+      setFeedback(null);
+    },
+    onSuccess: (delivered) => {
       if (delivered) {
         setFeedbackTone('success');
         setFeedback('Test notification submitted to Farcaster. Check your client inbox.');
@@ -96,12 +94,21 @@ export function MiniAppNotificationCard({
         setFeedbackTone('error');
         setFeedback('Notification request was rejected. Confirm the miniapp is added and notifications are enabled in Farcaster.');
       }
-    } catch (error) {
+    },
+    onError: (error) => {
       setFeedbackTone('error');
       setFeedback(error instanceof Error ? error.message : 'Failed to send a test notification.');
-    } finally {
-      setIsSending(false);
-    }
+    },
+  });
+
+  const handleAddFrame = async () => {
+    setFeedback(null);
+    await addFrameMutation.mutateAsync();
+  };
+
+  const handleSendTest = async () => {
+    setFeedback(null);
+    await sendTestMutation.mutateAsync();
   };
 
   return (
@@ -155,18 +162,18 @@ export function MiniAppNotificationCard({
           <button
             type="button"
             onClick={() => void handleAddFrame()}
-            disabled={!isInMiniApp || isAdding || isAdded}
+            disabled={!isInMiniApp || addFrameMutation.isPending || isAdded}
             className="rounded-2xl border border-slate-900/12 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            {isAdding ? 'Adding...' : isAdded ? 'Miniapp Added' : 'Add to Farcaster'}
+            {addFrameMutation.isPending ? 'Adding...' : isAdded ? 'Miniapp Added' : 'Add to Farcaster'}
           </button>
           <button
             type="button"
             onClick={() => void handleSendTest()}
-            disabled={!isInMiniApp || !hasNotificationDetails || isSending}
+            disabled={!isInMiniApp || !hasNotificationDetails || sendTestMutation.isPending}
             className="rounded-2xl border border-cyan-300/55 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-950 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
           >
-            {isSending ? 'Sending...' : 'Send Test Ping'}
+            {sendTestMutation.isPending ? 'Sending...' : 'Send Test Ping'}
           </button>
         </div>
       </div>
