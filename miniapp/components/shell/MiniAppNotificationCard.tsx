@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAddFrame, useNotification } from '@coinbase/onchainkit/minikit';
 import { useMutation } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'framer-motion';
 
 type MiniAppNotificationCardProps = {
   isInMiniApp: boolean;
@@ -21,6 +22,12 @@ export function MiniAppNotificationCard({
   const sendNotification = useNotification();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<'neutral' | 'success' | 'error'>('neutral');
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const status = useMemo(() => {
     if (!isInMiniApp) {
@@ -101,6 +108,25 @@ export function MiniAppNotificationCard({
     },
   });
 
+  const mutationStateLabel = addFrameMutation.isPending
+    ? 'Adding to Farcaster...'
+    : sendTestMutation.isPending
+      ? 'Sending test ping...'
+      : addFrameMutation.isError || sendTestMutation.isError
+        ? 'Last action failed'
+        : addFrameMutation.isSuccess || sendTestMutation.isSuccess
+          ? 'Last action succeeded'
+          : 'No pending actions';
+
+  const lastMutationAt = Math.max(
+    addFrameMutation.submittedAt || 0,
+    sendTestMutation.submittedAt || 0,
+    addFrameMutation.dataUpdatedAt || 0,
+    sendTestMutation.dataUpdatedAt || 0
+  );
+
+  const mutationAgeSec = lastMutationAt > 0 ? Math.max(Math.floor((now - lastMutationAt) / 1000), 0) : null;
+
   const handleAddFrame = async () => {
     setFeedback(null);
     await addFrameMutation.mutateAsync();
@@ -133,20 +159,25 @@ export function MiniAppNotificationCard({
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3">
-            <button
+            <motion.button
               type="button"
+              whileHover={{ y: -1 }}
               className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-3 text-left font-semibold text-slate-900 shadow-[0_10px_22px_rgba(15,23,42,0.06)]"
             >
               {status.label}
-            </button>
-            <button
+              <div className="mt-1 text-xs text-slate-600">{mutationStateLabel}</div>
+            </motion.button>
+            <motion.button
               type="button"
+              whileHover={{ y: -1 }}
               className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-3 text-left font-semibold text-slate-900 shadow-[0_10px_22px_rgba(15,23,42,0.06)]"
             >
               {status.detail}
-            </button>
-            <button
+              <div className="mt-1 text-xs text-slate-600">{mutationAgeSec === null ? 'No actions yet' : `Updated ${mutationAgeSec}s ago`}</div>
+            </motion.button>
+            <motion.button
               type="button"
+              whileHover={{ y: -1 }}
               className={`rounded-2xl border px-3 py-3 text-left font-semibold shadow-[0_10px_22px_rgba(15,23,42,0.06)] ${
                 hasNotificationDetails
                   ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
@@ -154,7 +185,8 @@ export function MiniAppNotificationCard({
               }`}
             >
               {hasNotificationDetails ? 'Push Ready' : 'Push Locked'}
-            </button>
+              <div className="mt-1 text-xs text-slate-600">{isInMiniApp ? 'Miniapp runtime' : 'Browser runtime'}</div>
+            </motion.button>
           </div>
         </div>
 
@@ -178,11 +210,19 @@ export function MiniAppNotificationCard({
         </div>
       </div>
 
-      {feedback ? (
-        <div className={`mt-4 rounded-2xl border px-3 py-2 text-sm ${feedbackClassName}`}>
-          {feedback}
-        </div>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {feedback ? (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className={`mt-4 rounded-2xl border px-3 py-2 text-sm ${feedbackClassName}`}
+          >
+            {feedback}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </section>
   );
 }
