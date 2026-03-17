@@ -744,8 +744,17 @@ export async function POST(request: Request) {
           ? `User prompt: ${prompt}`
           : `No explicit prompt. Generate proactive integrity and UX recommendations for the ${activeTab} tab.`;
 
+        // Include prior conversation turns so Origin Pilot has full context.
+        const historyMessages: ChatMessage[] = (body.history ?? [])
+          .slice(-10)
+          .map((msg) => ({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.text,
+          }));
+
         const chatMessages: ChatMessage[] = [
           { role: 'system', content: systemPrompt },
+          ...historyMessages,
           { role: 'user', content: userContent },
         ];
 
@@ -770,8 +779,10 @@ export async function POST(request: Request) {
           aiUxEnhancements = aiResp.uxEnhancements;
         }
         originPilotActive = true;
-      } catch {
-        // silently fall back to deterministic templates
+      } catch (pilotError) {
+        // Surface the Origin Pilot error so the caller knows responses are template-based.
+        aiSummary = `Origin Pilot is configured but could not respond: ${pilotError instanceof Error ? pilotError.message : 'unknown error'}. Showing template guidance below.`;
+        assistantText = aiSummary;
       }
     }
     // ─────────────────────────────────────────────────────────────────────────

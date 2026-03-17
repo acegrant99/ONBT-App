@@ -24,19 +24,23 @@ export interface OriginPilotOptions {
   signal?: AbortSignal;
 }
 
-/** Returns true when ORIGIN_PILOT_API is present in the environment. */
+/** Returns true when both ORIGIN_PILOT_API and ORIGIN_PILOT_URL are configured. */
 export function isOriginPilotConfigured(): boolean {
-  return Boolean(process.env.ORIGIN_PILOT_API?.trim());
+  return Boolean(process.env.ORIGIN_PILOT_API?.trim() && process.env.ORIGIN_PILOT_URL?.trim());
 }
 
-/** The base URL for completions requests. */
+/** The base URL for completions requests. Throws if not configured. */
 export function originPilotBaseUrl(): string {
-  return process.env.ORIGIN_PILOT_URL?.trim() || 'https://api.openai.com/v1';
+  const url = process.env.ORIGIN_PILOT_URL?.trim();
+  if (!url) {
+    throw new Error('ORIGIN_PILOT_URL is not set. Add it to miniapp/.env.local pointing to your Origin Pilot endpoint.');
+  }
+  return url;
 }
 
 /** The default model to use. */
 export function originPilotModel(): string {
-  return process.env.ORIGIN_PILOT_MODEL?.trim() || 'gpt-4o-mini';
+  return process.env.ORIGIN_PILOT_MODEL?.trim() || 'qwen2.5-72b-instruct';
 }
 
 /**
