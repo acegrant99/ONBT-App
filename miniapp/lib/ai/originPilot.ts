@@ -1,12 +1,25 @@
 /**
- * Origin Pilot — OpenAI-compatible LLM client for the Quantum AI advisor.
+ * Origin Pilot — Python-subprocess LLM client for the Quantum AI advisor.
  *
- * Reads the ORIGIN_PILOT_API bearer token from env.
- * Reads ORIGIN_PILOT_URL for a custom/self-hosted base URL
- * (default: https://api.openai.com/v1).
- * Reads ORIGIN_PILOT_MODEL for the model name
- * (default: gpt-4o-mini).
+ * Delegates LLM calls to scripts/quantum-ai/pyvqnet_llm.py via execFile,
+ * following the same pattern as qpandaClient.ts → qpanda_task.py.
+ *
+ * This allows pyvqnet's native LLM module to be dropped in when OriginQC
+ * ships one, without touching the TypeScript API layer.
+ *
+ * Env vars:
+ *   ORIGIN_PILOT_API   – OriginQC bearer token (required)
+ *   ORIGIN_PILOT_URL   – API base URL (default: https://qcloud.originqc.com.cn/api/v1)
+ *   ORIGIN_PILOT_MODEL – Model name (default: Qwen2.5-72B-Instruct)
  */
+
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import os from 'node:os';
+import path from 'node:path';
+import { readFile, writeFile, unlink } from 'node:fs/promises';
+
+const execFileAsync = promisify(execFile);
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -14,28 +27,27 @@ export interface ChatMessage {
 }
 
 export interface OriginPilotOptions {
-  /** Override the model for this call. Falls back to ORIGIN_PILOT_MODEL env var then gpt-4o-mini. */
+  /** Override the model for this call. Falls back to ORIGIN_PILOT_MODEL env var. */
   model?: string;
   /** Maximum tokens in the completion. Default: 1400. */
   maxTokens?: number;
   /** Sampling temperature 0–2. Default: 0.7. */
   temperature?: number;
-  /** AbortSignal for timeout / cancellation. */
+  // signal is not forwarded to the subprocess but kept for API compatibility.
   signal?: AbortSignal;
 }
 
-/** Returns true when both ORIGIN_PILOT_API and ORIGIN_PILOT_URL are configured. */
+/** Returns true when ORIGIN_PILOT_API is configured. */
 export function isOriginPilotConfigured(): boolean {
-  return Boolean(process.env.ORIGIN_PILOT_API?.trim() && process.env.ORIGIN_PILOT_URL?.trim());
+  return Boolean(process.env.ORIGIN_PILOT_API?.trim());
 }
 
-/** The base URL for completions requests. Throws if not configured. */
+/** The base URL used by the Python script. */
 export function originPilotBaseUrl(): string {
-  const url = process.env.ORIGIN_PILOT_URL?.trim();
-  if (!url) {
-    throw new Error('ORIGIN_PILOT_URL is not set. Add it to miniapp/.env.local pointing to your Origin Pilot endpoint.');
-  }
-  return url;
+  return (
+    process.env.ORIGIN_PILOT_URL?.trim() ||
+    'https://qcloud.originqc.com.cn/api/v1'
+  );
 }
 
 /** The default model to use. */
@@ -43,11 +55,59 @@ export function originPilotModel(): string {
   return process.env.ORIGIN_PILOT_MODEL?.trim() || 'Qwen2.5-72B-Instruct';
 }
 
+// ---------------------------------------------------------------------------
+// Python subprocess helpers (mirrors qpandaClient.ts)
+// ---------------------------------------------------------------------------
+
+function pythonCandidates(repoRoot: string): string[] {
+  return [
+    path.join(repoRoot, '.venv312', 'Scripts', 'python.exe'),
+    path.join(repoRoot, '.venv', 'Scripts', 'python.exe'),
+    path.join(repoRoot, '.venv313', 'Scripts', 'python.exe'),
+    'python',
+  ];
+}
+
+async function runPyvqnetLlm(
+  repoRoot: string,
+  scriptArgs: string[]
+): Promise<{ stdout: string; stderr: string }> {
+  const scriptPath = path.join(
+    repoRoot,
+    'scripts',
+    'quantum-ai',
+    'pyvqnet_llm.py'
+  );
+  const candidates = pythonCandidates(repoRoot);
+  let lastError: unknown = null;
+
+  for (const pythonExe of candidates) {
+    try {
+      return await execFileAsync(pythonExe, [scriptPath, ...scriptArgs], {
+        cwd: repoRoot,
+        timeout: 120_000,
+        windowsHide: true,
+        maxBuffer: 4 * 1024 * 1024,
+      });
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Unable to run python for OriginPilot LLM task');
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
 /**
- * Call the Origin Pilot LLM endpoint.
+ * Call the Origin Pilot LLM via the pyvqnet Python script.
  *
  * @throws When ORIGIN_PILOT_API is not set.
- * @throws When the API returns a non-2xx status.
+ * @throws When the Python script exits with an error.
  */
 export async function callOriginPilot(
   messages: ChatMessage[],
@@ -58,50 +118,69 @@ export async function callOriginPilot(
     throw new Error('ORIGIN_PILOT_API is not configured');
   }
 
-  const baseUrl = originPilotBaseUrl();
-  const url = `${baseUrl}/chat/completions`;
+  const repoRoot = path.resolve(process.cwd(), '..');
+  const ts = Date.now();
+  const msgsFile = path.join(os.tmpdir(), `onbt_llm_msgs_${ts}.json`);
+  const reportFile = path.join(os.tmpdir(), `onbt_llm_report_${ts}.json`);
 
-  const body = JSON.stringify({
-    model: options.model || originPilotModel(),
-    messages,
-    max_tokens: options.maxTokens ?? 1400,
-    temperature: options.temperature ?? 0.7,
-  });
+  // Write messages to a temp file to avoid shell-quoting issues.
+  await writeFile(msgsFile, JSON.stringify(messages), 'utf-8');
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body,
-    cache: 'no-store',
-    signal: options.signal,
-  });
+  const scriptArgs = [
+    '--report',
+    reportFile,
+    '--api-key',
+    apiKey,
+    '--base-url',
+    originPilotBaseUrl(),
+    '--model',
+    options.model || originPilotModel(),
+    '--messages-file',
+    msgsFile,
+    '--max-tokens',
+    String(options.maxTokens ?? 1400),
+    '--temperature',
+    String(options.temperature ?? 0.7),
+  ];
 
-  if (!response.ok) {
-    let detail = '';
-    try {
-      const errBody = await response.text();
-      detail = ` — ${errBody.slice(0, 280)}`;
-    } catch {
-      // ignore
-    }
-    throw new Error(`Origin Pilot API error ${response.status}${detail}`);
+  let stdout = '';
+  let stderr = '';
+  try {
+    ({ stdout, stderr } = await runPyvqnetLlm(repoRoot, scriptArgs));
+  } finally {
+    // Clean up messages temp file regardless of outcome.
+    unlink(msgsFile).catch(() => undefined);
   }
 
-  interface CompletionResponse {
-    choices?: { message?: { content?: string } }[];
+  const raw = await readFile(reportFile, 'utf-8').catch(() => null);
+  unlink(reportFile).catch(() => undefined);
+
+  if (!raw) {
+    throw new Error(
+      `pyvqnet_llm.py produced no report. stderr: ${stderr.slice(0, 400)}`
+    );
   }
 
-  const payload = (await response.json()) as CompletionResponse;
-  return payload.choices?.[0]?.message?.content?.trim() ?? '';
+  interface LlmReport {
+    ok: boolean;
+    text?: string;
+    error?: string;
+  }
+
+  const result = JSON.parse(raw) as LlmReport;
+
+  if (!result.ok) {
+    throw new Error(
+      `OriginPilot LLM error: ${result.error ?? 'unknown'} | stderr: ${stderr.slice(0, 300)}`
+    );
+  }
+
+  return result.text?.trim() ?? '';
 }
 
 /**
  * Convenience wrapper that parses a JSON block from the LLM response.
- * The LLM is instructed to return pure JSON; this extracts the JSON
- * even if the model wraps it in a markdown code fence.
+ * Strips markdown code fences if present.
  */
 export async function callOriginPilotJSON<T>(
   messages: ChatMessage[],
@@ -110,6 +189,9 @@ export async function callOriginPilotJSON<T>(
   const text = await callOriginPilot(messages, options);
 
   // Strip possible ```json ... ``` fences
-  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+  const cleaned = text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```\s*$/, '')
+    .trim();
   return JSON.parse(cleaned) as T;
 }
