@@ -28,6 +28,8 @@ export function deriveAbiRuntimeConfig(payload: AgentAbiConfiguratorResult): Abi
     governance: [] as string[],
     'private-sale': [] as string[],
     about: ['About tab is always enabled for fallback project and chain metadata.'],
+    'quantum-ai': [] as string[],
+    wallet: [] as string[],
   } satisfies Record<TabType, string[]>;
 
   for (const tabConfig of payload.tabConfiguration) {

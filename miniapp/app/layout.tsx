@@ -1,54 +1,56 @@
 import type { Metadata } from 'next';
+import { SafeArea } from '@coinbase/onchainkit/minikit';
+import '@coinbase/onchainkit/styles.css';
 import { ClientProviders } from '@/providers';
+import { getServerAppUrl } from '@/config/app-url';
+import { minikitConfig } from '@/minikit.config';
 import './globals.css';
 
-const ROOT_URL = process.env.NEXT_PUBLIC_URL || 'https://www.nabat.finance';
+const ROOT_URL = getServerAppUrl();
 
-// Farcaster Mini App embed
 const FC_MINIAPP = JSON.stringify({
-  version: '1',
-  imageUrl: `${ROOT_URL}/branding/onabat-logo-dark.png`,
+  version: minikitConfig.miniapp.version,
+  imageUrl: minikitConfig.miniapp.heroImageUrl,
   button: {
-    title: 'Open ONabat',
+    title: `Open ${minikitConfig.miniapp.name}`,
     action: {
       type: 'launch_miniapp',
-      name: 'ONabat',
-      url: ROOT_URL,
-      splashImageUrl: `${ROOT_URL}/branding/onabat-logo-dark.png`,
-      splashBackgroundColor: '#0f1f1c',
+      name: minikitConfig.miniapp.name,
+      url: minikitConfig.miniapp.homeUrl,
+      splashImageUrl: minikitConfig.miniapp.splashImageUrl,
+      splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
     },
   },
 });
 
 export const metadata: Metadata = {
   title: 'ONabat — Omnichain ONBT',
-  description: 'Buy, bridge, and stake ONBT across Base and Arbitrum. Powered by LayerZero V2.',
+  description: minikitConfig.miniapp.description,
   icons: {
-    icon: `${ROOT_URL}/branding/onabat-logo-dark.png`,
-    apple: `${ROOT_URL}/branding/onabat-logo-dark.png`,
+    icon: minikitConfig.miniapp.iconUrl,
+    apple: minikitConfig.miniapp.iconUrl,
   },
   openGraph: {
-    title: 'ONabat — Omnichain ONBT',
-    description: 'Buy, bridge, and stake ONBT across Base and Arbitrum.',
+    title: minikitConfig.miniapp.ogTitle,
+    description: minikitConfig.miniapp.ogDescription,
     url: ROOT_URL,
-    siteName: 'ONabat',
+    siteName: minikitConfig.miniapp.name,
     images: [
       {
-        url: `${ROOT_URL}/branding/onabat-logo-dark.png`,
+        url: minikitConfig.miniapp.ogImageUrl,
         width: 1200,
         height: 628,
-        alt: 'ONabat',
+        alt: minikitConfig.miniapp.name,
       },
     ],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ONabat — Omnichain ONBT',
-    description: 'Buy, bridge, and stake ONBT across Base and Arbitrum.',
-    images: [`${ROOT_URL}/branding/onabat-logo-dark.png`],
+    title: minikitConfig.miniapp.ogTitle,
+    description: minikitConfig.miniapp.ogDescription,
+    images: [minikitConfig.miniapp.ogImageUrl],
   },
-  // Farcaster / Coinbase Wallet meta — rendered via Next.js metadata, no manual <head> needed
   other: {
     'base:app_id': '69a3aa8e4036d91576063bba',
     'fc:miniapp': FC_MINIAPP,
@@ -59,7 +61,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <ClientProviders>{children}</ClientProviders>
+        <ClientProviders>
+          <SafeArea>{children}</SafeArea>
+        </ClientProviders>
       </body>
     </html>
   );

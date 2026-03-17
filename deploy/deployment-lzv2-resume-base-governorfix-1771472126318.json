@@ -1,0 +1,28 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "deploymentType": "hub",
+  "timestamp": "2026-02-19T01:55:59.957Z",
+  "deployer": "0x44497B9FF645A995b18967b34eFeFDe82AeC8144",
+  "layerZero": {
+    "endpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+    "eid": 30184,
+    "peerEid": 30110,
+    "hubEid": 30184
+  },
+  "contracts": {
+    "onbtToken": "0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5",
+    "vault": "0xFd06Ecbd22b208f398E4d822904F7114642eF9b9",
+    "staking": "0x929251E1e57678b9BcC6536bf5C33271a2fdD5AD",
+    "rewardsPool": "0x0e2a7bA0A315fa4A0702f54161D8D571E2F04D85",
+    "yieldDistributor": "0x383Be7aBD6D696f09D5087A3F77f75eC669acf33",
+    "achievementNFT": "0x1C8b47C76Dc486176b670C153aa5CB73547d2495",
+    "stakingRouter": "0x7b1E4982755A17bfBbD2d249BC1079C2d31E959B",
+    "governor": "0xf41971b179C0ae6f2CdBdA9b57F407b1C9bF20c9",
+    "liquidityManager": "0xb362Af3da1497A551C08F79bC03CbA12D2b7e908",
+    "insuranceFund": "0xD9df789dc6BA5C27D3b591d58F9A02a87C6250FE",
+    "stabilizer": "0x26D75024c2491636a1A1145a3d6966788EF54667",
+    "incentiveController": "0x7b06795D31482fef0213b24E8ad5f348692A73BD",
+    "revenueRouter": "0xCBFFd3F88d5C97D06F6306181493D56f70E7fBb0"
+  }
+}

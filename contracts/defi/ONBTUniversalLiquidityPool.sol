@@ -3,6 +3,7 @@ pragma solidity ^0.8.22;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -527,8 +528,3 @@ contract ONBTUniversalLiquidityPool is ERC20, Ownable, ReentrancyGuard, Pausable
     }
 }
 
-// Interface for getting token metadata
-interface IERC20Metadata is IERC20 {
-    function symbol() external view returns (string memory);
-    function decimals() external view returns (uint8);
-}

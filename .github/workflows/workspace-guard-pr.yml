@@ -1,0 +1,37 @@
+name: Workspace Guard PR
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/workspace-guard.mjs'
+      - '.workspace-guard-baseline.json'
+      - '.gitignore'
+      - '.github/workflows/workspace-guard-pr.yml'
+      - 'deploy/**'
+      - 'frontend/**'
+      - 'contracts/**'
+      - 'docs/WORKSPACE_GUARD.md'
+    paths-ignore:
+      - 'artifacts/**'
+      - 'cache/**'
+      - 'reports/**'
+      - 'coverage/**'
+      - 'frontend/.next/**'
+      - '**/*.tsbuildinfo'
+  workflow_dispatch:
+
+jobs:
+  workspace-guard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+
+      - name: Run workspace guard (strict)
+        run: node scripts/workspace-guard.mjs --strict

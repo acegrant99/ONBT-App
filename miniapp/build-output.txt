@@ -1,0 +1,53 @@
+
+> onbt-miniapp@1.0.0 prebuild
+> node scripts/clean-next.mjs && npm run type-check && npm run lint
+
+No .next directory to clean.
+
+> onbt-miniapp@1.0.0 type-check
+> tsc --noEmit
+
+
+> onbt-miniapp@1.0.0 lint
+> eslint . --ext .ts,.tsx
+
+
+> onbt-miniapp@1.0.0 build
+> node --require ./scripts/punycode-resolver.cjs ./node_modules/next/dist/bin/next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 32.3s
+  Running TypeScript ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/6) ...
+  Generating static pages using 15 workers (1/6) 
+  Generating static pages using 15 workers (2/6) 
+  Generating static pages using 15 workers (4/6) 
+✓ Generating static pages using 15 workers (6/6) in 28.6s
+  Finalizing page optimization ...
+
+Route (app)                          Revalidate  Expire
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /api/agentkit/abi-configurator
+├ ƒ /api/agentkit/access-profile
+├ ƒ /api/agentkit/advisor
+├ ƒ /api/agentkit/dependency-health
+├ ƒ /api/agentkit/env-health
+├ ƒ /api/agentkit/github-scout
+├ ƒ /api/agentkit/integrity
+├ ƒ /api/agentkit/preflight
+├ ƒ /api/agentkit/website-editor
+├ ○ /api/chains/overview                    20s      1y
+├ ƒ /api/quantum/predict
+├ ƒ /api/quantum/retrain
+└ ƒ /api/webhook
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+SUCCESS  

@@ -11,6 +11,10 @@ const nextConfig = {
     resolveAlias: {
       '@react-native-async-storage/async-storage': './lib/shims/noop.ts',
       'pino-pretty': './lib/shims/noop.ts',
+      // Turbopack on Windows doesn't resolve exports-map subpaths for these;
+      // use relative paths (relative to project root / next.config location).
+      '@coinbase/onchainkit/minikit': './node_modules/@coinbase/onchainkit/dist/minikit/index.js',
+      '@coinbase/onchainkit/styles.css': './node_modules/@coinbase/onchainkit/dist/assets/style.css',
     },
   },
   async headers() {

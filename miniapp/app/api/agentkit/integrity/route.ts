@@ -15,7 +15,6 @@ type RequestBody = {
   task?: TaskName;
 };
 
-const DEFAULT_AGENTKIT_TOKEN = 'QuantumLayer';
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 4;
 const requestLog = new Map<string, number[]>();
@@ -25,17 +24,17 @@ const TASKS: Record<TaskName, string> = {
   'advance-miniapp-quick': 'npm run advance:miniapp:quick',
 };
 
-function configuredToken(): string {
+function configuredToken(): string | null {
   return (
     process.env.AGENTKIT_ADMIN_TOKEN ||
     process.env.QUANTUM_ADMIN_TOKEN ||
-    process.env.NEXT_PUBLIC_QUANTUM_ADMIN_TOKEN ||
-    DEFAULT_AGENTKIT_TOKEN
+    null
   );
 }
 
 function isAuthorized(request: Request): boolean {
   const expected = configuredToken();
+  if (!expected) return false;
   const headerToken = request.headers.get('x-agentkit-admin-token')?.trim();
   const bearerToken = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
   return headerToken === expected || bearerToken === expected;

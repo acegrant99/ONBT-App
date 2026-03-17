@@ -198,15 +198,49 @@ export const ONBT_PRIVATE_SALE_ABI = ONBTPrivateSaleOApp_ABI;
 // ONBTOmnichainStaking: full omnichain staking interface
 export const ONBT_STAKING_ABI = ONBTOmnichainStaking_ABI;
 
-// ONBT Governor ABI (minimal read/write interface used by miniapp governance page)
-export const ONBT_GOVERNOR_ABI = [
+// ONBTAchievementNFT: minimal read interface (balanceOf, owned tokens, per-token detail)
+export const ONBT_ACHIEVEMENT_NFT_ABI = [
+  {
+    inputs: [{ name: 'owner', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'owner', type: 'address' }],
+    name: 'getAchievementsByOwner',
+    outputs: [{ name: '', type: 'uint256[]' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'tokenId', type: 'uint256' }],
+    name: 'getAchievement',
+    outputs: [
+      { name: 'achievementType', type: 'uint8' },
+      { name: 'name', type: 'string' },
+      { name: 'rarity', type: 'uint8' },
+      { name: 'unlockedAt', type: 'uint256' },
+      { name: 'originChain', type: 'uint32' },
+      { name: 'originalRecipient', type: 'address' },
+      { name: 'transfers', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
   {
     inputs: [],
-    name: 'name',
-    outputs: [{ name: '', type: 'string' }],
+    name: 'totalMinted',
+    outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
-    type: 'function'
+    type: 'function',
   },
+] as const;
+
+// ONBT Governor ABI (minimal read/write interface used by miniapp governance page)
+export const ONBT_GOVERNOR_ABI = [
+  // ── View: proposal state (enum: 0=Pending 1=Active 2=Canceled 3=Defeated 4=Succeeded 5=Queued 6=Executed)
   {
     inputs: [{ name: 'proposalId', type: 'uint256' }],
     name: 'state',
@@ -214,43 +248,96 @@ export const ONBT_GOVERNOR_ABI = [
     stateMutability: 'view',
     type: 'function'
   },
+  // ── View: get full proposal details
   {
     inputs: [{ name: 'proposalId', type: 'uint256' }],
-    name: 'proposalVotes',
+    name: 'getProposal',
     outputs: [
-      { name: 'againstVotes', type: 'uint256' },
+      { name: 'proposer', type: 'address' },
+      { name: 'title', type: 'string' },
+      { name: 'description', type: 'string' },
       { name: 'forVotes', type: 'uint256' },
-      { name: 'abstainVotes', type: 'uint256' }
+      { name: 'againstVotes', type: 'uint256' },
+      { name: 'abstainVotes', type: 'uint256' },
+      { name: 'startBlock', type: 'uint256' },
+      { name: 'endBlock', type: 'uint256' },
+      { name: 'currentState', type: 'uint8' }
     ],
     stateMutability: 'view',
     type: 'function'
   },
+  // ── View: get voter receipt for a proposal
   {
     inputs: [
       { name: 'proposalId', type: 'uint256' },
-      { name: 'account', type: 'address' }
+      { name: 'voter', type: 'address' }
     ],
-    name: 'hasVoted',
-    outputs: [{ name: '', type: 'bool' }],
+    name: 'getReceipt',
+    outputs: [
+      { name: 'hasVoted', type: 'bool' },
+      { name: 'support', type: 'uint8' },
+      { name: 'votes', type: 'uint256' }
+    ],
     stateMutability: 'view',
     type: 'function'
   },
+  // ── View: public state variable getters
   {
-    inputs: [
-      { name: 'account', type: 'address' },
-      { name: 'timepoint', type: 'uint256' }
-    ],
-    name: 'getVotes',
+    inputs: [],
+    name: 'proposalCount',
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
     type: 'function'
   },
+  {
+    inputs: [],
+    name: 'votingPeriod',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'proposalThreshold',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'quorumPercentage',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'stakingContract',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  // ── Write: cast vote (support: 0=Against 1=For 2=Abstain)
   {
     inputs: [
       { name: 'proposalId', type: 'uint256' },
       { name: 'support', type: 'uint8' }
     ],
     name: 'castVote',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  // ── Write: create proposal (hub only)
+  {
+    inputs: [
+      { name: 'title', type: 'string' },
+      { name: 'description', type: 'string' },
+      { name: 'targets', type: 'address[]' },
+      { name: 'values', type: 'uint256[]' },
+      { name: 'calldatas', type: 'bytes[]' }
+    ],
+    name: 'propose',
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'nonpayable',
     type: 'function'

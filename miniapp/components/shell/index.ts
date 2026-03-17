@@ -1,5 +1,8 @@
 export { AppHeader } from './AppHeader';
+export { CdpCliPanel } from './CdpCliPanel';
 export { HeroSection } from './HeroSection';
+export { MiniAppActionPanel } from './MiniAppActionPanel';
+export { MiniAppNotificationCard } from './MiniAppNotificationCard';
 export { TabsSection } from './TabsSection';
 export { TxStatusBanner } from './TxStatusBanner';
 export { AboutPanel } from './AboutPanel';
@@ -9,3 +12,4 @@ export { QuantumSignalPanel } from './QuantumSignalPanel';
 export { AbiDrivenStudio } from './AbiDrivenStudio';
 export { QuantumAgentKitPanel } from './QuantumAgentKitPanel';
 export { QuantumAiLauncher } from './QuantumAiLauncher';
+export { PriceTicker } from './PriceTicker';

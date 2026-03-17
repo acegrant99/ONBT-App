@@ -1,0 +1,20 @@
+# Reusable PR trigger block for security workflows
+# Copy this block into the workflow's `on:` section.
+
+pull_request:
+  paths:
+    - 'scripts/workspace-guard.mjs'
+    - '.workspace-guard-baseline.json'
+    - '.gitignore'
+    - '.github/workflows/workspace-guard-pr.yml'
+    - 'deploy/**'
+    - 'frontend/**'
+    - 'contracts/**'
+    - 'docs/WORKSPACE_GUARD.md'
+  paths-ignore:
+    - 'artifacts/**'
+    - 'cache/**'
+    - 'reports/**'
+    - 'coverage/**'
+    - 'frontend/.next/**'
+    - '**/*.tsbuildinfo'

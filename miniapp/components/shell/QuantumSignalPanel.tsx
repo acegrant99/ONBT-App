@@ -24,6 +24,26 @@ export function QuantumSignalPanel({
   onRetry,
   onRetrain,
 }: QuantumSignalPanelProps) {
+  const progressWidthClass = (probability: number) => {
+    if (probability >= 0.95) return 'w-full';
+    if (probability >= 0.85) return 'w-5/6';
+    if (probability >= 0.7) return 'w-4/5';
+    if (probability >= 0.55) return 'w-3/5';
+    if (probability >= 0.4) return 'w-2/5';
+    if (probability >= 0.25) return 'w-1/4';
+    if (probability > 0) return 'w-[12%]';
+    return 'w-[6%]';
+  };
+
+  const trendHeightClass = (probability: number) => {
+    if (probability >= 0.9) return 'h-8';
+    if (probability >= 0.75) return 'h-7';
+    if (probability >= 0.6) return 'h-6';
+    if (probability >= 0.45) return 'h-5';
+    if (probability >= 0.3) return 'h-4';
+    return 'h-3';
+  };
+
   const [liquidityTweak, setLiquidityTweak] = useState(0);
   const [bridgeTweak, setBridgeTweak] = useState(0);
   const [governanceTweak, setGovernanceTweak] = useState(0);
@@ -49,6 +69,8 @@ export function QuantumSignalPanel({
     governance: 'Governance participation quality',
     'private-sale': 'Private sale timing quality',
     about: 'Ecosystem posture',
+    'quantum-ai': 'AI strategy readiness',
+    wallet: 'Wallet activity',
   };
 
   const signal = prediction?.signal ?? 'caution';
@@ -68,69 +90,94 @@ export function QuantumSignalPanel({
   const recommendationList = useMemo(() => {
     if (!prediction) {
       return [
-        'Gathering baseline telemetry for adaptive suggestions.',
-        'Check back after the next refresh to unlock scenario guidance.',
+        'Syncing telemetry',
+        'Awaiting next pulse',
       ];
     }
 
     if (activeTab === 'bridge') {
       return signal === 'risk-on'
         ? [
-            'Bridge route looks stable. Execute standard-sized transfers.',
-            'Keep slippage limits near default while conditions stay green.',
+            'Bridge route stable',
+            'Default slippage OK',
           ]
         : [
-            'Bridge reliability is soft. Split large transfers into smaller batches.',
-            'Delay non-urgent bridge actions until confidence improves.',
+            'Split bridge size',
+            'Delay non-urgent',
           ];
     }
 
     if (activeTab === 'staking') {
       return signal === 'risk-on'
         ? [
-            'Current conditions support normal staking horizons.',
-            'Compounding cadence can remain on your regular schedule.',
+            'Normal horizons',
+            'Regular compounding',
           ]
         : [
-            'Use shorter staking horizons during caution windows.',
-            'Favor claim-and-hold over aggressive compounding for now.',
+            'Shorter horizons',
+            'Claim then hold',
           ];
     }
 
     if (activeTab === 'governance') {
       return signal === 'risk-on'
         ? [
-            'Governance participation is supportive. High-impact votes are timely.',
-            'Delegate refresh can proceed without elevated timing risk.',
+            'Vote windows open',
+            'Delegate refresh OK',
           ]
         : [
-            'Participation quality is mixed. Prioritize critical votes only.',
-            'Re-check signal before finalizing large governance moves.',
+            'Prioritize key votes',
+            'Re-check before final',
           ];
     }
 
     if (activeTab === 'private-sale') {
       return signal === 'risk-on'
         ? [
-            'Private sale conditions are favorable for planned entries.',
-            'Staggered entries still help control local volatility.',
+            'Entry window favorable',
+            'Stagger entries',
           ]
         : [
-            'Conditions are cautious. Use smaller staged allocations.',
-            'Preserve dry powder for stronger confidence windows.',
+            'Smaller staged buys',
+            'Preserve dry powder',
           ];
     }
 
     return signal === 'risk-on'
       ? [
-          'Execution conditions are favorable for regular app activity.',
-          'You can keep normal cadence while confidence remains stable.',
+          'Execution favorable',
+          'Normal cadence',
         ]
       : [
-          'Use defensive pacing across actions while caution is active.',
-          'Prioritize low-slippage and reversible actions first.',
+          'Defensive pacing',
+          'Low slippage first',
         ];
   }, [activeTab, prediction, signal]);
+
+  const constellation = useMemo(() => {
+    return [
+      {
+        icon: '💧',
+        label: 'Liquidity',
+        value: prediction ? `${Math.round(prediction.features.liquidity_health * 100)}%` : '--',
+      },
+      {
+        icon: '🌉',
+        label: 'Bridge',
+        value: prediction ? `${Math.round(prediction.features.bridge_reliability * 100)}%` : '--',
+      },
+      {
+        icon: '🗳️',
+        label: 'Gov',
+        value: prediction ? `${Math.round(prediction.features.governance_participation * 100)}%` : '--',
+      },
+      {
+        icon: signal === 'risk-on' ? '🟢' : '🟠',
+        label: 'Mode',
+        value: signalLabel,
+      },
+    ];
+  }, [prediction, signal, signalLabel]);
 
   const scenario = useMemo(() => {
     if (!prediction) {
@@ -165,6 +212,12 @@ export function QuantumSignalPanel({
   const trendLabel = recentDelta > 0.02 ? 'Improving' : recentDelta < -0.02 ? 'Softening' : 'Stable';
   const trendClass =
     recentDelta > 0.02 ? 'text-emerald-700' : recentDelta < -0.02 ? 'text-rose-700' : 'text-[color:var(--brand-ink)]/80';
+  const signalButtons = [
+    signalLabel,
+    tabIntentLabel[activeTab],
+    trendLabel,
+    prediction ? `${(confidenceValue * 100).toFixed(1)}% confidence` : 'Confidence --',
+  ];
 
   if (hasError) {
     return (
@@ -177,7 +230,7 @@ export function QuantumSignalPanel({
           <button
             type="button"
             onClick={onRetry}
-            className="rounded-md border border-amber-400 bg-white px-3 py-1 text-xs font-medium hover:bg-amber-100"
+            className="brand-secondary-button rounded-md px-3 py-1 text-xs font-medium"
           >
             Retry
           </button>
@@ -187,88 +240,94 @@ export function QuantumSignalPanel({
   }
 
   return (
-    <section className="mb-6 rounded-2xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/70 p-4 sm:p-5">
+    <section className="brand-panel mb-6 p-4 sm:p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm sm:text-base font-semibold">Quantum Ecosystem Signal</h3>
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">
+              Quantum Telemetry
+            </button>
+            {signalButtons.map((item) => (
+              <button
+                key={item}
+                type="button"
+                className="rounded-full border border-cyan-300/35 bg-cyan-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-950"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          <button type="button" className="rounded-full border border-slate-900/12 bg-white px-3 py-1 text-sm font-semibold text-slate-900">
+            Quantum Signal
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setCompactMode((current) => !current)}
-            className="rounded-md border border-[color:var(--brand-leaf)]/45 bg-[color:var(--brand-cream)] px-2.5 py-1 text-xs font-medium text-[color:var(--brand-ink)] hover:border-[color:var(--brand-forest)]/55"
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
           >
-            {compactMode ? 'Expanded View' : 'Compact View'}
+            {compactMode ? 'Show Details' : 'Hide Details'}
           </button>
           {onRetrain && (
             <button
               type="button"
               onClick={onRetrain}
               disabled={retraining}
-              className="rounded-md border border-[color:var(--brand-leaf)]/45 bg-[color:var(--brand-cream)] px-2.5 py-1 text-xs font-medium text-[color:var(--brand-ink)] hover:border-[color:var(--brand-forest)]/55 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {retraining ? 'Retraining...' : 'Retrain Now'}
+              {retraining ? 'Retraining...' : 'Retrain'}
             </button>
           )}
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${signalClass}`}>
+          <button type="button" className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${signalClass}`}>
             {signalLabel}
-          </span>
+          </button>
         </div>
       </div>
 
-      <div className="mb-3 rounded-xl border border-[color:var(--brand-leaf)]/25 bg-gradient-to-r from-[color:var(--brand-cream)] via-[color:var(--brand-leaf)]/10 to-[color:var(--brand-sun)]/10 px-3 py-2">
-        <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Adaptive UX Mode</p>
-        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm">
-          <p>
-            Focus: <span className="font-semibold">{tabIntentLabel[activeTab]}</span>
-          </p>
-          <p>
-            Trend: <span className={`font-semibold ${trendClass}`}>{trendLabel}</span>
-          </p>
-          <p>
-            Confidence:{' '}
-            <span className={`font-semibold ${confidenceClass}`}>
-              {prediction ? `${(confidenceValue * 100).toFixed(1)}%` : '--'}
-            </span>
-          </p>
-        </div>
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <button type="button" className="rounded-2xl border border-slate-200 bg-white/90 px-3 py-3 text-left text-sm font-semibold text-slate-900">
+          Healthy {prediction ? `${(prediction.probabilityHealthy * 100).toFixed(1)}%` : '--'}
+        </button>
+        <button type="button" className={`rounded-2xl border border-slate-200 bg-white/90 px-3 py-3 text-left text-sm font-semibold ${confidenceClass}`}>
+          Confidence {prediction ? `${(prediction.confidence * 100).toFixed(1)}%` : '--'}
+        </button>
+        <button type="button" className="rounded-2xl border border-slate-200 bg-white/90 px-3 py-3 text-left text-sm font-semibold text-slate-900">
+          Mode {prediction?.mode ?? '--'}
+        </button>
+        <button type="button" className="rounded-2xl border border-slate-200 bg-white/90 px-3 py-3 text-left text-sm font-semibold text-slate-900">
+          {prediction?.label ?? '--'} {refreshing ? 'refreshing...' : ''}
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm">
-        <div className="motion-card rounded-xl border border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)]/75 px-3 py-2">
-          <p className="text-[color:var(--brand-ink)]/60">Healthy Probability</p>
-          <p className="font-semibold">{prediction ? `${(prediction.probabilityHealthy * 100).toFixed(1)}%` : '--'}</p>
+      <div className="mt-3 rounded-xl border border-slate-200 bg-white/90 px-3 py-2">
+        <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand-ink)]/65">
+          Signal Constellation
+        </button>
+        <div className="signal-constellation mt-2">
+          {constellation.map((item) => (
+            <button key={item.label} type="button" className="visual-icon-tile w-full justify-between">
+              <span className="inline-flex items-center gap-2">
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </span>
+              <span className="rounded-full border border-slate-900/10 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                {item.value}
+              </span>
+            </button>
+          ))}
         </div>
-        <div className="motion-card rounded-xl border border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)]/75 px-3 py-2">
-          <p className="text-[color:var(--brand-ink)]/60">Confidence</p>
-          <p className="font-semibold">{prediction ? `${(prediction.confidence * 100).toFixed(1)}%` : '--'}</p>
-        </div>
-        <div className="motion-card rounded-xl border border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)]/75 px-3 py-2">
-          <p className="text-[color:var(--brand-ink)]/60">Inference Mode</p>
-          <p className="font-semibold">{prediction?.mode ?? '--'}</p>
-        </div>
-        <div className="motion-card rounded-xl border border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)]/75 px-3 py-2">
-          <p className="text-[color:var(--brand-ink)]/60">Model Label</p>
-          <p className="font-semibold flex items-center gap-2">
-            {prediction?.label ?? '--'}
-            {refreshing && <span className="text-[color:var(--brand-ink)]/55">refreshing...</span>}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3 rounded-xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-        <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Model Guidance</p>
-        <p className="mt-1 text-xs sm:text-sm text-[color:var(--brand-ink)]/80">
-          {prediction?.recommendation ?? 'Collecting enough signal data to produce guidance.'}
-        </p>
 
         {!compactMode && (
           <div className="mt-2 grid grid-cols-1 gap-1.5 text-xs sm:text-sm">
             {recommendationList.map((item, idx) => (
-              <p
+              <button
                 key={idx}
-                className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/60 px-2.5 py-1.5 text-[color:var(--brand-ink)]/85"
+                type="button"
+                className="brand-pill brand-pill-soft rounded-lg px-2.5 py-1.5 text-[color:var(--brand-ink)]/85"
               >
-                {item}
-              </p>
+                • {item}
+              </button>
             ))}
           </div>
         )}
@@ -277,8 +336,7 @@ export function QuantumSignalPanel({
           <span
             className={`block h-full rounded-full transition-all duration-500 ease-out ${
               scenario.signal === 'risk-on' ? 'bg-emerald-500/80' : 'bg-orange-500/80'
-            }`}
-            style={{ width: `${Math.round(scenario.probability * 100)}%` }}
+            } ${progressWidthClass(scenario.probability)}`}
           />
         </div>
 
@@ -293,29 +351,68 @@ export function QuantumSignalPanel({
               <span
                 key={`${point.generatedAt}-${idx}`}
                 title={`${(point.probabilityHealthy * 100).toFixed(1)}%`}
-                className={`w-2 rounded-sm border transition-all duration-500 ease-out ${barClass}`}
-                style={{ height }}
+                className={`w-2 rounded-sm border transition-all duration-500 ease-out ${barClass} ${trendHeightClass(point.probabilityHealthy)}`}
               />
             );
           })}
         </div>
       </div>
 
+      {!compactMode && prediction?.confidenceEngine?.components && (
+        <div className="mt-3 rounded-xl border border-slate-200 bg-white/90 px-3 py-2">
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand-ink)]/65">
+            Confidence Engine v{prediction.confidenceEngine.version}
+          </button>
+          <div className="grid grid-cols-2 gap-1.5 text-xs sm:grid-cols-5">
+            {([
+              { key: 'modelMargin', label: 'Model Margin' },
+              { key: 'featureConsensus', label: 'Feature Consensus' },
+              { key: 'temporalStability', label: 'Temporal Stability' },
+              { key: 'backendReliability', label: 'Backend Reliability' },
+              { key: 'trendAlignment', label: 'Trend Alignment' },
+            ] as const).map(({ key, label }) => {
+              const value = prediction.confidenceEngine!.components[key];
+              const pct = Math.round(value * 100);
+              const colorClass = pct >= 70 ? 'text-emerald-700' : pct >= 45 ? 'text-amber-700' : 'text-rose-700';
+              return (
+                <button key={key} type="button" className="rounded-lg border border-slate-200 bg-white/80 px-2 py-2 text-left">
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-[color:var(--brand-ink)]/55">{label}</div>
+                  <div className={`text-sm font-bold ${colorClass}`}>{pct}%</div>
+                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100">
+                    <span
+                      className={`block h-full rounded-full transition-all duration-500 ${
+                        pct >= 70 ? 'bg-emerald-500/80' : pct >= 45 ? 'bg-amber-500/80' : 'bg-rose-500/80'
+                      } ${progressWidthClass(value)}`}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {!compactMode && (
-        <div className="mt-3 rounded-xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-3">
+        <div className="brand-stat-card mt-3 rounded-xl px-3 py-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Scenario Lab</p>
-            <p className="text-xs text-[color:var(--brand-ink)]/70">What-if simulation for your next action</p>
+            <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--brand-ink)]/65">
+              Scenario Lab
+            </button>
+            <button type="button" className="rounded-full border border-slate-900/12 bg-white px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/75">
+              What-if simulation
+            </button>
           </div>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 text-xs">
-            <label className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/60 px-2.5 py-2">
+            <div className="brand-pill brand-pill-soft rounded-lg px-2.5 py-2">
               <div className="mb-1 flex items-center justify-between">
-                <span>Liquidity bias</span>
-                <span className="font-semibold">{liquidityTweak > 0 ? `+${liquidityTweak}` : liquidityTweak}%</span>
+                <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2 py-0.5 font-semibold">Liquidity bias</button>
+                <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2 py-0.5 font-semibold">{liquidityTweak > 0 ? `+${liquidityTweak}` : liquidityTweak}%</button>
               </div>
               <input
                 type="range"
+                aria-label="Liquidity bias"
+                title="Liquidity bias"
                 min={-30}
                 max={30}
                 step={5}
@@ -323,15 +420,17 @@ export function QuantumSignalPanel({
                 onChange={(event) => setLiquidityTweak(Number(event.target.value))}
                 className="w-full"
               />
-            </label>
+            </div>
 
-            <label className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/60 px-2.5 py-2">
+            <div className="brand-pill brand-pill-soft rounded-lg px-2.5 py-2">
               <div className="mb-1 flex items-center justify-between">
-                <span>Bridge bias</span>
-                <span className="font-semibold">{bridgeTweak > 0 ? `+${bridgeTweak}` : bridgeTweak}%</span>
+                <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2 py-0.5 font-semibold">Bridge bias</button>
+                <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2 py-0.5 font-semibold">{bridgeTweak > 0 ? `+${bridgeTweak}` : bridgeTweak}%</button>
               </div>
               <input
                 type="range"
+                aria-label="Bridge bias"
+                title="Bridge bias"
                 min={-30}
                 max={30}
                 step={5}
@@ -339,15 +438,17 @@ export function QuantumSignalPanel({
                 onChange={(event) => setBridgeTweak(Number(event.target.value))}
                 className="w-full"
               />
-            </label>
+            </div>
 
-            <label className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/60 px-2.5 py-2">
+            <div className="brand-pill brand-pill-soft rounded-lg px-2.5 py-2">
               <div className="mb-1 flex items-center justify-between">
-                <span>Governance bias</span>
-                <span className="font-semibold">{governanceTweak > 0 ? `+${governanceTweak}` : governanceTweak}%</span>
+                <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2 py-0.5 font-semibold">Governance bias</button>
+                <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2 py-0.5 font-semibold">{governanceTweak > 0 ? `+${governanceTweak}` : governanceTweak}%</button>
               </div>
               <input
                 type="range"
+                aria-label="Governance bias"
+                title="Governance bias"
                 min={-30}
                 max={30}
                 step={5}
@@ -355,14 +456,14 @@ export function QuantumSignalPanel({
                 onChange={(event) => setGovernanceTweak(Number(event.target.value))}
                 className="w-full"
               />
-            </label>
+            </div>
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/70 px-2.5 py-2 text-xs sm:text-sm">
-            <p>
+          <div className="brand-pill brand-pill-soft mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs sm:text-sm">
+            <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 font-semibold">
               Simulated Healthy Probability:{' '}
               <span className="font-semibold">{prediction ? `${(scenario.probability * 100).toFixed(1)}%` : '--'}</span>
-            </p>
+            </button>
             <span
               className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
                 scenario.signal === 'risk-on'

@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-type TabType = 'token' | 'bridge' | 'staking' | 'governance' | 'private-sale' | 'about';
+type TabType = 'token' | 'bridge' | 'staking' | 'governance' | 'private-sale' | 'about' | 'quantum-ai' | 'wallet';
 
 type WebsiteEditRequest = {
   prompt?: string;
@@ -13,20 +13,19 @@ type WebsiteEditRequest = {
   targetSite?: string;
 };
 
-const DEFAULT_AGENTKIT_TOKEN = 'QuantumLayer';
 const DEFAULT_TARGET_SITE = 'https://www.nabat.finance';
 
-function configuredToken(): string {
+function configuredToken(): string | null {
   return (
     process.env.AGENTKIT_ADMIN_TOKEN ||
     process.env.QUANTUM_ADMIN_TOKEN ||
-    process.env.NEXT_PUBLIC_QUANTUM_ADMIN_TOKEN ||
-    DEFAULT_AGENTKIT_TOKEN
+    null
   );
 }
 
 function isAuthorized(request: Request): boolean {
   const expected = configuredToken();
+  if (!expected) return false;
   const headerToken = request.headers.get('x-agentkit-admin-token')?.trim();
   const bearerToken = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
   return headerToken === expected || bearerToken === expected;

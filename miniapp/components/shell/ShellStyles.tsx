@@ -3,67 +3,116 @@ import React from 'react';
 export function ShellStyles() {
   return (
     <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;700&display=swap');
+
+      :root {
+        --brand-ink: #0d1628;
+        --brand-muted: #4a5a77;
+        --brand-forest: #0b5e71;
+        --brand-leaf: #1d4ed8;
+        --brand-sun: #ea580c;
+        --brand-sand: #f1f5fb;
+        --brand-cream: #f8fbff;
+      }
+
       body {
-        font-family: "Avenir Next", "Segoe UI Variable", "Trebuchet MS", "Gill Sans", sans-serif;
-        letter-spacing: 0.01em;
+        margin: 0;
+        font-family: 'Plus Jakarta Sans', 'Segoe UI Variable', 'Segoe UI', sans-serif;
+        letter-spacing: 0.002em;
+        color: var(--brand-ink);
+        background: #edf2f8;
       }
 
       .brand-display {
-        font-family: "Fraunces", "Iowan Old Style", "Palatino Linotype", serif;
-        letter-spacing: -0.02em;
+        font-family: 'Sora', 'Segoe UI Variable', sans-serif;
+        letter-spacing: -0.018em;
+      }
+
+      .brand-root {
+        position: relative;
+        min-height: 100vh;
+        background:
+          radial-gradient(900px 540px at -10% -12%, rgba(29, 78, 216, 0.14), transparent 62%),
+          radial-gradient(760px 420px at 110% -10%, rgba(11, 94, 113, 0.14), transparent 58%),
+          linear-gradient(180deg, #f5f8fd 0%, #edf3fb 46%, #e8eef8 100%);
+      }
+
+      .brand-root::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(to right, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+        background-size: 34px 34px;
+        mask-image: radial-gradient(circle at 50% 10%, black 14%, transparent 72%);
+        opacity: 0.28;
+        z-index: 0;
+      }
+
+      .brand-root > * {
+        position: relative;
+        z-index: 1;
       }
 
       .brand-surface {
-        box-shadow: 0 18px 44px rgba(8, 19, 18, 0.18);
+        box-shadow: 0 22px 52px rgba(10, 20, 40, 0.16);
       }
 
       .brand-card {
-        box-shadow: 0 30px 72px rgba(7, 18, 16, 0.2);
-        backdrop-filter: blur(4px);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(245, 250, 255, 0.88));
+        border: 1px solid rgba(10, 20, 40, 0.12);
+        box-shadow: 0 18px 44px rgba(10, 20, 40, 0.12);
+        backdrop-filter: blur(7px);
       }
 
       .brand-hero {
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 30px 70px rgba(8, 19, 18, 0.2);
         position: relative;
         overflow: hidden;
+        border: 1px solid rgba(10, 20, 40, 0.12);
+        background:
+          linear-gradient(132deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 255, 0.95)),
+          radial-gradient(circle at 84% 18%, rgba(29, 78, 216, 0.15), transparent 48%);
+        box-shadow: 0 18px 40px rgba(10, 20, 40, 0.12);
       }
 
       .brand-hero::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         pointer-events: none;
         background:
-          linear-gradient(135deg, rgba(255, 255, 255, 0.24), transparent 45%),
-          radial-gradient(130% 160% at 0% 100%, rgba(244, 166, 90, 0.16), transparent 60%);
+            radial-gradient(110% 140% at 0% 0%, rgba(14, 165, 233, 0.2), transparent 58%),
+            radial-gradient(120% 130% at 100% 100%, rgba(2, 132, 199, 0.12), transparent 60%);
       }
 
       .hero-graphic::before,
       .hero-graphic::after {
         content: '';
         position: absolute;
-        border-radius: 9999px;
         pointer-events: none;
+        border-radius: 999px;
       }
 
       .hero-graphic::before {
-        width: 360px;
-        height: 360px;
-        right: -120px;
+        width: 320px;
+        height: 320px;
+        right: -100px;
         top: -120px;
-        background: radial-gradient(circle, rgba(34, 164, 127, 0.45), transparent 68%);
-        opacity: 0.28;
-        animation: driftA 14s ease-in-out infinite;
+        background: radial-gradient(circle, rgba(14, 165, 233, 0.28), transparent 70%);
+        opacity: 0.52;
+        animation: driftA 13s ease-in-out infinite;
       }
 
       .hero-graphic::after {
-        width: 320px;
-        height: 320px;
-        left: -120px;
-        bottom: -160px;
-        background: radial-gradient(circle, rgba(247, 170, 103, 0.52), transparent 70%);
-        opacity: 0.25;
-        animation: driftB 18s ease-in-out infinite;
+        width: 280px;
+        height: 280px;
+        left: -90px;
+        bottom: -120px;
+        background: radial-gradient(circle, rgba(37, 99, 235, 0.24), transparent 70%);
+        opacity: 0.45;
+        animation: driftB 15s ease-in-out infinite;
       }
 
       .mesh-overlay {
@@ -71,25 +120,38 @@ export function ShellStyles() {
         inset: 0;
         pointer-events: none;
         background-image:
-          linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-        background-size: 26px 26px;
-        mask-image: radial-gradient(circle at 65% 30%, black 35%, transparent 80%);
+          linear-gradient(to right, rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+        background-size: 24px 24px;
+        mask-image: radial-gradient(circle at 20% 25%, black 18%, transparent 76%);
+        opacity: 0.32;
       }
 
       .motion-card {
-        transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
-        position: relative;
+        transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+        border-radius: 0.95rem;
       }
 
       .motion-card:hover {
         transform: translateY(-4px);
-        border-color: color-mix(in srgb, var(--brand-forest) 45%, transparent);
-        box-shadow: 0 16px 32px rgba(8, 20, 18, 0.16);
+        border-color: rgba(3, 105, 161, 0.52);
+        box-shadow: 0 16px 38px rgba(10, 20, 40, 0.14);
+      }
+
+      .metric-card {
+        animation: metricFloat 6.4s ease-in-out infinite;
+      }
+
+      .metric-card:nth-child(2) {
+        animation-delay: 180ms;
+      }
+
+      .metric-card:nth-child(3) {
+        animation-delay: 360ms;
       }
 
       .content-stage {
-        animation: contentIn 320ms ease;
+        animation: contentIn 380ms ease;
       }
 
       .logo-float {
@@ -100,10 +162,433 @@ export function ShellStyles() {
         animation: ringPulse 2.8s ease-in-out infinite;
       }
 
+      .reveal-up {
+        animation: revealUp 420ms ease both;
+      }
+
+      .stagger-1 {
+        animation-delay: 80ms;
+      }
+
+      .stagger-2 {
+        animation-delay: 140ms;
+      }
+
+      .stagger-3 {
+        animation-delay: 210ms;
+      }
+
+      .brand-button {
+        border: 1px solid rgba(3, 105, 161, 0.45);
+        background: linear-gradient(120deg, #1d4ed8, #0891b2);
+        color: #ffffff;
+        box-shadow: 0 10px 24px rgba(3, 105, 161, 0.3);
+        transition: transform 180ms ease, filter 180ms ease;
+      }
+
+      .brand-button:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.04);
+      }
+
+      .brand-button:disabled {
+        filter: grayscale(0.2) brightness(0.9);
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+
+      .brand-input {
+        color: var(--brand-ink);
+        background: rgba(255, 255, 255, 0.85);
+        border-color: rgba(8, 145, 178, 0.28);
+        caret-color: var(--brand-leaf);
+      }
+
+      .brand-input::placeholder {
+        color: rgba(71, 85, 105, 0.8);
+      }
+
+      .brand-panel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.2rem;
+        border: 1px solid rgba(10, 20, 40, 0.12);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(242, 248, 255, 0.9));
+        box-shadow: 0 18px 44px rgba(10, 20, 40, 0.12);
+        backdrop-filter: blur(8px);
+      }
+
+      .brand-panel::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.45), transparent 28%),
+            radial-gradient(120% 90% at 0% 0%, rgba(37, 99, 235, 0.12), transparent 58%);
+      }
+
+      .brand-panel > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .scanline-panel::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: linear-gradient(to bottom, rgba(2, 6, 23, 0.06) 1px, transparent 1px);
+        background-size: 100% 4px;
+        opacity: 0.22;
+        mask-image: linear-gradient(to bottom, black 0%, transparent 82%);
+      }
+
+      .kicker-label {
+        font-family: 'IBM Plex Mono', 'Segoe UI', monospace;
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(11, 18, 35, 0.58);
+      }
+
+      .status-rail {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        border: 1px solid rgba(10, 20, 40, 0.12);
+        background: linear-gradient(90deg, rgba(29, 78, 216, 0.11), rgba(14, 165, 233, 0.08));
+        border-radius: 0.72rem;
+        padding: 0.45rem 0.62rem;
+      }
+
+      .status-rail-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #0284c7;
+        box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.2);
+      }
+
+      .telemetry-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.7rem;
+        border-top: 1px solid rgba(10, 20, 40, 0.1);
+        padding: 0.46rem 0;
+      }
+
+      .telemetry-row:first-child {
+        border-top: none;
+        padding-top: 0;
+      }
+
+      .telemetry-key {
+        font-family: 'IBM Plex Mono', 'Segoe UI', monospace;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(11, 18, 35, 0.64);
+      }
+
+      .telemetry-value {
+        font-weight: 700;
+        color: #0b1223;
+      }
+
+      .brand-secondary-button {
+        border: 1px solid rgba(8, 145, 178, 0.3);
+        background: rgba(255, 255, 255, 0.85);
+        color: var(--brand-ink);
+        transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+      }
+
+      .brand-secondary-button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(8, 145, 178, 0.52);
+        background: rgba(255, 255, 255, 0.98);
+      }
+
+      .brand-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(10, 20, 40, 0.14);
+        background: rgba(255, 255, 255, 0.84);
+        padding: 0.26rem 0.62rem;
+      }
+
+      .brand-pill-soft {
+        border-color: rgba(3, 105, 161, 0.22);
+        background: rgba(230, 244, 255, 0.8);
+      }
+
+      .brand-stat-card {
+        border: 1px solid rgba(10, 20, 40, 0.12);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(238, 246, 255, 0.88));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      }
+
+      .brand-highlight-bar {
+        border: 1px solid rgba(3, 105, 161, 0.24);
+        background: linear-gradient(90deg, rgba(37, 99, 235, 0.12), rgba(14, 165, 233, 0.12));
+      }
+
+      .visual-orb-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.5rem;
+      }
+
+      .visual-icon-tile {
+        border: 1px solid rgba(10, 20, 40, 0.12);
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 0.95rem;
+        padding: 0.52rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-weight: 700;
+        font-size: 11px;
+        color: var(--brand-ink);
+        box-shadow: 0 10px 20px rgba(10, 20, 40, 0.08);
+        transition: transform 220ms ease, border-color 220ms ease;
+      }
+
+      .visual-icon-tile:hover {
+        transform: translateY(-2px);
+        border-color: rgba(8, 145, 178, 0.45);
+      }
+
+      .visual-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #0891b2;
+        box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.18);
+        animation: visualDotPulse 2.8s ease-in-out infinite;
+      }
+
+      .signal-constellation {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+      }
+
+      .pulse-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        height: 20px;
+      }
+
+      .pulse-bars span {
+        width: 4px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #0ea5e9, #1d4ed8);
+        animation: pulseBars 1.4s ease-in-out infinite;
+      }
+
+      .pulse-bars span:nth-child(2) { animation-delay: 120ms; }
+      .pulse-bars span:nth-child(3) { animation-delay: 240ms; }
+      .pulse-bars span:nth-child(4) { animation-delay: 360ms; }
+      .pulse-bars span:nth-child(5) { animation-delay: 480ms; }
+
+      .action-panel {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .action-panel::before {
+        content: '';
+        position: absolute;
+        inset: -20% -10%;
+        pointer-events: none;
+        background:
+          radial-gradient(40% 40% at 12% 18%, rgba(37, 99, 235, 0.12), transparent 72%),
+          radial-gradient(36% 36% at 88% 22%, rgba(14, 165, 233, 0.1), transparent 74%),
+          linear-gradient(120deg, transparent 18%, rgba(255, 255, 255, 0.26) 48%, transparent 76%);
+        transform: translate3d(-8%, 0, 0);
+        animation: panelSweep 11s ease-in-out infinite;
+      }
+
+      .action-panel > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .chip-pulse {
+        animation: chipPulse 3.8s ease-in-out infinite;
+      }
+
+      .mini-orb {
+        animation: orbDrift 4.8s ease-in-out infinite;
+      }
+
+      .cta-button {
+        transition: transform 220ms ease, box-shadow 220ms ease, background-color 220ms ease, border-color 220ms ease;
+      }
+
+      .cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+      }
+
+      .tab-pill {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .tab-pill-active::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(125deg, rgba(255, 255, 255, 0.14), transparent 42%, rgba(125, 211, 252, 0.12));
+        animation: activeTabGlow 3.2s ease-in-out infinite;
+      }
+
+      .tab-pill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -45%;
+        width: 34%;
+        height: 100%;
+        pointer-events: none;
+        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+        opacity: 0;
+        transition: opacity 220ms ease;
+      }
+
+      .tab-pill:hover::after {
+        opacity: 1;
+        animation: tabSweep 1s ease;
+      }
+
+      .takeover-glow {
+        position: relative;
+      }
+
+      .takeover-glow::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        pointer-events: none;
+      }
+
+      .takeover-pulse {
+        animation: takeoverPulse 2.6s ease-in-out infinite;
+      }
+
+      .module-shell {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.25rem;
+      }
+
+      .module-shell::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(120% 120% at 0% 0%, rgba(37, 99, 235, 0.1), transparent 52%),
+          radial-gradient(120% 120% at 100% 100%, rgba(14, 165, 233, 0.1), transparent 58%);
+      }
+
+      .module-shell-token {
+        border-color: rgba(8, 145, 178, 0.4) !important;
+      }
+
+      .module-shell-token::before {
+        background:
+          radial-gradient(120% 120% at 0% 0%, rgba(16, 185, 129, 0.16), transparent 56%),
+          radial-gradient(120% 120% at 100% 100%, rgba(14, 165, 233, 0.15), transparent 58%);
+      }
+
+      .module-shell-bridge {
+        border-color: rgba(37, 99, 235, 0.35) !important;
+      }
+
+      .module-shell-bridge::before {
+        background:
+          radial-gradient(120% 120% at 0% 0%, rgba(59, 130, 246, 0.18), transparent 56%),
+          radial-gradient(120% 120% at 100% 100%, rgba(56, 189, 248, 0.14), transparent 58%);
+      }
+
+      .module-shell-staking {
+        border-color: rgba(22, 163, 74, 0.35) !important;
+      }
+
+      .module-shell-staking::before {
+        background:
+          radial-gradient(120% 120% at 0% 0%, rgba(34, 197, 94, 0.16), transparent 56%),
+          radial-gradient(120% 120% at 100% 100%, rgba(245, 158, 11, 0.14), transparent 58%);
+      }
+
+      .module-shell-governance {
+        border-color: rgba(59, 130, 246, 0.34) !important;
+      }
+
+      .module-shell-governance::before {
+        background:
+          radial-gradient(120% 120% at 0% 0%, rgba(96, 165, 250, 0.18), transparent 56%),
+          radial-gradient(120% 120% at 100% 100%, rgba(14, 165, 233, 0.13), transparent 58%);
+      }
+
+      .module-shell-sale {
+        border-color: rgba(56, 189, 248, 0.35) !important;
+      }
+
+      .module-shell-sale::before {
+        background:
+          radial-gradient(120% 120% at 0% 0%, rgba(56, 189, 248, 0.16), transparent 56%),
+          radial-gradient(120% 120% at 100% 100%, rgba(14, 165, 233, 0.14), transparent 58%);
+      }
+
+      .module-grid-bg {
+        position: relative;
+      }
+
+      .module-grid-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+        background-size: 24px 24px;
+        mask-image: linear-gradient(to bottom, black 20%, transparent 86%);
+      }
+
+      .glass-tile {
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(7px);
+        border-radius: 1rem;
+      }
+
       @keyframes contentIn {
         from {
           opacity: 0;
-          transform: translateY(6px);
+          transform: translateY(7px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes revealUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
         to {
           opacity: 1;
@@ -114,7 +599,7 @@ export function ShellStyles() {
       @keyframes logoFloat {
         0%,
         100% {
-          transform: translateY(0px);
+          transform: translateY(0);
         }
         50% {
           transform: translateY(-4px);
@@ -124,12 +609,12 @@ export function ShellStyles() {
       @keyframes ringPulse {
         0%,
         100% {
-          transform: scale(1);
           opacity: 0.55;
+          transform: scale(1);
         }
         50% {
+          opacity: 1;
           transform: scale(1.08);
-          opacity: 0.25;
         }
       }
 
@@ -139,7 +624,7 @@ export function ShellStyles() {
           transform: translate(0, 0);
         }
         50% {
-          transform: translate(-18px, 14px);
+          transform: translate(-16px, 12px);
         }
       }
 
@@ -149,242 +634,149 @@ export function ShellStyles() {
           transform: translate(0, 0);
         }
         50% {
-          transform: translate(18px, -12px);
+          transform: translate(16px, -14px);
         }
       }
 
-      .brand-button {
-        background-image: linear-gradient(120deg, #1b8a6d, #f3a95e);
-        transition: transform 200ms ease, box-shadow 200ms ease, filter 200ms ease;
-        border: 1px solid rgba(255, 255, 255, 0.22);
-      }
-
-      .brand-button:hover {
-        filter: brightness(1.04);
-        box-shadow: 0 20px 36px rgba(15, 31, 28, 0.24);
-      }
-
-      .brand-button:disabled {
-        filter: grayscale(0.2) brightness(0.9);
-        box-shadow: none;
-        cursor: not-allowed;
-      }
-
-      .takeover-glow {
-        box-shadow: 0 0 0 1px rgba(31, 111, 91, 0.2), 0 14px 36px rgba(31, 111, 91, 0.24);
-      }
-
-      .takeover-pulse {
-        animation: takeoverPulse 2.4s ease-in-out infinite;
+      @keyframes tabSweep {
+        from {
+          left: -45%;
+        }
+        to {
+          left: 130%;
+        }
       }
 
       @keyframes takeoverPulse {
         0%,
         100% {
-          transform: scale(1);
-          box-shadow: 0 0 0 0 rgba(127, 191, 122, 0.4);
+          box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
         }
         50% {
-          transform: scale(1.01);
-          box-shadow: 0 0 0 10px rgba(127, 191, 122, 0);
+          box-shadow: 0 26px 64px rgba(245, 158, 11, 0.22);
         }
       }
 
-      .brand-root {
-        --brand-ink: #10211f;
-        --brand-forest: #1b8a6d;
-        --brand-leaf: #5bc7a2;
-        --brand-sun: #f3a95e;
-        --brand-sand: #f7efe2;
-        --brand-cream: #fff9f1;
-        background-color: #f3ebdc;
-        background-image:
-          radial-gradient(1200px 700px at 0% -6%, rgba(91, 199, 162, 0.28), transparent),
-          radial-gradient(900px 620px at 100% 4%, rgba(243, 169, 94, 0.26), transparent),
-          linear-gradient(180deg, #f6efdf 0%, #efe2cd 100%);
-        background-size: 120% 120%, 120% 120%, 100% 100%;
-        animation: brandGlow 20s ease-in-out infinite;
-      }
-
-      @keyframes brandGlow {
+      @keyframes metricFloat {
         0%,
         100% {
-          background-position: 0% 0%, 100% 0%;
+          transform: translateY(0);
         }
         50% {
-          background-position: 30% 10%, 70% 20%;
+          transform: translateY(-3px);
+        }
+      }
+
+      @keyframes panelSweep {
+        0%,
+        100% {
+          transform: translate3d(-8%, 0, 0) rotate(0deg);
+          opacity: 0.78;
+        }
+        50% {
+          transform: translate3d(8%, -2%, 0) rotate(2deg);
+          opacity: 1;
+        }
+      }
+
+      @keyframes chipPulse {
+        0%,
+        100% {
+          transform: translateY(0);
+          box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
+        }
+        50% {
+          transform: translateY(-1px);
+          box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.08);
+        }
+      }
+
+      @keyframes orbDrift {
+        0%,
+        100% {
+          transform: translateY(0) scale(1);
+        }
+        50% {
+          transform: translateY(-4px) scale(1.02);
+        }
+      }
+
+      @keyframes activeTabGlow {
+        0%,
+        100% {
+          opacity: 0.65;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      @keyframes visualDotPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(8, 145, 178, 0.12);
+        }
+        50% {
+          box-shadow: 0 0 0 6px rgba(8, 145, 178, 0.2);
+        }
+      }
+
+      @keyframes pulseBars {
+        0%,
+        100% {
+          height: 7px;
+          opacity: 0.7;
+        }
+        50% {
+          height: 20px;
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .brand-root::before {
+          opacity: 0.2;
+        }
+
+        .hero-graphic::before {
+          width: 240px;
+          height: 240px;
+          right: -130px;
+        }
+
+        .hero-graphic::after {
+          width: 220px;
+          height: 220px;
+          left: -120px;
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .brand-root {
-          animation: none;
-        }
-
-        .hero-graphic::before,
-        .hero-graphic::after,
+        .reveal-up,
         .content-stage,
         .logo-float,
-        .hero-ring {
+        .hero-ring,
+        .hero-graphic::before,
+        .hero-graphic::after,
+        .takeover-pulse,
+        .metric-card,
+        .action-panel::before,
+        .chip-pulse,
+        .mini-orb,
+        .tab-pill-active::before {
           animation: none !important;
         }
 
-        .motion-card {
-          transition: none;
-        }
-      }
-
-      @media (prefers-color-scheme: dark) {
-        body {
-          background-color: #081411;
-          color: #e7f8f1;
+        .pulse-bars span,
+        .visual-dot {
+          animation: none !important;
         }
 
-        .brand-root {
-          --brand-ink: #e7f8f1;
-          --brand-forest: #66d8b6;
-          --brand-leaf: #7bdcc6;
-          --brand-sun: #ffbf76;
-          --brand-sand: #081411;
-          --brand-cream: #10201c;
-          background-color: var(--brand-sand);
-          background-image:
-            radial-gradient(1000px 640px at 8% -2%, rgba(91, 199, 162, 0.28), transparent),
-            radial-gradient(900px 560px at 92% 8%, rgba(243, 169, 94, 0.24), transparent);
-        }
-
-        .brand-surface {
-          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-          border-color: rgba(155, 225, 176, 0.18) !important;
-        }
-
-        .brand-card {
-          box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
-          border-color: rgba(155, 225, 176, 0.18) !important;
-        }
-
-        .brand-button {
-          background-image: linear-gradient(120deg, rgba(102, 216, 182, 0.75), rgba(255, 191, 118, 0.75));
-        }
-
-        .tab-pill {
-          background-color: rgba(16, 32, 28, 0.9);
-        }
-      }
-
-      .brand-input {
-        color: var(--brand-ink);
-        background-color: var(--brand-cream);
-        caret-color: var(--brand-forest);
-      }
-
-      .module-shell {
-        position: relative;
-        overflow: hidden;
-        border-radius: 1.25rem;
-      }
-
-      .module-shell::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background:
-          radial-gradient(120% 120% at 0% 0%, rgba(91, 199, 162, 0.12), transparent 55%),
-          radial-gradient(120% 120% at 100% 100%, rgba(243, 169, 94, 0.14), transparent 55%);
-      }
-
-      .module-grid-bg {
-        position: relative;
-      }
-
-      .module-grid-bg::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background-image:
-          linear-gradient(to right, rgba(16, 33, 31, 0.05) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(16, 33, 31, 0.05) 1px, transparent 1px);
-        background-size: 22px 22px;
-        mask-image: linear-gradient(to bottom, black 10%, transparent 80%);
-      }
-
-      .glass-tile {
-        border: 1px solid color-mix(in srgb, var(--brand-leaf) 35%, transparent);
-        background: color-mix(in srgb, var(--brand-cream) 88%, white);
-        backdrop-filter: blur(4px);
-        border-radius: 1rem;
-      }
-
-      .module-accent-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        border-radius: 9999px;
-        border: 1px solid rgba(27, 138, 109, 0.35);
-        background: rgba(255, 255, 255, 0.72);
-        padding: 0.25rem 0.55rem;
-        font-size: 0.66rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: color-mix(in srgb, var(--brand-forest) 78%, black);
-      }
-
-      .module-banner {
-        position: relative;
-        overflow: hidden;
-        border-radius: 0.85rem;
-        padding: 0.55rem 0.7rem;
-        margin-bottom: 0.75rem;
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-      }
-
-      .module-banner::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -45%;
-        width: 40%;
-        height: 100%;
-        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.45), transparent);
-        animation: bannerSweep 5.8s ease-in-out infinite;
-      }
-
-      .module-banner-token {
-        background: linear-gradient(115deg, rgba(33, 145, 117, 0.22), rgba(126, 220, 198, 0.18));
-      }
-
-      .module-banner-bridge {
-        background: linear-gradient(115deg, rgba(69, 124, 220, 0.24), rgba(120, 190, 255, 0.2));
-      }
-
-      .module-banner-staking {
-        background: linear-gradient(115deg, rgba(46, 157, 107, 0.24), rgba(241, 187, 104, 0.2));
-      }
-
-      .module-banner-governance {
-        background: linear-gradient(115deg, rgba(87, 130, 224, 0.24), rgba(144, 112, 230, 0.2));
-      }
-
-      .module-banner-sale {
-        background: linear-gradient(115deg, rgba(245, 148, 88, 0.25), rgba(237, 202, 120, 0.2));
-      }
-
-      @keyframes bannerSweep {
-        0%,
-        100% {
-          left: -45%;
-          opacity: 0;
-        }
-        40% {
-          opacity: 0.7;
-        }
-        60% {
-          left: 110%;
-          opacity: 0;
+        .motion-card,
+        .brand-secondary-button,
+        .brand-button,
+        .cta-button {
+          transition: none !important;
         }
       }
     `}</style>

@@ -17,15 +17,17 @@ let retrainStatus: RetrainStatus = {
   inFlight: false,
 };
 
-const DEFAULT_QUANTUM_TOKEN = 'QuantumLayer';
+function configuredToken(): string | null {
+  return process.env.QUANTUM_ADMIN_TOKEN || process.env.AGENTKIT_ADMIN_TOKEN || null;
+}
 
 function isAuthorized(request: Request): boolean {
-  const configuredToken =
-    process.env.QUANTUM_ADMIN_TOKEN || process.env.NEXT_PUBLIC_QUANTUM_ADMIN_TOKEN || DEFAULT_QUANTUM_TOKEN;
+  const token = configuredToken();
+  if (!token) return false;
   const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
   const headerToken = request.headers.get('x-quantum-admin-token')?.trim();
 
-  return bearer === configuredToken || headerToken === configuredToken;
+  return bearer === token || headerToken === token;
 }
 
 function npmCommand(): string {

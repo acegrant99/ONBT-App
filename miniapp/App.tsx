@@ -1,11 +1,24 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
+  TokenInterface,
+  PrivateSaleInterface,
+  GovernanceInterface,
+  BridgeInterface,
+  StakingInterface,
+} from './components';
+import {
+  AppFooter,
   AppHeader,
   AboutPanel,
+  CdpCliPanel,
   HeroSection,
+  MiniAppActionPanel,
   AbiDrivenStudio,
+  MiniAppNotificationCard,
+  QuantumAgentKitPanel,
   QuantumAiLauncher,
   QuantumSignalPanel,
   ShellStyles,
@@ -14,19 +27,13 @@ import {
 } from '@/components/shell';
 import { APP_TABS } from '@/config/app-shell';
 import { CHAIN_CONFIG, ONBT_ARBITRUM_ADDRESS, ONBT_TOKEN_ADDRESS } from '@/config/contracts';
-import { FEATURE_SLICES } from '@/features';
 import { useBackendOverview } from '@/hooks/useBackendOverview';
 import { useQuantumPrediction } from '@/hooks/useQuantumPrediction';
-import {
-  ABI_RUNTIME_CONFIG_UPDATED_EVENT,
-  clearAbiRuntimeConfig,
-  deriveAbiRuntimeConfig,
-  loadAbiRuntimeConfig,
-  saveAbiRuntimeConfig,
-  type AbiRuntimeConfig,
-} from '@/lib/abiRuntimeConfig';
-import { GLOBAL_TX_STATUS_EVENT, type GlobalTxStatus } from '@/lib/txStatus';
-import type { AgentAbiConfiguratorResult, AiTakeoverPlan, TabType } from '@/types/app-shell';
+import { useMiniApp } from '@/hooks/useMiniApp';
+import { useGlobalTxStatus } from '@/hooks/useGlobalTxStatus';
+import { publishGlobalTxStatus } from '@/lib/txStatus';
+import { WalletPanel } from '@/features/wallet/ui/WalletPanel';
+import type { TabType } from '@/types/app-shell';
 
 /**
  * Main ONBT Miniapp
@@ -46,17 +53,13 @@ import type { AgentAbiConfiguratorResult, AiTakeoverPlan, TabType } from '@/type
  */
 export function ONBTMiniApp() {
   const [activeTab, setActiveTab] = useState<TabType>('token');
-  const [abiRuntimeConfig, setAbiRuntimeConfig] = useState<AbiRuntimeConfig | null>(null);
-  const [takeoverPlan, setTakeoverPlan] = useState<AiTakeoverPlan>({
-    enabled: false,
-    focus: 'all',
-    headline: 'ONBT AI is optimizing visibility',
-    subline: 'Feature surfacing and conversion guidance are enabled.',
-    featuredTabs: [],
-  });
-  const [globalTxStatus, setGlobalTxStatus] = useState<GlobalTxStatus | null>(null);
   const [retrainingQuantum, setRetrainingQuantum] = useState(false);
-  const quantumAdminToken = process.env.NEXT_PUBLIC_QUANTUM_ADMIN_TOKEN || 'QuantumLayer';
+  const quantumAdminToken = process.env.NEXT_PUBLIC_QUANTUM_ADMIN_TOKEN;
+
+  // MiniKit: fires sdk.actions.ready() once on mount, hiding the splash screen.
+  const { isInMiniApp, context: miniAppContext } = useMiniApp();
+  // Global tx status — auto-clears after success/error; driven by publishGlobalTxStatus events.
+  const globalTxStatus = useGlobalTxStatus();
   const {
     data: backendOverview,
     isFetching: backendRefreshing,
@@ -72,136 +75,24 @@ export function ONBTMiniApp() {
     refetch: refetchQuantumPrediction,
   } = useQuantumPrediction();
 
-  useEffect(() => {
-    const initialConfig = loadAbiRuntimeConfig();
-    if (initialConfig) {
-      setAbiRuntimeConfig(initialConfig);
-    }
-
-    const onAbiConfigUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<AbiRuntimeConfig | null>;
-      setAbiRuntimeConfig(customEvent.detail || null);
-    };
-
-    window.addEventListener(ABI_RUNTIME_CONFIG_UPDATED_EVENT, onAbiConfigUpdated as EventListener);
-    return () => {
-      window.removeEventListener(ABI_RUNTIME_CONFIG_UPDATED_EVENT, onAbiConfigUpdated as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    const onGlobalTxStatus = (event: Event) => {
-      const customEvent = event as CustomEvent<GlobalTxStatus>;
-      setGlobalTxStatus(customEvent.detail);
-    };
-
-    window.addEventListener(GLOBAL_TX_STATUS_EVENT, onGlobalTxStatus as EventListener);
-    return () => {
-      window.removeEventListener(GLOBAL_TX_STATUS_EVENT, onGlobalTxStatus as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!globalTxStatus) return;
-    if (globalTxStatus.stage !== 'success') return;
-
-    const timeout = setTimeout(() => setGlobalTxStatus(null), 12_000);
-    return () => clearTimeout(timeout);
-  }, [globalTxStatus]);
-
-  const configuredTabs = abiRuntimeConfig
-    ? APP_TABS.filter((tab) => abiRuntimeConfig.enabledTabs.includes(tab.key))
-    : APP_TABS;
-
-  useEffect(() => {
-    if (!configuredTabs.some((tab) => tab.key === activeTab)) {
-      const fallback = configuredTabs[0]?.key || 'about';
-      setActiveTab(fallback);
-    }
-  }, [configuredTabs, activeTab]);
-
-  const applyAbiConfiguration = (payload: AgentAbiConfiguratorResult) => {
-    const derived = deriveAbiRuntimeConfig(payload);
-    saveAbiRuntimeConfig(derived);
-    setGlobalTxStatus({
-      source: 'governance',
-      stage: 'success',
-      txHash: undefined,
-      updatedAt: Date.now(),
-      errorMessage: `ABI config applied: ${derived.enabledTabs.join(', ')}`,
-    });
-  };
-
-  const resetAbiConfiguration = () => {
-    clearAbiRuntimeConfig();
-    setGlobalTxStatus({
-      source: 'governance',
-      stage: 'success',
-      txHash: undefined,
-      updatedAt: Date.now(),
-      errorMessage: 'ABI runtime config cleared. Default miniapp tabs restored.',
-    });
-  };
-
   const explorerBase = CHAIN_CONFIG.base.blockExplorer;
   const explorerArbitrum = CHAIN_CONFIG.arbitrum.blockExplorer;
+  const hasNotificationDetails = Boolean(miniAppContext?.client.notificationDetails);
+  const isMiniAppAdded = Boolean(miniAppContext?.client.added || hasNotificationDetails);
+  const miniAppFid = miniAppContext?.user.fid;
+
+  // Tabs that show the AbiDrivenStudio contract sidebar alongside content
+  const DEFI_TABS: TabType[] = ['token', 'bridge', 'staking', 'governance', 'private-sale'];
+  const showStudioSidebar = DEFI_TABS.includes(activeTab);
 
   const renderActivePanel = () => {
-    const activeSlice = FEATURE_SLICES.find((slice) => slice.key === activeTab);
-    if (activeSlice) {
-      return activeSlice.render({
-        quantumPrediction,
-      });
-    }
-
-    return (
-      <AboutPanel
-        baseExplorer={explorerBase}
-        arbitrumExplorer={explorerArbitrum}
-        baseTokenAddress={ONBT_TOKEN_ADDRESS}
-        arbitrumTokenAddress={ONBT_ARBITRUM_ADDRESS}
-      />
-    );
-  };
-
-  const triggerQuantumRetrain = async () => {
-    try {
-      setRetrainingQuantum(true);
-      const response = await fetch('/api/quantum/retrain', {
-        method: 'POST',
-        headers: {
-          'x-quantum-admin-token': quantumAdminToken,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Retrain request failed with status ${response.status}`);
-      }
-
-      await refetchQuantumPrediction();
-    } catch (error) {
-      setGlobalTxStatus({
-        source: 'governance',
-        stage: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Failed to trigger retrain',
-        updatedAt: Date.now(),
-      });
-    } finally {
-      setRetrainingQuantum(false);
-    }
-  };
-
-  return (
-    <div className={`brand-root h-full flex flex-col overflow-hidden text-[color:var(--brand-ink)] ${takeoverPlan.enabled ? 'takeover-glow' : ''}`}>
-      <ShellStyles />
-      <AppHeader aiTakeoverEnabled={takeoverPlan.enabled} />
-
-      <main className="flex-1 min-h-0 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
-        <HeroSection
-          takeoverPlan={takeoverPlan}
-        />
-
+    if (activeTab === 'token') return <TokenInterface />;
+    if (activeTab === 'bridge') return <BridgeInterface />;
+    if (activeTab === 'staking') return <StakingInterface />;
+    if (activeTab === 'governance') return <GovernanceInterface />;
+    if (activeTab === 'private-sale') return <PrivateSaleInterface />;
+    if (activeTab === 'quantum-ai') return (
+      <div className="space-y-6">
         <QuantumSignalPanel
           activeTab={activeTab}
           prediction={quantumPrediction}
@@ -212,23 +103,105 @@ export function ONBTMiniApp() {
           onRetry={() => void refetchQuantumPrediction()}
           onRetrain={() => void triggerQuantumRetrain()}
         />
-
-        <AbiDrivenStudio
+        <QuantumAgentKitPanel
           activeTab={activeTab}
           prediction={quantumPrediction}
         />
+      </div>
+    );
+    if (activeTab === 'wallet') return (
+      <div className="space-y-6">
+        <MiniAppNotificationCard
+          isInMiniApp={isInMiniApp}
+          fid={miniAppFid}
+          isAdded={isMiniAppAdded}
+          hasNotificationDetails={hasNotificationDetails}
+        />
+        <MiniAppActionPanel />
+        <WalletPanel />
+      </div>
+    );
+    // about (default)
+    return (
+      <div className="space-y-6">
+        <AboutPanel
+          baseExplorer={explorerBase}
+          arbitrumExplorer={explorerArbitrum}
+          baseTokenAddress={ONBT_TOKEN_ADDRESS}
+          arbitrumTokenAddress={ONBT_ARBITRUM_ADDRESS}
+        />
+        <CdpCliPanel />
+      </div>
+    );
+  };
+
+  const triggerQuantumRetrain = async () => {
+    try {
+      setRetrainingQuantum(true);
+      const headers: Record<string, string> = {};
+      if (quantumAdminToken) {
+        headers['x-quantum-admin-token'] = quantumAdminToken;
+      }
+      const response = await fetch('/api/quantum/retrain', {
+        method: 'POST',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Retrain request failed with status ${response.status}`);
+      }
+
+      await refetchQuantumPrediction();
+    } catch (error) {
+      publishGlobalTxStatus({
+        source: 'governance',
+        stage: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Failed to trigger retrain',
+      });
+    } finally {
+      setRetrainingQuantum(false);
+    }
+  };
+
+  const backendAgeMs = backendOverview?.generatedAt ? Math.max(Date.now() - Date.parse(backendOverview.generatedAt), 0) : Number.POSITIVE_INFINITY;
+  const quantumAgeMs = quantumPrediction?.generatedAt ? Math.max(Date.now() - Date.parse(quantumPrediction.generatedAt), 0) : Number.POSITIVE_INFINITY;
+  const tabFreshness: Partial<Record<TabType, { ageMs: number; refreshing?: boolean; staleAfterMs?: number }>> = {
+    token: { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
+    bridge: { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
+    staking: { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
+    'private-sale': { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
+    governance: { ageMs: quantumAgeMs, refreshing: quantumRefreshing, staleAfterMs: 35_000 },
+    about: { ageMs: Math.max(backendAgeMs, quantumAgeMs), refreshing: backendRefreshing || quantumRefreshing, staleAfterMs: 45_000 },
+  };
+
+  const refreshStaleData = () => {
+    void refetchBackendOverview();
+    void refetchQuantumPrediction();
+  };
+
+  return (
+    <div className="brand-root min-h-screen text-[color:var(--brand-ink)]">
+      <ShellStyles />
+      <AppHeader />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-9">
+        <HeroSection />
+
+        {globalTxStatus && <TxStatusBanner status={globalTxStatus} />}
 
         {backendHasError && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="mb-6 rounded-2xl border border-rose-300 bg-rose-50/92 px-4 py-3 text-sm text-rose-900 shadow-[0_14px_28px_rgba(190,24,93,0.12)] backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p>
-                Live chain telemetry is temporarily unavailable.
-                {backendError instanceof Error ? ` ${backendError.message}` : ''}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" className="rounded-full border border-rose-300 bg-white px-3 py-1 text-xs font-semibold text-rose-900">Telemetry Offline</button>
+                {backendError instanceof Error && (
+                  <button type="button" className="rounded-2xl border border-rose-300 bg-white px-3 py-1 text-xs font-semibold text-rose-900">{backendError.message}</button>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => void refetchBackendOverview()}
-                className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-100"
+                className="rounded-md border border-rose-300 bg-white px-3 py-1 text-xs font-medium text-rose-900 transition-colors hover:bg-rose-100"
               >
                 Retry
               </button>
@@ -236,36 +209,48 @@ export function ONBTMiniApp() {
           </div>
         )}
 
-        {globalTxStatus && <TxStatusBanner status={globalTxStatus} />}
+        <section className={`grid gap-6 xl:items-start ${showStudioSidebar ? 'xl:grid-cols-[0.8fr_1.2fr]' : ''}`}>
+          {showStudioSidebar && (
+            <div className="space-y-6 xl:sticky xl:top-28">
+              <AbiDrivenStudio
+                activeTab={activeTab}
+                prediction={quantumPrediction}
+              />
+            </div>
+          )}
 
-        <TabsSection
-          tabs={configuredTabs}
-          activeTab={activeTab}
-          onChangeTab={setActiveTab}
-          featuredTabs={takeoverPlan.enabled ? takeoverPlan.featuredTabs : []}
-        />
+          <div className="space-y-6">
+            <TabsSection
+              tabs={APP_TABS}
+              activeTab={activeTab}
+              onChangeTab={setActiveTab}
+              freshnessByTab={tabFreshness}
+              onRefreshStale={refreshStaleData}
+            />
 
-        <section className="content-stage pb-8">
-          {renderActivePanel()}
+            <section className="content-stage pb-8">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.16, ease: 'easeOut' }}
+                >
+                  {renderActivePanel()}
+                </motion.div>
+              </AnimatePresence>
+            </section>
+          </div>
         </section>
-        </div>
       </main>
 
       <QuantumAiLauncher
         activeTab={activeTab}
         prediction={quantumPrediction}
-        takeoverPlan={takeoverPlan}
-        onActivateTakeover={setTakeoverPlan}
-        onDeactivateTakeover={() =>
-          setTakeoverPlan((prev) => ({
-            ...prev,
-            enabled: false,
-            featuredTabs: [],
-          }))
-        }
-        onApplyAbiConfiguration={applyAbiConfiguration}
-        onResetAbiConfiguration={resetAbiConfiguration}
       />
+
+      <AppFooter />
     </div>
   );
 }

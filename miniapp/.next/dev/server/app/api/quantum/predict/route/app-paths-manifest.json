@@ -1,0 +1,3 @@
+{
+  "/api/quantum/predict/route": "app/api/quantum/predict/route.js"
+}

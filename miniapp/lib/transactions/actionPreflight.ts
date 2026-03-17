@@ -27,7 +27,34 @@ export type ActionPreflightInput = {
 export type ActionPreflightResult = {
   ok: boolean;
   copy: string;
+  decodedReason?: string;
+  rawError?: string;
 };
+
+function decodeRevertReason(error: unknown): { decodedReason?: string; rawError?: string } {
+  const rawError = error instanceof Error ? error.message : String(error);
+  const normalized = rawError.replace(/\s+/g, ' ').trim();
+
+  const explicitRevert = normalized.match(/execution reverted(?::| with reason string)?\s*['"]?([^'".]+)['"]?/i);
+  if (explicitRevert?.[1]) {
+    return { decodedReason: explicitRevert[1].trim(), rawError };
+  }
+
+  const viemShortMessage = normalized.match(/shortMessage:\s*([^,}]+)/i);
+  if (viemShortMessage?.[1]) {
+    return { decodedReason: viemShortMessage[1].trim(), rawError };
+  }
+
+  if (/insufficient funds/i.test(normalized)) {
+    return { decodedReason: 'Insufficient native gas balance for this transaction.', rawError };
+  }
+
+  if (/user rejected|rejected the request|denied transaction/i.test(normalized)) {
+    return { decodedReason: 'Signature was rejected in wallet confirmation.', rawError };
+  }
+
+  return { rawError };
+}
 
 function firstFailedCheck(checks: PreflightCheck[] = []): string | null {
   for (const check of checks) {
@@ -41,6 +68,7 @@ export async function runActionPreflight(input: ActionPreflightInput): Promise<A
     return {
       ok: false,
       copy: 'Connect your wallet before submitting this transaction.',
+      decodedReason: 'Wallet is not connected.',
     };
   }
 
@@ -48,6 +76,7 @@ export async function runActionPreflight(input: ActionPreflightInput): Promise<A
     return {
       ok: false,
       copy: `Switch wallet network to chain ${input.targetChainId} before continuing.`,
+      decodedReason: `Wallet is connected to chain ${input.connectedChainId ?? 'unknown'}.`,
     };
   }
 
@@ -56,6 +85,7 @@ export async function runActionPreflight(input: ActionPreflightInput): Promise<A
     return {
       ok: false,
       copy: failedCheck,
+      decodedReason: failedCheck,
     };
   }
 
@@ -63,6 +93,7 @@ export async function runActionPreflight(input: ActionPreflightInput): Promise<A
     return {
       ok: false,
       copy: 'Chain RPC client unavailable. Retry in a few seconds.',
+      decodedReason: 'RPC client missing or not initialized.',
     };
   }
 
@@ -85,11 +116,12 @@ export async function runActionPreflight(input: ActionPreflightInput): Promise<A
       value: input.request.value,
     });
   } catch (error) {
+    const { decodedReason, rawError } = decodeRevertReason(error);
     return {
       ok: false,
-      copy: error instanceof Error
-        ? `${input.actionLabel} preflight failed: ${error.message}`
-        : `${input.actionLabel} preflight failed during simulation.`,
+      copy: `${input.actionLabel} preflight failed${decodedReason ? `: ${decodedReason}` : ' during simulation.'}`,
+      decodedReason,
+      rawError,
     };
   }
 

@@ -1,0 +1,26 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "contractName": "ONBTPrivateSaleOApp",
+  "proxyAddress": "0x871a21fB4de40dAb02Bcd99F37E8BEB6cFcCD100",
+  "implementationAddress": "0xc0e1bA2C5Ba920daAb03E29b846aE6d1cBd251B2",
+  "deployer": "0x44497B9FF645A995b18967b34eFeFDe82AeC8144",
+  "deploymentMode": "UUPS Proxy",
+  "pricing": {
+    "usdcRateWad": "10000000000000000000",
+    "usdtRateWad": "10000000000000000000",
+    "ethRateWad": "25000000000000000000000",
+    "note": "$0.10 per ONBT for USDC/USDT rails"
+  },
+  "saleConfig": {
+    "saleStart": 1772071799,
+    "saleEnd": 1774663799,
+    "saleAllocation": "100000000000000000000000000"
+  },
+  "tokens": {
+    "onbt": "0x7047e54EA5E23Ee8d2693382Ec4500f3426fF3fD",
+    "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "usdt": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
+  },
+  "timestamp": "2026-02-26T00:00:00.000Z"
+}

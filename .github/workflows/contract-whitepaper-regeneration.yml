@@ -1,0 +1,50 @@
+name: Contract Whitepaper Regeneration
+
+on:
+  pull_request:
+    paths:
+      - 'deploy/deployment-*.json'
+      - 'scripts/generate-contract-whitepapers.mjs'
+      - '.github/workflows/contract-whitepaper-regeneration.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'deploy/deployment-*.json'
+      - 'scripts/generate-contract-whitepapers.mjs'
+      - '.github/workflows/contract-whitepaper-regeneration.yml'
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+jobs:
+  regenerate-whitepapers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+
+      - name: Regenerate contract whitepapers
+        run: node scripts/generate-contract-whitepapers.mjs --all --force --clean
+
+      - name: Verify generated whitepapers are committed
+        run: |
+          if [ -n "$(git status --porcelain docs/whitepapers)" ]; then
+            echo "Generated whitepapers are out of date."
+            echo "Run: node scripts/generate-contract-whitepapers.mjs --all --force --clean"
+            git --no-pager diff -- docs/whitepapers | head -n 250
+            exit 1
+          fi
+
+      - name: Upload whitepaper artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-whitepapers
+          path: docs/whitepapers

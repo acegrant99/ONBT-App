@@ -1,0 +1,32 @@
+{
+  "component": "chainbase-backend",
+  "sdk": {
+    "package": "@chainbase/sdk",
+    "version": "TODO_PIN_VERSION",
+    "endpoint": "https://api.chainbase.online",
+    "timeoutMs": 10000,
+    "retries": 3
+  },
+  "datasets": [
+    {
+      "chain": "base",
+      "contractAddress": "TODO_CONTRACT",
+      "eventSignatures": [
+        "Transfer(address,address,uint256)"
+      ]
+    },
+    {
+      "chain": "arbitrum",
+      "contractAddress": "TODO_CONTRACT",
+      "eventSignatures": [
+        "Transfer(address,address,uint256)"
+      ]
+    }
+  ],
+  "backendIntegrity": {
+    "requireSchemaValidation": true,
+    "maxBlockLag": 30,
+    "deduplicateEvents": true,
+    "reconcileOnStartup": true
+  }
+}

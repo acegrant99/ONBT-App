@@ -141,17 +141,17 @@ contract ONBTYieldDistributor is Ownable, ReentrancyGuard {
     
     /**
      * @notice Batch update shares for multiple users
-     * @param users Array of user addresses
+        * @param userList Array of user addresses
      * @param newShares Array of new share amounts
      */
     function batchUpdateShares(
-        address[] calldata users,
+        address[] calldata userList,
         uint256[] calldata newShares
     ) external onlyRewardDepositor {
-        require(users.length == newShares.length, "Length mismatch");
+        require(userList.length == newShares.length, "Length mismatch");
         
-        for (uint256 i = 0; i < users.length; i++) {
-            _updateShares(users[i], newShares[i]);
+        for (uint256 i = 0; i < userList.length; i++) {
+            _updateShares(userList[i], newShares[i]);
         }
     }
     

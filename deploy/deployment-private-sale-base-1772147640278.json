@@ -1,0 +1,33 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "contractName": "ONBTPrivateSaleOApp",
+  "proxyAddress": "0x35d0429837207B0D80ae825fa063047E7491Db0b",
+  "implementationAddress": "0x057aa4448D0e0622481a4A50c1bDd098fa98B41f",
+  "deployer": "0x44497B9FF645A995b18967b34eFeFDe82AeC8144",
+  "deploymentMode": "UUPS Proxy",
+  "constructorArgs": {
+    "onbtToken": "0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5",
+    "saleAllocation": "100000000000000000000000000"
+  },
+  "initializeArgs": {
+    "lzEndpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+    "owner": "0x44497B9FF645A995b18967b34eFeFDe82AeC8144",
+    "fundsRecipient": "0x44497B9FF645A995b18967b34eFeFDe82AeC8144",
+    "saleStart": 1772129627,
+    "saleEnd": 1774721627,
+    "paymentTokens": [
+      "0x0000000000000000000000000000000000000000",
+      "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
+    ],
+    "rateWads": [
+      "25000000000000000000000",
+      "10000000000000000000",
+      "10000000000000000000"
+    ]
+  },
+  "timestamp": "2026-02-26T23:14:00.278Z",
+  "deploymentTx": "0x7c219c06ea9fa423c64c6a333629f213a9091d02f6409bc30a7b5d90be2bdafb",
+  "implementationDeploymentTx": "0x1e5eb41b713da24d28b8b58acf1d9d281e3c51a1f1d797b14365b9ef6e05f4ff"
+}

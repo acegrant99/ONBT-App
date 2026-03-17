@@ -1,104 +1,86 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useAccount, usePublicClient, useReadContract, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { parseEther, formatEther, encodePacked, pad } from 'viem';
-import { Avatar, Name, Identity } from '@coinbase/onchainkit/identity';
-import { 
-  ONBT_OFT_ABI, 
-  ONBT_TOKEN_ADDRESS, 
-  LZ_ENDPOINT_ID, 
+import {
+  ONBT_OFT_ABI,
+  ONBT_TOKEN_ADDRESS,
+  LZ_ENDPOINT_ID,
   CHAIN_CONFIG,
   ONBT_STAKING_ABI,
   ONBT_STAKING_ADDRESS,
-  LockupPeriod
+  ONBT_ACHIEVEMENT_NFT_ABI,
+  ONBT_ACHIEVEMENT_NFT_BASE_ADDRESS,
+  ONBT_ACHIEVEMENT_NFT_ARBITRUM_ADDRESS,
 } from '@/config/contracts';
 import { runActionPreflight } from '@/lib/transactions/actionPreflight';
 import { publishGlobalTxStatus } from '@/lib/txStatus';
 import { ChainSelector } from '@/components/ChainSelector';
+import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
+import { WalletIdentityBadge } from '@/components/WalletIdentityBadge';
 
-/**
- * BridgeInterface Component
- * LayerZero-powered cross-chain bridge for ONBT with:
- * - Bridge + Auto-stake functionality
- * - Achievement tracking (first bridge, cross-chain user)
- * - Volume milestones
- */
-
-// Achievement tracking types
-interface BridgeAchievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  earned: boolean;
-}
+// On-chain achievement metadata matching ONBTOmnichainStaking.Achievement enum (bits 0–7)
+const ACHIEVEMENT_META = [
+  { bit: 0, name: 'First Stake',        icon: '🌱', desc: 'Made your first stake' },
+  { bit: 1, name: 'Long-Term Holder',   icon: '⏳', desc: 'Staked for 365 consecutive days' },
+  { bit: 2, name: 'Whale',              icon: '🐋', desc: 'Staked 100,000+ ONBT' },
+  { bit: 3, name: 'Compound Master',    icon: '🔄', desc: 'Compounded rewards 10+ times' },
+  { bit: 4, name: 'Early Adopter',      icon: '⭐', desc: 'One of the first 100 stakers' },
+  { bit: 5, name: 'Loyal Staker',       icon: '🛡️', desc: 'Never unstaked for 180 days' },
+  { bit: 6, name: 'Governance Active',  icon: '🗳️', desc: 'Delegated or received delegation' },
+  { bit: 7, name: 'Rewards Pioneer',    icon: '🏆', desc: 'Claimed rewards in the first week' },
+] as const;
 
 export function BridgeInterface() {
   const { address, chain } = useAccount();
   const { switchChain } = useSwitchChain();
   const [bridgeAmount, setBridgeAmount] = useState('');
   const [destinationChain, setDestinationChain] = useState<'arbitrum' | 'base'>('arbitrum');
-  const [selectedSourceChainId, setSelectedSourceChainId] = useState<8453 | 42161>(chain?.id === 42161 ? 42161 : 8453);
+  // Keep first paint deterministic across SSR/client, then sync to connected wallet chain.
+  const [selectedSourceChainId, setSelectedSourceChainId] = useState<8453 | 42161>(8453);
   const publicClient = usePublicClient({ chainId: selectedSourceChainId });
   const [estimatedFee, setEstimatedFee] = useState<bigint | null>(null);
-  const [autoStake, setAutoStake] = useState(false);
-  const [autoStakeLockup, setAutoStakeLockup] = useState<LockupPeriod>(LockupPeriod.NONE);
-  const [showAchievements, setShowAchievements] = useState(false);
-  const [bridgeCount, setBridgeCount] = useState(0);
-  const [totalBridgedVolume, setTotalBridgedVolume] = useState(0);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [preflightDetail, setPreflightDetail] = useState<{ decodedReason?: string; rawError?: string } | null>(null);
   const processedTxHashRef = useRef<string | null>(null);
 
-  // Load bridge history from localStorage
   useEffect(() => {
-    if (address) {
-      const storageKey = `onbt_bridge_history_${address}`;
-      const history = localStorage.getItem(storageKey);
-      if (history) {
-        const parsed = JSON.parse(history);
-        setBridgeCount(parsed.count || 0);
-        setTotalBridgedVolume(parsed.volume || 0);
-      }
+    if (chain?.id === 8453 || chain?.id === 42161) {
+      setSelectedSourceChainId(chain.id);
     }
-  }, [address]);
-
-  // Track achievements
-  const achievements: BridgeAchievement[] = [
-    {
-      id: 'first_bridge',
-      name: 'Cross-Chain Pioneer',
-      description: 'Complete your first bridge transaction',
-      icon: '🌉',
-      earned: bridgeCount > 0
-    },
-    {
-      id: 'bridge_master',
-      name: 'Bridge Master',
-      description: 'Complete 10 bridge transactions',
-      icon: '🏆',
-      earned: bridgeCount >= 10
-    },
-    {
-      id: 'whale_bridger',
-      name: 'Whale Bridger',
-      description: 'Bridge 100,000 ONBT total',
-      icon: '🐋',
-      earned: totalBridgedVolume >= 100000
-    },
-    {
-      id: 'omnichain_user',
-      name: 'Omnichain User',
-      description: 'Use ONBT on multiple chains',
-      icon: '⛓️',
-      earned: bridgeCount > 0
-    }
-  ];
-
-  const unlockedAchievements = achievements.filter(a => a.earned);
-  const nextAchievement = achievements.find(a => !a.earned);
+  }, [chain?.id]);
 
   // Determine current chain and contract
   const isOnBase = selectedSourceChainId === 8453;
   const isWalletOnSelectedChain = chain?.id === selectedSourceChainId;
   const currentContractAddress = isOnBase ? ONBT_TOKEN_ADDRESS : CHAIN_CONFIG.arbitrum.tokenAddress;
+  const nftAddress = isOnBase
+    ? ONBT_ACHIEVEMENT_NFT_BASE_ADDRESS
+    : ONBT_ACHIEVEMENT_NFT_ARBITRUM_ADDRESS;
+
+  // Achievement bitmap from staking contract (hub = Base, chainId 8453)
+  const { data: achievementBitmap } = useReadContract({
+    chainId: 8453,
+    address: ONBT_STAKING_ADDRESS as `0x${string}`,
+    abi: ONBT_STAKING_ABI,
+    functionName: 'achievementsBitmap',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address, refetchInterval: 30_000 },
+  });
+
+  // Achievement NFT balance on current chain
+  const { data: nftBalance } = useReadContract({
+    chainId: selectedSourceChainId,
+    address: nftAddress as `0x${string}`,
+    abi: ONBT_ACHIEVEMENT_NFT_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address, refetchInterval: 30_000 },
+  });
+
+  const bitmap = (achievementBitmap ?? 0n) as bigint;
+  const earnedCount = ACHIEVEMENT_META.filter((a) => (bitmap >> BigInt(a.bit)) & 1n).length;
 
   useEffect(() => {
     setDestinationChain(isOnBase ? 'arbitrum' : 'base');
@@ -166,8 +148,10 @@ export function BridgeInterface() {
   });
 
   const handleBridge = async () => {
+    setValidationError(null);
+    setPreflightDetail(null);
     if (!sendParams || !feeQuote) {
-      alert('Unable to prepare bridge transaction');
+      setValidationError('Unable to prepare bridge transaction.');
       return;
     }
 
@@ -196,7 +180,8 @@ export function BridgeInterface() {
     });
 
     if (!preflight.ok) {
-      alert(preflight.copy);
+      setValidationError(preflight.copy);
+      setPreflightDetail({ decodedReason: preflight.decodedReason, rawError: preflight.rawError });
       return;
     }
 
@@ -213,67 +198,15 @@ export function BridgeInterface() {
     }
   };
 
-  // Track bridge completion and achievements
-  const trackBridgeCompletion = useCallback(() => {
-    if (!address || !bridgeAmount) return;
-
-    const amount = parseFloat(bridgeAmount);
-    const storageKey = `onbt_bridge_history_${address}`;
-    
-    // Update history
-    const newCount = bridgeCount + 1;
-    const newVolume = totalBridgedVolume + amount;
-    
-    localStorage.setItem(storageKey, JSON.stringify({
-      count: newCount,
-      volume: newVolume,
-      lastBridge: Date.now()
-    }));
-
-    setBridgeCount(newCount);
-    setTotalBridgedVolume(newVolume);
-
-    // Check for new achievements
-    const newlyUnlocked: string[] = [];
-    
-    if (newCount === 1) {
-      newlyUnlocked.push('🎉 Achievement Unlocked: Cross-Chain Pioneer!');
-    }
-    if (newCount === 10) {
-      newlyUnlocked.push('🏆 Achievement Unlocked: Bridge Master!');
-    }
-    if (newVolume >= 100000 && totalBridgedVolume < 100000) {
-      newlyUnlocked.push('🐋 Achievement Unlocked: Whale Bridger!');
-    }
-
-    // Show achievement notifications
-    if (newlyUnlocked.length > 0) {
-      setShowAchievements(true);
-      setTimeout(() => {
-        alert(newlyUnlocked.join('\n'));
-      }, 1000);
-    }
-  }, [address, bridgeAmount, bridgeCount, totalBridgedVolume]);
-
-  // Refetch balance after successful transaction and track achievements
+  // Refetch balance after successful transaction
   useEffect(() => {
     if (!isConfirmed || !txHash) return;
     if (processedTxHashRef.current === txHash) return;
 
     processedTxHashRef.current = txHash;
-    const bridgedAmount = bridgeAmount;
-
     refetchBalance();
-    trackBridgeCompletion();
     setBridgeAmount('');
-
-    // TODO: Auto-stake feature (requires waiting for tokens to arrive on destination chain)
-    // This would require a separate monitoring service or manual action
-    if (autoStake) {
-      console.log(`Auto-stake enabled: Will stake ${bridgedAmount} ONBT with ${autoStakeLockup} lockup when tokens arrive`);
-      // Future: Add notification for user to complete stake on destination chain
-    }
-  }, [isConfirmed, txHash, refetchBalance, trackBridgeCompletion, autoStake, autoStakeLockup, bridgeAmount]);
+  }, [isConfirmed, txHash, refetchBalance]);
 
   useEffect(() => {
     const explorerBaseUrl = selectedSourceChainId === 42161 ? 'https://arbiscan.io' : 'https://basescan.org';
@@ -324,108 +257,69 @@ export function BridgeInterface() {
   const destinationChainName = destinationChain === 'arbitrum' ? 'Arbitrum' : 'Base';
 
   return (
-    <div className="brand-card module-shell module-grid-bg max-w-2xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
+    <div className="brand-card module-shell module-shell-bridge module-grid-bg scanline-panel max-w-2xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
       {/* Header */}
-      <div className="mb-6 border-b border-[color:var(--brand-leaf)]/30 pb-4">
-        <h2 className="text-2xl font-semibold brand-display mb-2">
-          🌉 Omnichain Bridge
-        </h2>
-        <span className="module-accent-chip mb-2">Bridge Routing</span>
-        <div className="module-banner module-banner-bridge text-xs text-[color:var(--brand-ink)]/85">
-          Route intelligence: dual-chain transfer pathing with fee-awareness and achievement tracking.
-        </div>
+      <div className="mb-6 border-b border-sky-900/15 pb-4">
         <ChainSelector
           label="Source chain"
           selectedChainId={selectedSourceChainId}
           onSelectChain={setSelectedSourceChainId}
         />
-        <p className="text-sm text-[color:var(--brand-ink)]/60 mb-4">
-          Bridge ONBT across chains with LayerZero V2
-        </p>
-        <div className="mb-3 inline-flex items-center rounded-full border border-[color:var(--brand-leaf)]/40 bg-[color:var(--brand-cream)] px-3 py-1 text-xs text-[color:var(--brand-ink)]/75">
-          Capability: Bridge ONBT between Base and Arbitrum from selected source chain ({currentChainName})
-        </div>
         
-        {/* Achievements Summary */}
-        <div className="glass-tile motion-card flex items-center justify-between p-3 border border-[color:var(--brand-sun)]/40">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[color:var(--brand-ink)]/70">
-              🏆 {unlockedAchievements.length}/{achievements.length} Achievements
-            </span>
-            <button
-              onClick={() => setShowAchievements(!showAchievements)}
-              className="text-xs text-[color:var(--brand-forest)] hover:underline"
-            >
-              {showAchievements ? 'Hide' : 'View'}
+        {/* On-Chain Achievements — from ONBTAchievementNFT + ONBTOmnichainStaking contracts */}
+        <div className="brand-stat-card motion-card rounded-xl p-3 border border-[color:var(--brand-sun)]/30">
+          <div className="flex items-center justify-between mb-2">
+            <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-sm font-semibold text-[color:var(--brand-ink)]/80">
+              🏆 Staking Achievements {address ? `${earnedCount}/8` : '—'}
             </button>
+            {address && (
+              <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/60">
+                {nftBalance !== undefined ? `${nftBalance.toString()} NFT${Number(nftBalance) === 1 ? '' : 's'}` : '…'}
+              </button>
+            )}
           </div>
-          <div className="text-right">
-            <div className="text-xs text-[color:var(--brand-ink)]/60">
-              {bridgeCount} bridges · {totalBridgedVolume.toFixed(0)} ONBT total
+          {address ? (
+            <div className="grid grid-cols-4 gap-1.5">
+              {ACHIEVEMENT_META.map((a) => {
+                const earned = (bitmap >> BigInt(a.bit)) & 1n;
+                return (
+                  <div
+                    key={a.bit}
+                    title={`${a.name}: ${a.desc}`}
+                    className={`flex flex-col items-center rounded-lg p-2 border text-center ${
+                      earned
+                        ? 'bg-emerald-500/10 border-emerald-400/35'
+                        : 'bg-[color:var(--brand-cream)]/45 border-[color:var(--brand-leaf)]/15 opacity-45'
+                    }`}
+                  >
+                    <span className="text-lg">{a.icon}</span>
+                    <span className="text-[10px] font-medium leading-tight mt-0.5 text-[color:var(--brand-ink)]/70">{a.name}</span>
+                    {earned ? <span className="text-[9px] text-emerald-400 font-bold">✓</span> : null}
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          ) : (
+            <p className="text-xs text-[color:var(--brand-ink)]/55 text-center py-1">Connect wallet to view achievements</p>
+          )}
         </div>
-
-        {/* Achievement Details */}
-        {showAchievements && (
-          <div className="mt-3 space-y-2">
-            {achievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border ${
-                  achievement.earned
-                    ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
-                    : 'bg-gray-50 border-gray-200 dark:bg-gray-800/20 dark:border-gray-700'
-                }`}
-              >
-                <span className="text-2xl">{achievement.icon}</span>
-                <div className="flex-1">
-                  <div className="font-medium text-sm text-[color:var(--brand-ink)]">
-                    {achievement.name}
-                  </div>
-                  <div className="text-xs text-[color:var(--brand-ink)]/60">
-                    {achievement.description}
-                  </div>
-                </div>
-                {achievement.earned && (
-                  <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                    ✓ Unlocked
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
 
         {address && (
-          <Identity address={address} className="mt-4">
-            <Avatar />
-            <Name />
-          </Identity>
+          <WalletIdentityBadge address={address} className="mt-4" label="Bridge wallet" />
         )}
       </div>
 
       {/* Current Chain Info */}
-      <div className="mb-6 p-4 bg-[color:var(--brand-cream)] rounded-xl border border-[color:var(--brand-leaf)]/20">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-sm text-[color:var(--brand-ink)]/60 mb-1">Current Chain</p>
-            <p className="text-xl font-semibold text-[color:var(--brand-forest)]">{currentChainName}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-[color:var(--brand-ink)]/60 mb-1">Your Balance</p>
-            <p className="text-xl font-semibold text-[color:var(--brand-ink)]">
-              {parseFloat(userBalance).toFixed(4)} ONBT
-            </p>
-          </div>
-        </div>
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button type="button" className="brand-stat-card rounded-xl p-4 text-left text-xl font-semibold text-[color:var(--brand-leaf)]">{currentChainName}</button>
+        <button type="button" className="brand-stat-card rounded-xl p-4 text-left text-xl font-semibold text-[color:var(--brand-ink)]">{parseFloat(userBalance).toFixed(4)} ONBT</button>
       </div>
 
       {!isWalletOnSelectedChain && (
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
+        <div className="mb-6 rounded-xl border border-amber-400/35 bg-amber-500/10 p-4">
+          <button type="button" className="rounded-2xl border border-amber-300/45 bg-amber-50 px-3 py-2 text-left text-sm font-semibold text-amber-900">
             Wallet chain differs from selected source chain. Click Bridge to switch wallet to {currentChainName}.
-          </p>
+          </button>
         </div>
       )}
 
@@ -433,9 +327,9 @@ export function BridgeInterface() {
       <div className="space-y-4">
         {/* Destination Chain Selection */}
         <div>
-          <label className="block text-sm font-medium text-[color:var(--brand-ink)]/70 mb-2">
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-sm font-semibold text-[color:var(--brand-ink)]/80">
             Bridge To
-          </label>
+          </button>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setDestinationChain('arbitrum')}
@@ -446,7 +340,7 @@ export function BridgeInterface() {
                   : 'border-[color:var(--brand-leaf)]/40 hover:border-[color:var(--brand-forest)]/70 disabled:opacity-50 disabled:cursor-not-allowed'
               }`}
             >
-              <div className="font-medium">Arbitrum</div>
+                <div className="font-medium">Arbitrum</div>
               <div className="text-xs text-[color:var(--brand-ink)]/60 mt-1">EID: {LZ_ENDPOINT_ID.ARBITRUM}</div>
             </button>
             <button
@@ -458,61 +352,17 @@ export function BridgeInterface() {
                   : 'border-[color:var(--brand-leaf)]/40 hover:border-[color:var(--brand-forest)]/70 disabled:opacity-50 disabled:cursor-not-allowed'
               }`}
             >
-              <div className="font-medium">Base</div>
+                <div className="font-medium">Base</div>
               <div className="text-xs text-[color:var(--brand-ink)]/60 mt-1">EID: {LZ_ENDPOINT_ID.BASE}</div>
             </button>
           </div>
         </div>
 
-        {/* Auto-Stake Feature */}
-        <div className="p-4 border-2 border-dashed border-[color:var(--brand-leaf)]/30 rounded-lg bg-[color:var(--brand-cream)]/50">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="autoStake"
-                checked={autoStake}
-                onChange={(e) => setAutoStake(e.target.checked)}
-                className="w-4 h-4 text-[color:var(--brand-forest)] rounded focus:ring-[color:var(--brand-forest)]"
-              />
-              <label htmlFor="autoStake" className="text-sm font-medium text-[color:var(--brand-ink)]">
-                🎯 Auto-Stake on Arrival
-              </label>
-            </div>
-            <span className="text-xs bg-[color:var(--brand-sun)]/30 px-2 py-1 rounded">
-              Coming Soon
-            </span>
-          </div>
-          
-          {autoStake && (
-            <div>
-              <label className="block text-xs font-medium text-[color:var(--brand-ink)]/70 mb-2">
-                Select Lockup Period
-              </label>
-              <select
-                value={autoStakeLockup}
-                onChange={(e) => setAutoStakeLockup(parseInt(e.target.value) as LockupPeriod)}
-                aria-label="Select lockup period for auto-staking"
-                className="w-full px-3 py-2 text-sm border border-[color:var(--brand-leaf)]/40 rounded-lg focus:ring-2 focus:ring-[color:var(--brand-forest)] focus:border-transparent bg-[color:var(--brand-cream)]"
-              >
-                <option value={LockupPeriod.NONE}>No Lockup (1x rewards)</option>
-                <option value={LockupPeriod.DAYS_30}>30 Days (1.2x rewards)</option>
-                <option value={LockupPeriod.DAYS_90}>90 Days (1.5x rewards)</option>
-                <option value={LockupPeriod.DAYS_180}>180 Days (2x rewards)</option>
-                <option value={LockupPeriod.DAYS_365}>365 Days (3x rewards)</option>
-              </select>
-              <p className="mt-2 text-xs text-[color:var(--brand-ink)]/60">
-                💡 Your tokens will automatically stake when they arrive on {destinationChainName}
-              </p>
-            </div>
-          )}
-        </div>
-
         {/* Amount Input */}
         <div>
-          <label className="block text-sm font-medium text-[color:var(--brand-ink)]/70 mb-2">
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-sm font-semibold text-[color:var(--brand-ink)]/80">
             Amount to Bridge
-          </label>
+          </button>
           <input
             type="number"
             value={bridgeAmount}
@@ -520,31 +370,30 @@ export function BridgeInterface() {
             placeholder="0.0"
             className="brand-input w-full px-4 py-3 border border-[color:var(--brand-leaf)]/40 rounded-lg focus:ring-2 focus:ring-[color:var(--brand-forest)] focus:border-transparent bg-[color:var(--brand-cream)]/80 text-lg"
           />
-          <div className="mt-2 flex justify-between text-xs text-[color:var(--brand-ink)]/60">
-            <span>Available: {parseFloat(userBalance).toFixed(4)} ONBT</span>
-            <button
-              onClick={() => setBridgeAmount(userBalance)}
-              className="text-[color:var(--brand-forest)] hover:underline"
-            >
-              Max
-            </button>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/75">{parseFloat(userBalance).toFixed(4)} ONBT</span>
+            {[0.25, 0.5, 0.75, 1].map((pct) => (
+              <button key={pct} onClick={() => setBridgeAmount((parseFloat(userBalance) * pct).toFixed(4))} className="rounded-full border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] px-2.5 py-1 text-xs font-semibold text-[color:var(--brand-forest)] hover:bg-[color:var(--brand-leaf)]/10">
+                {pct === 1 ? 'Max' : `${pct * 100}%`}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Fee Estimate */}
         {estimatedFee && bridgeAmount && parseFloat(bridgeAmount) > 0 && (
-          <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-leaf)]/20">
+          <div className="brand-stat-card rounded-xl p-4">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-[color:var(--brand-ink)]/60">Bridge Fee (LayerZero)</span>
-              <span className="font-medium text-[color:var(--brand-ink)]">
+              <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 font-semibold text-[color:var(--brand-ink)]/75">Bridge Fee</button>
+              <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 font-semibold text-[color:var(--brand-ink)]">
                 {formatEther(estimatedFee)} ETH
-              </span>
+              </button>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-[color:var(--brand-ink)]/60">You will receive</span>
-              <span className="font-medium text-[color:var(--brand-forest)]">
+              <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 font-semibold text-[color:var(--brand-ink)]/75">Receive</button>
+              <button type="button" className="rounded-full border border-emerald-300/40 bg-emerald-50 px-3 py-1 font-semibold text-[color:var(--brand-forest)]">
                 ~{bridgeAmount} ONBT
-              </span>
+              </button>
             </div>
           </div>
         )}
@@ -572,81 +421,74 @@ export function BridgeInterface() {
         </button>
 
         {txHash && (
-          <a
+          <MiniAppExternalLink
             href={`https://${selectedSourceChainId === 42161 ? 'arbiscan.io' : 'basescan.org'}/tx/${txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
             className="inline-flex text-sm text-[color:var(--brand-forest)] hover:underline"
           >
             View transaction on explorer
-          </a>
+          </MiniAppExternalLink>
         )}
 
         {error && (
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-sm text-red-800 dark:text-red-200">Error: {error.message}</p>
+            <div className="rounded-xl border border-rose-400/35 bg-rose-500/10 p-4">
+            <button type="button" className="rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-left text-sm font-semibold text-rose-700">Error: {error.message}</button>
+          </div>
+        )}
+
+        {validationError && (
+          <div className="rounded-xl border border-rose-400/35 bg-rose-500/10 p-4">
+            <button type="button" className="rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-left text-sm font-semibold text-rose-700">{validationError}</button>
+            {preflightDetail?.decodedReason && (
+              <button type="button" className="mt-2 rounded-full border border-rose-300 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">Decoded: {preflightDetail.decodedReason}</button>
+            )}
           </div>
         )}
 
         {isConfirmed && (
           <div className="space-y-3">
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <p className="text-sm text-green-800 dark:text-green-200 font-medium mb-1">
+            <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 p-4">
+              <button type="button" className="mb-2 rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-left text-sm font-semibold text-emerald-700">
                 ✓ Bridge transaction submitted!
-              </p>
-              <p className="text-xs text-green-700 dark:text-green-300">
+              </button>
+              <button type="button" className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                 Tokens will arrive on {destinationChainName} in a few minutes.
-              </p>
+              </button>
             </div>
             
-            {/* Show achievement progress */}
-            {nextAchievement && (
-              <div className="p-3 bg-[color:var(--brand-sun)]/20 border border-[color:var(--brand-sun)]/40 rounded-lg">
-                <p className="text-xs font-medium text-[color:var(--brand-ink)] mb-1">
-                  🎯 Next Achievement: {nextAchievement.name}
-                </p>
-                <p className="text-xs text-[color:var(--brand-ink)]/60">
-                  {nextAchievement.description}
-                </p>
-              </div>
-            )}
           </div>
         )}
       </div>
 
       {/* Info Box */}
       <div className="mt-6 space-y-3">
-        <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-sun)]/40">
-          <p className="text-xs text-[color:var(--brand-ink)]/70 mb-2">
-            <strong>🔒 Powered by LayerZero V2</strong>
-          </p>
-          <p className="text-xs text-[color:var(--brand-ink)]/70 mb-3">
+        <div className="brand-highlight-bar rounded-lg p-4">
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/80">
+            🔒 Powered by LayerZero V2
+          </button>
+          <button type="button" className="mb-2 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-3 py-2 text-left text-xs font-semibold text-[color:var(--brand-ink)]/75">
             ONBT uses LayerZero&apos;s Omnichain Fungible Token (OFT) standard for secure cross-chain transfers.
             Your tokens are burned on the source chain and minted on the destination chain, maintaining a
             unified global supply.
-          </p>
-          <p className="text-xs text-[color:var(--brand-ink)]/70">
-            <strong>🏆 Earn Achievements:</strong> Complete bridges to unlock achievements and showcase your
-            omnichain journey!
-          </p>
+          </button>
+          <button type="button" className="w-full rounded-2xl border border-slate-900/10 bg-white/90 px-3 py-2 text-left text-xs font-semibold text-[color:var(--brand-ink)]/75">
+            🏆 Achievements are minted as on-chain NFTs by the ONBTAchievementNFT contract when staking milestones are reached.
+          </button>
         </div>
 
         {/* Alternative Bridge Option */}
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <p className="text-xs text-blue-800 dark:text-blue-200 mb-2">
-            <strong>Alternative Bridge:</strong>
-          </p>
-          <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">
-            You can also bridge ONBT using Stargate Finance or other LayerZero-compatible bridges:
-          </p>
-          <a
+        <div className="rounded-lg border border-sky-400/35 bg-sky-500/10 p-4">
+          <button type="button" className="mb-2 rounded-full border border-sky-300/50 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
+            Alternative Bridge
+          </button>
+          <button type="button" className="mb-2 w-full rounded-2xl border border-sky-300/50 bg-sky-50 px-3 py-2 text-left text-xs font-semibold text-sky-800">
+            Use Stargate or other LayerZero-compatible routes.
+          </button>
+          <MiniAppExternalLink
             href="https://stargate.finance/transfer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            className="inline-flex items-center gap-1 rounded-full border border-sky-300/50 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800"
           >
             Bridge via Stargate Finance →
-          </a>
+          </MiniAppExternalLink>
         </div>
       </div>
     </div>

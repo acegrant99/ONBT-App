@@ -1,0 +1,37 @@
+{
+  "project": "ONBT-App",
+  "component": "layerzero-interoperability",
+  "endpointVersion": "v2",
+  "chains": [
+    {
+      "name": "base",
+      "eid": 30184,
+      "endpoint": "0x0000000000000000000000000000000000000000",
+      "requiredDVNs": [
+        "TODO_DVN_ADDRESS_1",
+        "TODO_DVN_ADDRESS_2"
+      ],
+      "confirmations": 15
+    },
+    {
+      "name": "arbitrum",
+      "eid": 30110,
+      "endpoint": "0x0000000000000000000000000000000000000000",
+      "requiredDVNs": [
+        "TODO_DVN_ADDRESS_1",
+        "TODO_DVN_ADDRESS_2"
+      ],
+      "confirmations": 20
+    }
+  ],
+  "enforcedOptions": {
+    "send": "TODO_ENCODED_OPTIONS",
+    "receive": "TODO_ENCODED_OPTIONS"
+  },
+  "integrityChecks": [
+    "peer_configuration_consistent",
+    "dvn_set_matches_network",
+    "executor_gas_floor_defined",
+    "endpoint_delegates_verified"
+  ]
+}

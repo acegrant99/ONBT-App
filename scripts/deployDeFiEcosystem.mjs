@@ -1,11 +1,18 @@
 import hre from "hardhat";
 
+const { ethers } = hre;
+const isV6 = typeof ethers.parseEther === "function";
+const parseEther = (value) => (isV6 ? ethers.parseEther(value) : ethers.utils.parseEther(value));
+const formatEther = (value) => (isV6 ? ethers.formatEther(value) : ethers.utils.formatEther(value));
+const toWei = (value) => (isV6 ? BigInt(value) : ethers.BigNumber.from(value));
+const getAddressCompat = async (contract) => (contract.getAddress ? contract.getAddress() : contract.address);
+
 async function main() {
   console.log("\n🚀 Deploying ONBT DeFi Factory...\n");
 
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with account:", deployer.address);
-  console.log("Account balance:", hre.ethers.formatEther(await hre.ethers.provider.getBalance(deployer.address)), "ETH\n");
+  console.log("Account balance:", formatEther(await ethers.provider.getBalance(deployer.address)), "ETH\n");
 
   // Get ONBT token address from environment or prompt
   const onbtTokenAddress = process.env.ONBT_TOKEN_ADDRESS;
@@ -20,18 +27,22 @@ async function main() {
 
   // Deploy Factory
   console.log("Deploying ONBTDeFiFactory...");
-  const ONBTDeFiFactory = await hre.ethers.getContractFactory("ONBTDeFiFactory");
+  const ONBTDeFiFactory = await ethers.getContractFactory("ONBTDeFiFactory");
   const factory = await ONBTDeFiFactory.deploy(onbtTokenAddress);
-  await factory.waitForDeployment();
-  const factoryAddress = await factory.getAddress();
+  if (factory.waitForDeployment) {
+    await factory.waitForDeployment();
+  } else {
+    await factory.deployed();
+  }
+  const factoryAddress = await getAddressCompat(factory);
 
   console.log("✅ ONBTDeFiFactory deployed to:", factoryAddress);
   console.log();
 
   // Deploy Staking via Factory
   console.log("Deploying Staking contract via Factory...");
-  const rewardRate = process.env.REWARD_RATE || hre.ethers.parseEther("0.0001"); // 0.0001 ONBT per second
-  const minimumStake = process.env.MINIMUM_STAKE || hre.ethers.parseEther("100"); // 100 ONBT minimum
+  const rewardRate = process.env.REWARD_RATE ? toWei(process.env.REWARD_RATE) : parseEther("0.0001"); // 0.0001 ONBT per second
+  const minimumStake = process.env.MINIMUM_STAKE ? toWei(process.env.MINIMUM_STAKE) : parseEther("100"); // 100 ONBT minimum
 
   const stakingTx = await factory.deployStaking(
     onbtTokenAddress, // reward token (same as staking token)
@@ -108,8 +119,8 @@ async function main() {
   console.log();
   console.log("Configuration:");
   console.log("  ONBT Token:", onbtTokenAddress);
-  console.log("  Reward Rate:", hre.ethers.formatEther(rewardRate), "ONBT/second");
-  console.log("  Minimum Stake:", hre.ethers.formatEther(minimumStake), "ONBT");
+  console.log("  Reward Rate:", formatEther(rewardRate), "ONBT/second");
+  console.log("  Minimum Stake:", formatEther(minimumStake), "ONBT");
   console.log("  Fee Recipient:", feeRecipient);
   console.log();
   console.log("═══════════════════════════════════════════════════════");

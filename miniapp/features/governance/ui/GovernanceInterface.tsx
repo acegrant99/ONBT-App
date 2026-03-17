@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   useAccount,
-  useBlockNumber,
   usePublicClient,
   useReadContract,
   useWaitForTransactionReceipt,
@@ -9,15 +10,18 @@ import {
   useSwitchChain,
 } from 'wagmi';
 import { formatEther } from 'viem';
-import { Avatar, Name, Identity } from '@coinbase/onchainkit/identity';
 import {
   ONBT_GOVERNOR_ABI,
   ONBT_GOVERNOR_BASE_ADDRESS,
   ONBT_GOVERNOR_ARBITRUM_ADDRESS,
+  ONBT_STAKING_ABI,
+  ONBT_STAKING_ADDRESS,
 } from '@/config/contracts';
 import { runActionPreflight } from '@/lib/transactions/actionPreflight';
 import { publishGlobalTxStatus } from '@/lib/txStatus';
 import { ChainSelector } from '@/components/ChainSelector';
+import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
+import { WalletIdentityBadge } from '@/components/WalletIdentityBadge';
 
 /**
  * GovernanceInterface Component
@@ -32,33 +36,35 @@ export function GovernanceInterface() {
   const { switchChain } = useSwitchChain();
   const [proposalIdInput, setProposalIdInput] = useState('');
   const [voteChoice, setVoteChoice] = useState<0 | 1 | 2>(1);
-  const [selectedChainId, setSelectedChainId] = useState<8453 | 42161>(chain?.id === 42161 ? 42161 : 8453);
+  // Keep first paint deterministic across SSR/client, then sync to connected wallet chain.
+  const [selectedChainId, setSelectedChainId] = useState<8453 | 42161>(8453);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [preflightDetail, setPreflightDetail] = useState<{ decodedReason?: string; rawError?: string } | null>(null);
+  const [showCreateProposal, setShowCreateProposal] = useState(false);
+  const [propTitle, setPropTitle] = useState('');
+  const [propDesc, setPropDesc] = useState('');
+  const [recentProposals, setRecentProposals] = useState<Array<{
+    id: bigint;
+    title: string;
+    description: string;
+    state: number;
+    forVotes: bigint;
+    againstVotes: bigint;
+  }>>([]);
+  const [loadingProposals, setLoadingProposals] = useState(false);
   const publicClient = usePublicClient({ chainId: selectedChainId });
+
+  useEffect(() => {
+    if (chain?.id === 8453 || chain?.id === 42161) {
+      setSelectedChainId(chain.id);
+    }
+  }, [chain?.id]);
 
   const governorAddress = (selectedChainId === 42161 ? ONBT_GOVERNOR_ARBITRUM_ADDRESS : ONBT_GOVERNOR_BASE_ADDRESS) as `0x${string}`;
   const isSupportedChain = selectedChainId === 8453 || selectedChainId === 42161;
   const isWalletOnSelectedChain = chain?.id === selectedChainId;
   const explorerBaseUrl = selectedChainId === 42161 ? 'https://arbiscan.io' : 'https://basescan.org';
   const parsedProposalId = proposalIdInput.trim() ? BigInt(proposalIdInput.trim()) : null;
-
-  const { data: currentBlock } = useBlockNumber({ chainId: selectedChainId, query: { refetchInterval: 10_000 } });
-
-  const { data: governorName } = useReadContract({
-    chainId: selectedChainId,
-    address: governorAddress,
-    abi: ONBT_GOVERNOR_ABI,
-    functionName: 'name',
-    query: { refetchInterval: 60_000, enabled: isSupportedChain },
-  });
-
-  const { data: votingPower, refetch: refetchVotingPower } = useReadContract({
-    chainId: selectedChainId,
-    address: governorAddress,
-    abi: ONBT_GOVERNOR_ABI,
-    functionName: 'getVotes',
-    args: address && currentBlock ? [address, currentBlock] : undefined,
-    query: { refetchInterval: 30_000, enabled: !!address && !!currentBlock && isSupportedChain },
-  });
 
   const { data: proposalState, refetch: refetchProposalState } = useReadContract({
     chainId: selectedChainId,
@@ -69,22 +75,63 @@ export function GovernanceInterface() {
     query: { refetchInterval: 20_000, enabled: parsedProposalId !== null && isSupportedChain },
   });
 
-  const { data: proposalVotes, refetch: refetchProposalVotes } = useReadContract({
+  const { data: proposalDetails, refetch: refetchProposalVotes } = useReadContract({
     chainId: selectedChainId,
     address: governorAddress,
     abi: ONBT_GOVERNOR_ABI,
-    functionName: 'proposalVotes',
+    functionName: 'getProposal',
     args: parsedProposalId !== null ? [parsedProposalId] : undefined,
     query: { refetchInterval: 20_000, enabled: parsedProposalId !== null && isSupportedChain },
   });
 
-  const { data: hasVoted } = useReadContract({
+  const { data: receiptData } = useReadContract({
     chainId: selectedChainId,
     address: governorAddress,
     abi: ONBT_GOVERNOR_ABI,
-    functionName: 'hasVoted',
+    functionName: 'getReceipt',
     args: parsedProposalId !== null && address ? [parsedProposalId, address] : undefined,
     query: { refetchInterval: 20_000, enabled: parsedProposalId !== null && !!address && isSupportedChain },
+  });
+
+  const { data: proposalCount } = useReadContract({
+    chainId: selectedChainId,
+    address: governorAddress,
+    abi: ONBT_GOVERNOR_ABI,
+    functionName: 'proposalCount',
+    query: { refetchInterval: 30_000, enabled: isSupportedChain },
+  });
+
+  const { data: proposalThreshold } = useReadContract({
+    chainId: selectedChainId,
+    address: governorAddress,
+    abi: ONBT_GOVERNOR_ABI,
+    functionName: 'proposalThreshold',
+    query: { enabled: isSupportedChain },
+  });
+
+  const { data: votingPeriod } = useReadContract({
+    chainId: selectedChainId,
+    address: governorAddress,
+    abi: ONBT_GOVERNOR_ABI,
+    functionName: 'votingPeriod',
+    query: { enabled: isSupportedChain },
+  });
+
+  const { data: quorumPercentage } = useReadContract({
+    chainId: selectedChainId,
+    address: governorAddress,
+    abi: ONBT_GOVERNOR_ABI,
+    functionName: 'quorumPercentage',
+    query: { enabled: isSupportedChain },
+  });
+
+  const { data: votingPower } = useReadContract({
+    chainId: 8453,
+    address: ONBT_STAKING_ADDRESS,
+    abi: ONBT_STAKING_ABI,
+    functionName: 'getVotingPower',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address, refetchInterval: 30_000 },
   });
 
   const {
@@ -99,7 +146,21 @@ export function GovernanceInterface() {
     hash: voteTxHash,
   });
 
+  const {
+    data: proposalTxHash,
+    error: proposalError,
+    isPending: isPropSubmitting,
+    writeContract: writePropose,
+    reset: resetPropose,
+  } = useWriteContract();
+
+  const { isLoading: isPropConfirming, isSuccess: isPropConfirmed } = useWaitForTransactionReceipt({
+    hash: proposalTxHash,
+  });
+
   const handleCastVote = async () => {
+    setValidationError(null);
+    setPreflightDetail(null);
     if (!isSupportedChain || !address) return;
     if (!isWalletOnSelectedChain) {
       switchChain({ chainId: selectedChainId });
@@ -107,7 +168,7 @@ export function GovernanceInterface() {
     }
 
     if (parsedProposalId === null) {
-      alert('Enter a valid proposal ID');
+      setValidationError('Enter a valid proposal ID.');
       return;
     }
 
@@ -126,7 +187,8 @@ export function GovernanceInterface() {
     });
 
     if (!preflight.ok) {
-      alert(preflight.copy);
+      setValidationError(preflight.copy);
+      setPreflightDetail({ decodedReason: preflight.decodedReason, rawError: preflight.rawError });
       return;
     }
 
@@ -141,11 +203,10 @@ export function GovernanceInterface() {
 
   React.useEffect(() => {
     if (isVoteConfirmed) {
-      refetchVotingPower();
       refetchProposalState();
       refetchProposalVotes();
     }
-  }, [isVoteConfirmed, refetchVotingPower, refetchProposalState, refetchProposalVotes]);
+  }, [isVoteConfirmed, refetchProposalState, refetchProposalVotes]);
 
   React.useEffect(() => {
     if (voteError) {
@@ -189,6 +250,83 @@ export function GovernanceInterface() {
     }
   }, [voteError, isVoting, isVoteConfirming, isVoteConfirmed, voteTxHash, explorerBaseUrl]);
 
+  React.useEffect(() => {
+    if (proposalError) {
+      publishGlobalTxStatus({ source: 'governance', stage: 'error', errorMessage: proposalError.message, txHash: proposalTxHash, explorerBaseUrl });
+    } else if (isPropSubmitting) {
+      publishGlobalTxStatus({ source: 'governance', stage: 'pending', txHash: proposalTxHash, explorerBaseUrl });
+    } else if (isPropConfirming && proposalTxHash) {
+      publishGlobalTxStatus({ source: 'governance', stage: 'confirming', txHash: proposalTxHash, explorerBaseUrl });
+    } else if (isPropConfirmed && proposalTxHash) {
+      publishGlobalTxStatus({ source: 'governance', stage: 'success', txHash: proposalTxHash, explorerBaseUrl });
+    }
+  }, [proposalError, isPropSubmitting, isPropConfirming, isPropConfirmed, proposalTxHash, explorerBaseUrl]);
+
+  // Trigger proposal loading whenever proposalCount changes or publicClient updates
+  useEffect(() => {
+    if (proposalCount !== undefined && publicClient) {
+      loadRecentProposals();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proposalCount, publicClient]);
+
+  const loadRecentProposals = useCallback(async () => {
+    if (!publicClient || !proposalCount || !isSupportedChain) return;
+    setLoadingProposals(true);
+    try {
+      const count = Number(proposalCount);
+      if (count === 0) { setRecentProposals([]); setLoadingProposals(false); return; }
+      const ids = Array.from({ length: Math.min(count, 10) }, (_, i) => BigInt(count - i));
+      const results = await Promise.all(
+        ids.map(async (id) => {
+          const [details, stateVal] = await Promise.all([
+            publicClient.readContract({ address: governorAddress, abi: ONBT_GOVERNOR_ABI, functionName: 'getProposal', args: [id] }) as Promise<readonly [string, string, string, bigint, bigint, bigint, bigint, bigint, number]>,
+            publicClient.readContract({ address: governorAddress, abi: ONBT_GOVERNOR_ABI, functionName: 'state', args: [id] }) as Promise<number>,
+          ]);
+          return { id, title: details[1], description: details[2], state: Number(stateVal), forVotes: details[3], againstVotes: details[4] };
+        })
+      );
+      setRecentProposals(results);
+    } catch { /* proposals not indexed yet */ } finally {
+      setLoadingProposals(false);
+    }
+  }, [publicClient, proposalCount, governorAddress, isSupportedChain]);
+
+  const handleCreateProposal = async () => {
+    setValidationError(null);
+    setPreflightDetail(null);
+    if (!address || !propTitle.trim() || !propDesc.trim()) {
+      setValidationError('Title and description are required.');
+      return;
+    }
+    if (!isWalletOnSelectedChain) { switchChain({ chainId: selectedChainId }); return; }
+    const preflight = await runActionPreflight({
+      actionLabel: 'Create proposal',
+      account: address,
+      connectedChainId: chain?.id,
+      targetChainId: selectedChainId,
+      publicClient,
+      request: {
+        address: governorAddress,
+        abi: ONBT_GOVERNOR_ABI,
+        functionName: 'propose',
+        args: [propTitle.trim(), propDesc.trim(), [], [], []],
+      },
+    });
+    if (!preflight.ok) {
+      setValidationError(preflight.copy);
+      setPreflightDetail({ decodedReason: preflight.decodedReason, rawError: preflight.rawError });
+      return;
+    }
+    resetPropose();
+    writePropose({
+      address: governorAddress,
+      abi: ONBT_GOVERNOR_ABI,
+      functionName: 'propose',
+      args: [propTitle.trim(), propDesc.trim(), [], [], []],
+    });
+  };
+
   const proposalStateLabel = (() => {
     if (proposalState === undefined) return '--';
     const stateNum = Number(proposalState);
@@ -206,74 +344,87 @@ export function GovernanceInterface() {
   })();
 
   return (
-    <div className="brand-card module-shell module-grid-bg max-w-4xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
+    <div className="brand-card module-shell module-shell-governance module-grid-bg scanline-panel max-w-4xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
       {/* Header */}
-      <div className="mb-6 border-b border-[color:var(--brand-leaf)]/30 pb-4">
-        <h2 className="text-2xl font-semibold brand-display mb-2">
-          🏛️ DAO Governance
-        </h2>
-        <span className="module-accent-chip mb-2">Governance Rail</span>
-        <div className="module-banner module-banner-governance text-xs text-[color:var(--brand-ink)]/85">
-          Decision layer: proposal intelligence, vote execution, and omnichain governance telemetry.
+      <div className="mb-6 border-b border-sky-900/15 pb-4">
+        <div className="mb-3 flex flex-wrap gap-2">
+          <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">Governance Rail</button>
+          <button type="button" className="rounded-full border border-slate-900/12 bg-white px-3 py-1 text-xs font-semibold text-slate-900">DAO Governance</button>
+          <button type="button" className="rounded-full border border-cyan-300/35 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-950">Vote Live</button>
+        </div>
+        <div className="status-rail mb-2">
+          <span className="status-rail-dot" />
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">Proposal Intel</button>
+            <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">Vote Execution</button>
+            <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">{selectedChainId === 8453 ? 'Base' : 'Arbitrum'}</button>
+          </div>
         </div>
         <ChainSelector
           label="Use case chain"
           selectedChainId={selectedChainId}
           onSelectChain={setSelectedChainId}
         />
-        <p className="text-sm text-[color:var(--brand-ink)]/60 mb-4">
-          Read/write governance directly on deployed governor contracts
-        </p>
-        <div className="mb-3 inline-flex items-center rounded-full border border-[color:var(--brand-leaf)]/40 bg-[color:var(--brand-cream)] px-3 py-1 text-xs text-[color:var(--brand-ink)]/75">
-          Capability: Query proposals and cast votes on Base and Arbitrum governor contracts
-        </div>
         {address && (
-          <Identity address={address}>
-            <Avatar />
-            <Name />
-          </Identity>
+          <WalletIdentityBadge address={address} label="Voting wallet" />
         )}
       </div>
 
       {/* Governance Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="glass-tile motion-card p-4 rounded-xl">
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Your Voting Power</p>
-          <p className="text-2xl font-bold text-[color:var(--brand-forest)]">
-            {votingPower ? `${Number(formatEther(votingPower)).toLocaleString(undefined, { maximumFractionDigits: 4 })} ONBT` : '0 ONBT'}
-          </p>
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mt-1">
-            Stake tokens to gain voting power
-          </p>
+      <div className="brand-stat-card motion-card mb-6 grid grid-cols-1 gap-3 rounded-xl px-3 py-3 md:grid-cols-3">
+        <div className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-3 text-left">
+          <div className="text-xs text-[color:var(--brand-ink)]/60 mb-0.5">Your Voting Power</div>
+          <div className="font-semibold text-[color:var(--brand-ink)]">
+            {!address
+              ? 'Connect wallet'
+              : votingPower !== undefined
+                ? `${Number(formatEther(votingPower as bigint)).toLocaleString(undefined, { maximumFractionDigits: 2 })} ONBT`
+                : 'Loading...'}
+          </div>
         </div>
-        <div className="glass-tile motion-card p-4 rounded-xl">
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Governor Contract</p>
-          <p className="text-2xl font-bold text-[color:var(--brand-sun)]">
-            {governorName || 'Governor'}
-          </p>
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mt-1">
-            {`${governorAddress.slice(0, 6)}...${governorAddress.slice(-4)}`}
-          </p>
+        <div className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-3 text-left">
+          <div className="text-xs text-[color:var(--brand-ink)]/60 mb-0.5">Proposals On-Chain</div>
+          <div className="font-semibold text-[color:var(--brand-ink)]">{proposalCount !== undefined ? Number(proposalCount).toString() : '—'}</div>
         </div>
-        <div className="glass-tile motion-card p-4 rounded-xl">
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Network</p>
-          <p className="text-2xl font-bold text-[color:var(--brand-ink)]">
-            {selectedChainId === 8453 ? 'Base' : 'Arbitrum'}
-          </p>
+        <div className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-3 text-left">
+          <div className="text-xs text-[color:var(--brand-ink)]/60 mb-0.5">Network</div>
+          <div className="font-semibold text-[color:var(--brand-ink)]">{selectedChainId === 8453 ? 'Base' : 'Arbitrum'}</div>
         </div>
       </div>
 
-      <div className="glass-tile motion-card p-4 rounded-xl mb-6">
-        <h3 className="font-medium text-[color:var(--brand-ink)] mb-2">Vote on Proposal</h3>
+      {/* Governor Parameters */}
+      <div className="brand-stat-card motion-card mb-6 grid grid-cols-3 gap-3 rounded-xl px-3 py-3">
+        <div className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-3 text-left">
+          <div className="text-xs text-[color:var(--brand-ink)]/60 mb-0.5">Proposal Threshold</div>
+          <div className="font-semibold text-[color:var(--brand-ink)] text-sm">
+            {proposalThreshold !== undefined ? `${Number(formatEther(proposalThreshold as bigint)).toLocaleString()} ONBT` : '—'}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-3 text-left">
+          <div className="text-xs text-[color:var(--brand-ink)]/60 mb-0.5">Voting Period</div>
+          <div className="font-semibold text-[color:var(--brand-ink)] text-sm">
+            {votingPeriod !== undefined ? `${Math.round(Number(votingPeriod) / 86400)} days` : '—'}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-3 text-left">
+          <div className="text-xs text-[color:var(--brand-ink)]/60 mb-0.5">Quorum</div>
+          <div className="font-semibold text-[color:var(--brand-ink)] text-sm">
+            {quorumPercentage !== undefined ? `${Number(quorumPercentage)}%` : '—'}
+          </div>
+        </div>
+      </div>
+
+      <div className="brand-stat-card motion-card p-4 rounded-xl mb-6">
+        <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-semibold text-[color:var(--brand-ink)]">Vote on Proposal</button>
         {!isSupportedChain && (
-          <p className="text-sm text-red-700">Connect wallet to Base (8453) or Arbitrum (42161) to vote.</p>
+          <button type="button" className="rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-left text-sm font-semibold text-rose-700">Connect wallet to Base (8453) or Arbitrum (42161) to vote.</button>
         )}
         {isSupportedChain && (
           <>
             {!isWalletOnSelectedChain && (
-              <p className="text-sm text-yellow-700 mb-2">
+              <button type="button" className="mb-2 rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-left text-sm font-semibold text-amber-800">
                 Wallet chain differs from selected chain. Click Cast Vote to switch wallet to the selected network.
-              </p>
+              </button>
             )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
               <input
@@ -308,65 +459,176 @@ export function GovernanceInterface() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-2 text-sm">
-              <div className="p-3 rounded-lg border border-[color:var(--brand-leaf)]/20">
-                <p className="text-xs text-[color:var(--brand-ink)]/60">Proposal State</p>
-                <p className="font-medium text-[color:var(--brand-ink)]">{proposalStateLabel}</p>
-              </div>
-              <div className="p-3 rounded-lg border border-[color:var(--brand-leaf)]/20">
-                <p className="text-xs text-[color:var(--brand-ink)]/60">For Votes</p>
-                <p className="font-medium text-[color:var(--brand-ink)]">
-                  {proposalVotes ? Number(formatEther((proposalVotes as readonly [bigint, bigint, bigint])[1])).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '--'}
-                </p>
-              </div>
-              <div className="p-3 rounded-lg border border-[color:var(--brand-leaf)]/20">
-                <p className="text-xs text-[color:var(--brand-ink)]/60">Against Votes</p>
-                <p className="font-medium text-[color:var(--brand-ink)]">
-                  {proposalVotes ? Number(formatEther((proposalVotes as readonly [bigint, bigint, bigint])[0])).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '--'}
-                </p>
-              </div>
-              <div className="p-3 rounded-lg border border-[color:var(--brand-leaf)]/20">
-                <p className="text-xs text-[color:var(--brand-ink)]/60">You Voted</p>
-                <p className="font-medium text-[color:var(--brand-ink)]">{hasVoted ? 'Yes' : 'No'}</p>
-              </div>
+              <button type="button" className="brand-pill brand-pill-soft justify-between rounded-lg p-3 text-left">
+                <span className="text-xs text-[color:var(--brand-ink)]/60">Proposal State</span>
+                <span className="font-medium text-[color:var(--brand-ink)]">{proposalStateLabel}</span>
+              </button>
+              <button type="button" className="brand-pill brand-pill-soft justify-between rounded-lg p-3 text-left">
+                <span className="text-xs text-[color:var(--brand-ink)]/60">For Votes</span>
+                <span className="font-medium text-[color:var(--brand-ink)]">
+                  {proposalDetails ? Number(formatEther(proposalDetails[3])).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '--'}
+                </span>
+              </button>
+              <button type="button" className="brand-pill brand-pill-soft justify-between rounded-lg p-3 text-left">
+                <span className="text-xs text-[color:var(--brand-ink)]/60">Against Votes</span>
+                <span className="font-medium text-[color:var(--brand-ink)]">
+                  {proposalDetails ? Number(formatEther(proposalDetails[4])).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '--'}
+                </span>
+              </button>
+              <button type="button" className="brand-pill brand-pill-soft justify-between rounded-lg p-3 text-left">
+                <span className="text-xs text-[color:var(--brand-ink)]/60">You Voted</span>
+                <span className="font-medium text-[color:var(--brand-ink)]">{receiptData?.[0] ? 'Yes' : 'No'}</span>
+              </button>
             </div>
 
             {voteTxHash && (
-              <a
+              <MiniAppExternalLink
                 href={`${explorerBaseUrl}/tx/${voteTxHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="inline-flex mt-2 text-sm text-[color:var(--brand-forest)] hover:underline"
               >
                 View vote transaction
-              </a>
+              </MiniAppExternalLink>
             )}
             {voteError && (
-              <p className="text-sm text-red-700 mt-2">{voteError.message}</p>
+              <button type="button" className="mt-2 rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-left text-sm font-semibold text-rose-700">{voteError.message}</button>
+            )}
+            {validationError && (
+              <div className="mt-2 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2 text-sm text-rose-100">
+                <button type="button" className="rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-left font-semibold text-rose-700">{validationError}</button>
+                {preflightDetail?.decodedReason && (
+                  <button type="button" className="mt-1 rounded-full border border-rose-300 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">Decoded reason: {preflightDetail.decodedReason}</button>
+                )}
+              </div>
             )}
             {isVoteConfirmed && (
-              <p className="text-sm text-green-700 mt-2">Vote confirmed.</p>
+              <button type="button" className="mt-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">Vote confirmed.</button>
             )}
           </>
         )}
       </div>
 
-      <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-leaf)]/20 mb-6">
-        <p className="text-xs text-[color:var(--brand-ink)]/70">
-          Governance reads/writes are now bound directly to ONBT governor contracts on both Base and Arbitrum.
-          Enter a proposal ID to view state/votes and cast your vote.
-        </p>
+      {/* Recent Proposals Browser */}
+      <div className="brand-stat-card motion-card p-4 rounded-xl mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-semibold text-[color:var(--brand-ink)]">Recent Proposals</button>
+          <button
+            type="button"
+            onClick={loadRecentProposals}
+            disabled={loadingProposals || !isSupportedChain}
+            className="rounded-full border border-[color:var(--brand-leaf)]/40 bg-white px-3 py-1 text-xs font-semibold text-[color:var(--brand-forest)] disabled:opacity-50"
+          >
+            {loadingProposals ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
+        {recentProposals.length === 0 && !loadingProposals && (
+          <p className="text-sm text-[color:var(--brand-ink)]/60 py-2">{proposalCount !== undefined && Number(proposalCount) === 0 ? 'No proposals yet.' : 'Loading proposals…'}</p>
+        )}
+        <div className="space-y-2">
+          {recentProposals.map((p) => {
+            const stateMap: Record<number, { label: string; cls: string }> = {
+              0: { label: 'Pending', cls: 'border-amber-300 bg-amber-50 text-amber-800' },
+              1: { label: 'Active', cls: 'border-emerald-300 bg-emerald-50 text-emerald-800' },
+              2: { label: 'Canceled', cls: 'border-slate-300 bg-slate-50 text-slate-600' },
+              3: { label: 'Defeated', cls: 'border-rose-300 bg-rose-50 text-rose-700' },
+              4: { label: 'Succeeded', cls: 'border-sky-300 bg-sky-50 text-sky-800' },
+              5: { label: 'Queued', cls: 'border-violet-300 bg-violet-50 text-violet-800' },
+              6: { label: 'Expired', cls: 'border-slate-300 bg-slate-50 text-slate-500' },
+              7: { label: 'Executed', cls: 'border-teal-300 bg-teal-50 text-teal-800' },
+            };
+            const s = stateMap[p.state] ?? { label: 'Unknown', cls: 'border-slate-200 bg-slate-50 text-slate-500' };
+            return (
+              <div key={p.id.toString()} className="rounded-xl border border-[color:var(--brand-leaf)]/20 bg-white/60 px-4 py-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono text-[color:var(--brand-ink)]/50">#{p.id.toString()}</span>
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${s.cls}`}>{s.label}</span>
+                    </div>
+                    <p className="font-semibold text-[color:var(--brand-ink)] text-sm truncate">{p.title || '(no title)'}</p>
+                    {p.description && <p className="text-xs text-[color:var(--brand-ink)]/60 mt-0.5 line-clamp-2">{p.description}</p>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProposalIdInput(p.id.toString())}
+                    className="flex-shrink-0 rounded-full border border-[color:var(--brand-leaf)]/40 bg-white px-3 py-1 text-xs font-semibold text-[color:var(--brand-forest)]"
+                  >Vote</button>
+                </div>
+                <div className="mt-2 flex gap-4 text-xs text-[color:var(--brand-ink)]/60">
+                  <span>For: <span className="font-semibold text-emerald-700">{Number(formatEther(p.forVotes)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
+                  <span>Against: <span className="font-semibold text-rose-600">{Number(formatEther(p.againstVotes)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Info Box */}
-      <div className="mt-6 p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-sun)]/40">
-        <p className="text-xs text-[color:var(--brand-ink)]/70 mb-2">
-          <strong>🌐 Omnichain Governance:</strong>
-        </p>
-        <p className="text-xs text-[color:var(--brand-ink)]/70">
-          Your votes are aggregated across all chains via LayerZero V2. Stake ONBT on any chain to gain
-          voting power that works everywhere!
-        </p>
+      {/* Create Proposal */}
+      <div className="brand-stat-card motion-card p-4 rounded-xl mb-2">
+        <div className="flex items-center justify-between mb-3">
+          <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-semibold text-[color:var(--brand-ink)]">Create Proposal</button>
+          <button
+            type="button"
+            onClick={() => setShowCreateProposal((v) => !v)}
+            className="rounded-full border border-[color:var(--brand-leaf)]/40 bg-white px-3 py-1 text-xs font-semibold text-[color:var(--brand-forest)]"
+          >
+            {showCreateProposal ? 'Collapse' : 'Expand'}
+          </button>
+        </div>
+        {!showCreateProposal && (
+          <p className="text-sm text-[color:var(--brand-ink)]/60">
+            Requires {proposalThreshold !== undefined ? `${Number(formatEther(proposalThreshold as bigint)).toLocaleString()} ONBT` : '10,000 ONBT'} staked to propose.
+          </p>
+        )}
+        {showCreateProposal && (
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={propTitle}
+              onChange={(e) => setPropTitle(e.target.value)}
+              placeholder="Proposal title"
+              className="w-full px-4 py-3 border border-[color:var(--brand-leaf)]/40 rounded-lg focus:ring-2 focus:ring-[color:var(--brand-forest)] bg-[color:var(--brand-cream)]/80 text-sm"
+            />
+            <textarea
+              value={propDesc}
+              onChange={(e) => setPropDesc(e.target.value)}
+              placeholder="Description — explain the motivation, impact, and any relevant links."
+              rows={4}
+              className="w-full px-4 py-3 border border-[color:var(--brand-leaf)]/40 rounded-lg focus:ring-2 focus:ring-[color:var(--brand-forest)] bg-[color:var(--brand-cream)]/80 text-sm resize-none"
+            />
+            <div className="flex gap-2 flex-wrap">
+              {['Signal Vote', 'Parameter Change', 'Treasury Action'].map((tpl) => (
+                <button
+                  key={tpl}
+                  type="button"
+                  onClick={() => setPropTitle(tpl + ': ')}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700"
+                >{tpl}</button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleCreateProposal}
+              disabled={!address || !propTitle.trim() || !propDesc.trim() || isPropSubmitting || isPropConfirming}
+              className="brand-button text-white font-medium px-4 py-3 rounded-lg disabled:opacity-60 w-full"
+            >
+              {isPropSubmitting || isPropConfirming ? 'Submitting…' : 'Submit Proposal'}
+            </button>
+            {proposalError && (
+              <button type="button" className="rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-left text-sm font-semibold text-rose-700 w-full">{proposalError.message}</button>
+            )}
+            {isPropConfirmed && proposalTxHash && (
+              <div className="flex flex-col gap-1">
+                <button type="button" className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">Proposal submitted!</button>
+                <MiniAppExternalLink href={`${explorerBaseUrl}/tx/${proposalTxHash}`} className="text-sm text-[color:var(--brand-forest)] hover:underline">
+                  View transaction
+                </MiniAppExternalLink>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
     </div>
   );
 }

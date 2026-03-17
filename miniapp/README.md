@@ -48,6 +48,13 @@ npm install
 NEXT_PUBLIC_ONCHAINKIT_API_KEY=your_onchainkit_api_key
 NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
 NEXT_PUBLIC_URL=https://your-app-domain.example
+QUANTUM_ADMIN_TOKEN=QuantumLayer
+NEXT_PUBLIC_QUANTUM_ADMIN_TOKEN=QuantumLayer
+CDP_API_KEY_ID=your_cdp_api_key_id
+CDP_API_KEY_SECRET=your_cdp_api_key_secret
+AGENTKIT_NETWORK_ID=base
+AGENTKIT_ADMIN_TOKEN=QuantumLayer
+NEXT_PUBLIC_AGENTKIT_ADMIN_TOKEN=QuantumLayer
 ```
 
 3) Start dev server
@@ -98,6 +105,13 @@ Required Vercel env vars:
 - `NEXT_PUBLIC_ONCHAINKIT_API_KEY`
 - `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` (optional but recommended)
 - `NEXT_PUBLIC_URL`
+- `QUANTUM_ADMIN_TOKEN`
+- `NEXT_PUBLIC_QUANTUM_ADMIN_TOKEN`
+- `CDP_API_KEY_ID`
+- `CDP_API_KEY_SECRET`
+- `AGENTKIT_NETWORK_ID`
+- `AGENTKIT_ADMIN_TOKEN`
+- `NEXT_PUBLIC_AGENTKIT_ADMIN_TOKEN`
 
 ## Notes
 

@@ -1,4 +1,24 @@
 const hre = require("hardhat");
+const { ethers } = hre;
+
+const formatEther = (value) => (ethers.formatEther ? ethers.formatEther(value) : ethers.utils.formatEther(value));
+
+async function waitForDeploymentCompat(contract) {
+  if (contract.waitForDeployment) {
+    await contract.waitForDeployment();
+    return;
+  }
+  if (contract.deployed) {
+    await contract.deployed();
+  }
+}
+
+async function getAddressCompat(contract) {
+  if (contract.getAddress) {
+    return contract.getAddress();
+  }
+  return contract.address;
+}
 
 /**
  * Deployment script for OmnichainNabatOFT
@@ -22,10 +42,10 @@ const hre = require("hardhat");
  * at https://docs.layerzero.network/v2/developers/evm/technical-reference/deployed-contracts
  */
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
 
   console.log("Deploying OmnichainNabatOFT with the account:", deployer.address);
-  console.log("Account balance:", (await hre.ethers.provider.getBalance(deployer.address)).toString());
+  console.log("Account balance:", formatEther(await ethers.provider.getBalance(deployer.address)), "ETH");
 
   // Configure these values before deployment
   const LAYERZERO_ENDPOINT = process.env.LAYERZERO_ENDPOINT || "0x1a44076050125825900e736c501f859c50fE728c";
@@ -36,11 +56,11 @@ async function main() {
   console.log("- Delegate Address:", DELEGATE_ADDRESS);
 
   // Deploy OmnichainNabatOFT (NO PROXY - Direct deployment)
-  const OmnichainNabatOFT = await hre.ethers.getContractFactory("OmnichainNabatOFT");
+  const OmnichainNabatOFT = await ethers.getContractFactory("OmnichainNabatOFT");
   const nabatOFT = await OmnichainNabatOFT.deploy(LAYERZERO_ENDPOINT, DELEGATE_ADDRESS);
 
-  await nabatOFT.waitForDeployment();
-  const contractAddress = await nabatOFT.getAddress();
+  await waitForDeploymentCompat(nabatOFT);
+  const contractAddress = await getAddressCompat(nabatOFT);
 
   console.log("\n✅ OmnichainNabatOFT deployed to:", contractAddress);
   console.log("\n📝 IMPORTANT: No proxy contract was deployed (per LayerZero V2 standard)");

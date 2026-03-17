@@ -11,7 +11,7 @@ export type FeatureSlice = {
   key: FeatureSliceKey;
   label: string;
   icon: string;
-  route: string;
-  service: string;
+  route?: string;
+  service?: string;
   render: (context: FeatureUiContext) => ReactNode;
 };

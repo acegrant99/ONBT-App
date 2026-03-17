@@ -1,0 +1,22 @@
+{
+  "component": "frontend-advancement",
+  "qualityGates": {
+    "typescriptStrict": true,
+    "lintZeroWarnings": true,
+    "accessibilityRequired": true,
+    "bundleBudgetKb": 350
+  },
+  "walletSupport": {
+    "requiredChains": [
+      "base",
+      "arbitrum"
+    ],
+    "enforceChainSwitchGuard": true,
+    "transactionSimulation": true
+  },
+  "uiIntegrity": {
+    "requireAbiDecodingChecks": true,
+    "staleDataTtlSeconds": 30,
+    "optimisticUpdateRollback": true
+  }
+}

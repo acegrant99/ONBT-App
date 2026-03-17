@@ -1,3 +1,4 @@
+// NOTE: server-only module — only import from app/api/ route handlers.
 import {
   ONBT_TOKEN_ABI,
   ONBT_STAKING_ABI,

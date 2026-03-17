@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { verifyPrivilegedWalletProof, walletProofNonceStorageMode } from '@/lib/agentkit/walletAccess';
+import { notificationTokenStorageMode } from '@/lib/notificationStore';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-const DEFAULT_AGENTKIT_TOKEN = 'QuantumLayer';
 
 type EnvCheck = {
   key: string;
@@ -15,17 +14,17 @@ type EnvCheck = {
   note?: string;
 };
 
-function configuredToken(): string {
+function configuredToken(): string | null {
   return (
     process.env.AGENTKIT_ADMIN_TOKEN ||
     process.env.QUANTUM_ADMIN_TOKEN ||
-    process.env.NEXT_PUBLIC_QUANTUM_ADMIN_TOKEN ||
-    DEFAULT_AGENTKIT_TOKEN
+    null
   );
 }
 
 function isAuthorized(request: Request): boolean {
   const expected = configuredToken();
+  if (!expected) return false;
   const headerToken = request.headers.get('x-agentkit-admin-token')?.trim();
   const bearerToken = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
   return headerToken === expected || bearerToken === expected;
@@ -62,7 +61,7 @@ export async function GET(request: Request) {
     {
       key: 'AGENTKIT_ADMIN_TOKEN',
       required: true,
-      present: isPresent(process.env.AGENTKIT_ADMIN_TOKEN) || isPresent(process.env.NEXT_PUBLIC_AGENTKIT_ADMIN_TOKEN),
+      present: isPresent(process.env.AGENTKIT_ADMIN_TOKEN) || isPresent(process.env.QUANTUM_ADMIN_TOKEN),
       source: 'server',
       note: 'Protects admin-style API routes.',
     },
@@ -106,6 +105,76 @@ export async function GET(request: Request) {
       present: isPresent(process.env.NEXT_PUBLIC_BASE_APP_OWNER),
       source: 'client',
     },
+    {
+      key: 'REDIS_URL',
+      required: false,
+      present: isPresent(process.env.REDIS_URL),
+      source: 'server',
+      note: 'Standard Redis TCP URL (Redis Labs, self-hosted). Takes priority over REST.',
+    },
+    {
+      key: 'REDIS_API_KEY',
+      required: false,
+      present: isPresent(process.env.REDIS_API_KEY),
+      source: 'server',
+      note: 'Redis REST API key (Redis Cloud / Upstash). Pair with REDIS_API_URL.',
+    },
+    {
+      key: 'REDIS_API_URL',
+      required: false,
+      present: isPresent(process.env.REDIS_API_URL),
+      source: 'server',
+      note: 'Redis REST endpoint URL. Required when using REDIS_API_KEY for REST access.',
+    },
+    {
+      key: 'ORIGIN_PILOT_API',
+      required: false,
+      present: isPresent(process.env.ORIGIN_PILOT_API),
+      source: 'server',
+      note: 'API key for the Origin Pilot LLM. Enables real AI-generated responses in the Quantum Advisor and Strategy Lab. Treated as an OpenAI-compatible bearer token.',
+    },
+    {
+      key: 'ORIGIN_PILOT_URL',
+      required: false,
+      present: isPresent(process.env.ORIGIN_PILOT_URL),
+      source: 'server',
+      note: 'Base URL for the Origin Pilot LLM endpoint (default: https://api.openai.com/v1). Set this if you are using a custom or self-hosted endpoint.',
+    },
+    {
+      key: 'ORIGIN_PILOT_MODEL',
+      required: false,
+      present: isPresent(process.env.ORIGIN_PILOT_MODEL),
+      source: 'server',
+      note: 'Model name passed to the Origin Pilot LLM API (default: gpt-4o-mini).',
+    },
+    {
+      key: 'QPANDA_PILOT_URL',
+      required: isPresent(process.env.ORIGIN_PILOT_API) && !isPresent(process.env.ORIGIN_PILOT_URL),
+      present: isPresent(process.env.QPANDA_PILOT_URL),
+      source: 'server',
+      note: 'Preferred Origin Quantum PilotOS endpoint used by /api/quantum/qpanda for real quantum task submission. If absent, ORIGIN_PILOT_URL is used as fallback.',
+    },
+    {
+      key: 'UPSTASH_REDIS_REST_URL | KV_REST_API_URL',
+      required: process.env.NODE_ENV === 'production' && !isPresent(process.env.REDIS_URL) && !isPresent(process.env.REDIS_API_KEY),
+      present: isPresent(process.env.UPSTASH_REDIS_REST_URL) || isPresent(process.env.KV_REST_API_URL),
+      source: 'server',
+      note: 'Required in production when no other Redis credentials are configured.',
+    },
+    {
+      key: 'UPSTASH_REDIS_REST_TOKEN | KV_REST_API_TOKEN',
+      required: process.env.NODE_ENV === 'production' && !isPresent(process.env.REDIS_URL) && !isPresent(process.env.REDIS_API_KEY),
+      present: isPresent(process.env.UPSTASH_REDIS_REST_TOKEN) || isPresent(process.env.KV_REST_API_TOKEN),
+      source: 'server',
+      note: 'Required in production for notification token persistence when using Upstash REST.',
+    },
+    {
+      key: 'MINIKIT_NOTIFY_SECRET',
+      required: process.env.NODE_ENV === 'production',
+      present: isPresent(process.env.MINIKIT_NOTIFY_SECRET),
+      source: 'server',
+      note: 'Required in production to authorize /api/send-notification requests.',
+    },
   ];
 
   const missingRequired = checks.filter((c) => c.required && !c.present).map((c) => c.key);
@@ -120,6 +189,9 @@ export async function GET(request: Request) {
     checks,
     diagnostics: {
       walletProofNonceStorage: walletProofNonceStorageMode(),
+      notificationTokenStorage: notificationTokenStorageMode(),
+      notificationFileFallbackAllowed:
+        process.env.MINIKIT_ALLOW_FILE_FALLBACK === 'true' || process.env.NODE_ENV !== 'production',
     },
     checkedAt: new Date().toISOString(),
   });

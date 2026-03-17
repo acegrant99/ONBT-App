@@ -1,0 +1,17 @@
+{
+  "network": "base",
+  "timestamp": "2026-02-22T13:10:48.647Z",
+  "deployer": "0x44497B9FF645A995b18967b34eFeFDe82AeC8144",
+  "contracts": {
+    "ONBTPoolManager": "0xeaA0473f1a0Fa523B0D3C204b2567E159707121B"
+  },
+  "config": {
+    "lzEndpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+    "swapRouter": "0x2626664c2603336E57B271c5C0b26F421741e481",
+    "nftPositionManager": "0x03a520b32c63e69bd1d97ccc44ac0b3db46a80d7",
+    "onbtToken": "0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5",
+    "feeCollector": "0xCBFFd3F88d5C97D06F6306181493D56f70E7fBb0",
+    "rewardsCollector": "0x0e2a7bA0A315fa4A0702f54161D8D571E2F04D85",
+    "rewardsBps": 7000
+  }
+}

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+npm run -s security:scan-secrets
+status=$?
+
+if [ $status -ne 0 ]; then
+  echo "Pre-commit blocked by secret scanner."
+  exit $status
+fi
+
+exit 0

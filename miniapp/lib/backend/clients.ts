@@ -1,3 +1,4 @@
+// NOTE: server-only module — only import from app/api/ route handlers.
 import { createPublicClient, http } from 'viem';
 import { base, arbitrum } from 'viem/chains';
 import { CHAIN_CONFIG } from '@/config';

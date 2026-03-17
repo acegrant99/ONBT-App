@@ -13,5 +13,8 @@ export function useQuantumPrediction() {
     },
     refetchInterval: 30_000,
     staleTime: 15_000,
+    placeholderData: (previousData) => previousData,
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
   });
 }

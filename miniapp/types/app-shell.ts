@@ -1,4 +1,4 @@
-export type TabType = 'token' | 'bridge' | 'staking' | 'governance' | 'private-sale' | 'about';
+export type TabType = 'token' | 'bridge' | 'staking' | 'governance' | 'private-sale' | 'about' | 'quantum-ai' | 'wallet';
 
 export type AiWalletRole = 'user' | 'deployer' | 'cdp';
 export type AiWalletMode = 'auto' | AiWalletRole;
@@ -33,6 +33,18 @@ export type QuantumPrediction = {
   mode: string;
   probabilityHealthy: number;
   confidence: number;
+  confidenceEngine?: {
+    version: string;
+    theoreticalMax: number;
+    note: string;
+    components: {
+      modelMargin: number;
+      featureConsensus: number;
+      temporalStability: number;
+      backendReliability: number;
+      trendAlignment: number;
+    };
+  };
   signal: 'risk-on' | 'caution';
   recommendation: string;
   label: number;
@@ -197,6 +209,53 @@ export type AgentDependencyHealthResult = {
     status: 'pass' | 'warn' | 'fail';
     detail: string;
   }>;
+  featurePacks?: Array<{
+    key: string;
+    title: string;
+    objective: string;
+    dependencies: string[];
+    installedCount: number;
+    coverage: number;
+    status: 'ready' | 'partial' | 'missing';
+  }>;
+};
+
+export type AgentStrategyLabResult = {
+  ok: boolean;
+  mode: 'strategy-lab';
+  activeTab: TabType;
+  objective: string;
+  confidence: number;
+  signal: 'risk-on' | 'caution';
+  recommendation: string;
+  quickWins: string[];
+  growthBets: string[];
+  riskGuards: string[];
+  actionPlan: Array<{
+    id: 'dependency-health' | 'github-scout' | 'advisor-transfer-safety' | 'abi-sync' | 'preflight';
+    label: string;
+    reason: string;
+  }>;
+  diagnostics: {
+    weakComponents: string[];
+    readyFeaturePacks: number;
+    totalFeaturePacks: number;
+  };
+  generatedAt: string;
+};
+
+export type QuantumDiagnosticsSnapshot = {
+  capturedAt: string;
+  confidence: number;
+  signal: 'risk-on' | 'caution';
+  recommendation: string;
+  components?: {
+    modelMargin: number;
+    featureConsensus: number;
+    temporalStability: number;
+    backendReliability: number;
+    trendAlignment: number;
+  };
 };
 
 export type AiTakeoverPlan = {
@@ -223,6 +282,8 @@ export type AgentAccessProfileResult = {
     envHealth: boolean;
     websiteEditor: boolean;
     abiConfigurator: boolean;
+    cloudDeploy: boolean;
+    quantumTasks: boolean;
   };
   checkedAt: string;
 };
@@ -251,6 +312,44 @@ export type AgentAbiConfiguratorResult = {
     notes: string[];
   }>;
   generatedAt: string;
+};
+
+export type AgentCloudDeployResult = {
+  ok: boolean;
+  mode: 'cloud-deploy';
+  action: 'deploy' | 'status' | 'list';
+  platform: 'vercel' | 'railway' | 'none';
+  status: 'triggered' | 'building' | 'ready' | 'error' | 'no-credentials' | 'listed';
+  deploymentId?: string;
+  deploymentUrl?: string;
+  buildLogsUrl?: string;
+  projectName?: string;
+  deployments?: Array<{
+    id: string;
+    url: string;
+    state: string;
+    name: string;
+    createdAt: string;
+  }>;
+  message: string;
+  guidance: string[];
+  triggeredAt: string;
+};
+
+export type AgentQpandaTaskResult = {
+  ok: boolean;
+  mode: 'qpanda';
+  action: 'submit' | 'query';
+  pilotUrl?: string;
+  taskId?: string;
+  status?: string;
+  result?: Record<string, unknown> | Array<Record<string, unknown>>;
+  diagnostics?: {
+    stdout?: string;
+    stderr?: string;
+  };
+  error?: string;
+  generatedAt?: string;
 };
 
 export type AgentWebsiteEditResult = {

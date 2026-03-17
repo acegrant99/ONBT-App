@@ -1,0 +1,8 @@
+{
+  "source": "data\\nabat_quantum_ai_signals.csv",
+  "mode": "numpy-fallback",
+  "epochs": 20,
+  "samples": 206,
+  "train_accuracy": 0.890909,
+  "test_accuracy": 0.926829
+}

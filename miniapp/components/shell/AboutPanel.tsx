@@ -1,5 +1,6 @@
 import React from 'react';
 import { OnchainSdkPanel } from '@/components';
+import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
 
 type AboutPanelProps = {
   baseExplorer: string;
@@ -16,23 +17,22 @@ export function AboutPanel({
 }: AboutPanelProps) {
   return (
     <div className="brand-card max-w-2xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
-      <h2 className="text-2xl font-semibold brand-display mb-4">
+      <button type="button" className="mb-4 rounded-2xl border border-slate-900/12 bg-white px-4 py-2 text-2xl font-semibold brand-display">
         About ONBT
-      </h2>
+      </button>
       <div className="space-y-4 text-[color:var(--brand-ink)]/80">
-        <p>
-          <strong className="text-[color:var(--brand-forest)]">Omnichain Nabat Token (ONBT)</strong> is
-          a LayerZero V2 Omnichain Fungible Token (OFT) that exists natively across multiple blockchains.
-        </p>
+        <button type="button" className="w-full rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-2 text-left font-semibold text-[color:var(--brand-ink)]/85">
+          Omnichain Nabat Token (ONBT) is a LayerZero V2 Omnichain Fungible Token (OFT) that exists natively across multiple blockchains.
+        </button>
         <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-leaf)]/20">
-          <h3 className="font-semibold text-[color:var(--brand-ink)] mb-2">🔗 Supported Chains</h3>
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-semibold text-[color:var(--brand-ink)]">🔗 Supported Chains</button>
           <ul className="space-y-1 text-sm">
             <li>• <strong>Base</strong> (Hub Chain) - EID 30184</li>
             <li>• <strong>Arbitrum</strong> - EID 30110</li>
           </ul>
         </div>
         <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-leaf)]/20">
-          <h3 className="font-semibold text-[color:var(--brand-ink)] mb-2">✨ Features</h3>
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-semibold text-[color:var(--brand-ink)]">✨ Features</button>
           <ul className="space-y-1 text-sm">
             <li>• <strong>Unified Supply:</strong> 1 billion ONBT across all chains</li>
             <li>• <strong>Native Transfers:</strong> Seamless cross-chain bridging</li>
@@ -44,37 +44,30 @@ export function AboutPanel({
           </ul>
         </div>
         <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-leaf)]/20">
-          <h3 className="font-semibold text-[color:var(--brand-ink)] mb-2">📜 Contracts</h3>
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-semibold text-[color:var(--brand-ink)]">📜 Contracts</button>
           <div className="space-y-2 text-sm">
             <div>
-              <p className="text-[color:var(--brand-ink)]/60 mb-1">Base:</p>
-              <a
+              <button type="button" className="mb-1 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/70">Base</button>
+              <MiniAppExternalLink
                 href={`${baseExplorer}/address/${baseTokenAddress}`}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="font-mono text-xs text-[color:var(--brand-forest)] hover:underline break-all"
               >
                 {baseTokenAddress}
-              </a>
+              </MiniAppExternalLink>
             </div>
             <div>
-              <p className="text-[color:var(--brand-ink)]/60 mb-1">Arbitrum:</p>
-              <a
+              <button type="button" className="mb-1 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/70">Arbitrum</button>
+              <MiniAppExternalLink
                 href={`${arbitrumExplorer}/address/${arbitrumTokenAddress}`}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="font-mono text-xs text-[color:var(--brand-forest)] hover:underline break-all"
               >
                 {arbitrumTokenAddress}
-              </a>
+              </MiniAppExternalLink>
             </div>
           </div>
         </div>
         <div className="p-4 bg-[color:var(--brand-sun)]/20 rounded-lg border border-[color:var(--brand-sun)]/40">
-          <p className="text-sm">
-            <strong>⚡ LayerZero-Native:</strong> This miniapp exclusively features LayerZero-enabled
-            contracts. All functionality leverages omnichain messaging for true cross-chain interoperability.
-          </p>
+          <button type="button" className="w-full rounded-2xl border border-[color:var(--brand-sun)]/50 bg-white/92 px-3 py-2 text-left text-sm font-semibold text-[color:var(--brand-ink)]/85">⚡ LayerZero-Native: This miniapp exclusively features LayerZero-enabled contracts. All functionality leverages omnichain messaging for true cross-chain interoperability.</button>
         </div>
 
         <OnchainSdkPanel />

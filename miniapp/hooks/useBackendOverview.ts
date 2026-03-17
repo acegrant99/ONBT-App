@@ -13,5 +13,8 @@ export function useBackendOverview() {
     },
     refetchInterval: 20_000,
     staleTime: 10_000,
+    placeholderData: (previousData) => previousData,
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
   });
 }

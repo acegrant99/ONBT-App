@@ -1,0 +1,12 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/chains/overview/route.js")
+R.c("server/chunks/node_modules_viem_9cc75951._.js")
+R.c("server/chunks/[root-of-the-server]__0a0ef28c._.js")
+R.c("server/chunks/node_modules_next_88bda297._.js")
+R.c("server/chunks/node_modules_@opentelemetry_api_build_esm_7e8f41ca._.js")
+R.c("server/chunks/node_modules_viem__esm_657921e8._.js")
+R.c("server/chunks/8ee3c_@noble_curves_esm_0817d49b._.js")
+R.c("server/chunks/8ee3c_ox__esm_ef43d280._.js")
+R.c("server/chunks/node_modules_829c49f6._.js")
+R.c("server/chunks/_next-internal_server_app_api_chains_overview_route_actions_9d29c97b.js")
+R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/app/api/chains/overview/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)")
+module.exports=R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/app/api/chains/overview/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)").exports

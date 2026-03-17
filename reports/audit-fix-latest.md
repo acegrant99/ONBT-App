@@ -1,0 +1,1484 @@
+# Deployment Audit Report
+
+- Timestamp: 2026-02-20T00:35:09.432Z
+- Fix mode: enabled
+- Expected owner (base): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- Expected owner (arbitrum): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+
+## Network: base
+- Deployment file: deployment-lzv2-resume-base-contractfix-1771497364067.json
+
+### Contract: onbtToken
+- Address: 0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5
+- Skipped: OFT audit and fixes disabled by user request
+
+### Contract: vault
+- Address: 0xFd06Ecbd22b208f398E4d822904F7114642eF9b9
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_ALLOCATE_BUDGET(): 3
+  - MSG_EMERGENCY_WITHDRAW(): 5
+  - MSG_REPORT_BALANCE(): 2
+  - MSG_REQUEST_FUNDS(): 4
+  - MSG_TRANSFER_FUNDS(): 1
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - governance(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - hubChainEid(): 30184
+  - insuranceFund(): 0xD9df789dc6BA5C27D3b591d58F9A02a87C6250FE
+  - isHub(): true
+  - liquidityManager(): 0xb362Af3da1497A551C08F79bC03CbA12D2b7e908
+  - localEid(): 30184
+  - nextRequestId(): 0
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - paused(): false
+  - revenueRouter(): 0xCBFFd3F88d5C97D06F6306181493D56f70E7fBb0
+  - stabilizer(): 0x26D75024c2491636a1A1145a3d6966788EF54667
+  - treasuryManager(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - MSG_ALLOCATE_BUDGET() [view]
+  - MSG_EMERGENCY_WITHDRAW() [view]
+  - MSG_REPORT_BALANCE() [view]
+  - MSG_REQUEST_FUNDS() [view]
+  - MSG_TRANSFER_FUNDS() [view]
+  - allocateBudget(uint32 destinationEid, address token, uint256 amount) [payable]
+  - allowInitializePath(tuple origin) [view]
+  - approveInsurancePayout(bytes32 incidentId) [nonpayable]
+  - budgetAllocations(uint32 arg, address arg) [view]
+  - burnFromBuyback(uint256 amount) [nonpayable]
+  - depositNative() [payable]
+  - depositToken(address token, uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - executeBuyback(uint256 amountIn, uint256 minOut) [nonpayable]
+  - executeWithdrawal(uint256 requestId) [nonpayable]
+  - fundInsuranceReserve(uint256 amount) [nonpayable]
+  - fundLiquidity(uint32 eid, address pool, uint256 amount) [nonpayable]
+  - getAvailableBalance(address token) [view]
+  - getBalance(address token) [view]
+  - getBudgetAllocation(uint32 eid, address token) [view]
+  - getRemainingBudget(uint32 eid, address token) [view]
+  - getSpentAmount(uint32 eid, address token) [view]
+  - governance() [view]
+  - hubChainEid() [view]
+  - insuranceFund() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - liquidityManager() [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - nextRequestId() [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - pause() [nonpayable]
+  - paused() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - releaseReserved(uint32 destinationEid, address token, uint256 amount) [nonpayable]
+  - renounceOwnership() [nonpayable]
+  - reportBalance(address token) [payable]
+  - requestFunds(address token, uint256 amount) [payable]
+  - requestInsurancePayout(address to, uint256 amount, bytes32 incidentId) [nonpayable]
+  - reservedForChain(uint32 arg, address arg) [view]
+  - revenueCollected(uint32 arg, address arg) [view]
+  - revenueRouter() [view]
+  - routeRevenue(address token, uint256 amount) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setGovernance(address _governance) [nonpayable]
+  - setInsuranceFund(address _fund) [nonpayable]
+  - setLiquidityManager(address _manager) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRevenueRouter(address _router) [nonpayable]
+  - setRevenueSplits(uint256 toVault, uint256 toRewards, uint256 toInsurance) [nonpayable]
+  - setStabilizer(address _stabilizer) [nonpayable]
+  - setStabilizerStrategy(bytes32 strategyId) [nonpayable]
+  - setTreasuryManager(address _manager) [nonpayable]
+  - spentAmounts(uint32 arg, address arg) [view]
+  - stabilizer() [view]
+  - tokenBalances(address arg) [view]
+  - totalReserved(address arg) [view]
+  - transferFundsToChain(uint32 destinationEid, address token, uint256 amount) [payable]
+  - transferOwnership(address newOwner) [nonpayable]
+  - treasuryManager() [view]
+  - unpause() [nonpayable]
+  - whitelistToken(address token, bool whitelisted) [nonpayable]
+  - whitelistedTokens(address arg) [view]
+  - withdraw(address token, uint256 amount, address recipient) [nonpayable]
+  - withdrawLiquidity(uint32 eid, address pool, uint256 amount) [nonpayable]
+  - withdrawalRequests(uint256 arg) [view]
+
+### Contract: staking
+- Address: 0xFeBB5792d9315EAB47203553246529078f4880FD
+- Issues: none
+- Zero-arg view/pure calls:
+  - MAX_LOCKUP(): 31536000
+  - MIN_STAKE(): 1000000000000000000
+  - MSG_CLAIM_REWARDS(): 4
+  - MSG_COMPOUND(): 5
+  - MSG_STAKE(): 1
+  - MSG_SYNC_REWARDS(): 3
+  - MSG_UNSTAKE(): 2
+  - achievementNFT(): 0x0000000000000000000000000000000000000000
+  - baseRewardRate(): 1000
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - getRewardTokens(): [0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5]
+  - globalTotalStaked(): 0
+  - hubChainEid(): 30184
+  - isHub(): true
+  - localEid(): 30184
+  - localTotalStaked(): 0
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - paused(): false
+  - rewardPerSecond(): 3170979198
+  - totalVotingPower(): 0
+- ABI functions:
+  - MAX_LOCKUP() [view]
+  - MIN_STAKE() [view]
+  - MSG_CLAIM_REWARDS() [view]
+  - MSG_COMPOUND() [view]
+  - MSG_STAKE() [view]
+  - MSG_SYNC_REWARDS() [view]
+  - MSG_UNSTAKE() [view]
+  - achievementNFT() [view]
+  - achievementsBitmap(address arg) [view]
+  - addRewardToken(address token) [nonpayable]
+  - allowInitializePath(tuple origin) [view]
+  - baseRewardRate() [view]
+  - claimRewards() [nonpayable]
+  - combineOptions(uint32 _eid, uint16 _msgType, bytes _extraOptions) [view]
+  - compound() [nonpayable]
+  - compoundWithFee() [payable]
+  - crossChainStakes(address arg, uint32 arg) [view]
+  - delegate(address delegatee) [nonpayable]
+  - delegatedVotes(address arg) [view]
+  - delegates(address arg) [view]
+  - delegatorCount(address arg) [view]
+  - earned(address user) [view]
+  - emergencyWithdraw(address token, uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - enforcedOptions(uint32 eid, uint16 msgType) [view]
+  - getCurrentDelegate(address user) [view]
+  - getLeaderboardRank(address user) [view]
+  - getLockupBonus(uint8 lockup) [view]
+  - getLockupDuration(uint8 lockup) [view]
+  - getRewardTokens() [view]
+  - getStakeInfo(address user) [view]
+  - getTopStakers(uint256 count) [view]
+  - getVotingPower(address user) [view]
+  - globalTotalStaked() [view]
+  - hasAchievement(address user, uint8 achievement) [view]
+  - hubChainEid() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - isRewardToken(address arg) [view]
+  - localEid() [view]
+  - localTotalStaked() [view]
+  - lockupBonuses(uint8 arg) [view]
+  - lockupDurations(uint8 arg) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - pause() [nonpayable]
+  - paused() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - quoteStakeSyncFee(address user, uint256 amount, bool isStake) [view]
+  - removeRewardToken(address token) [nonpayable]
+  - renounceOwnership() [nonpayable]
+  - rewardPerSecond() [view]
+  - rewardTokens(uint256 arg) [view]
+  - setAchievementNFT(address nftContract) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setEnforcedOptions(tuple[] _enforcedOptions) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRewardRate(uint256 newRate) [nonpayable]
+  - stake(uint256 amount, uint8 lockup) [nonpayable]
+  - stakeWithFee(uint256 amount, uint8 lockup) [payable]
+  - stakes(address arg) [view]
+  - topStakers(uint256 arg) [view]
+  - totalClaimedByToken(address arg, address arg) [view]
+  - totalVotingPower() [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - unpause() [nonpayable]
+  - unstake(uint256 amount) [nonpayable]
+  - unstakeWithFee(uint256 amount) [payable]
+  - userRank(address arg) [view]
+
+### Contract: rewardsPool
+- Address: 0x0e2a7bA0A315fa4A0702f54161D8D571E2F04D85
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_REPORT_BALANCE(): 3
+  - MSG_REQUEST_REWARDS(): 1
+  - MSG_SEND_REWARDS(): 2
+  - MSG_UPDATE_ALLOCATION(): 4
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - getSupportedTokens(): [0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5]
+  - hubChainEid(): 30184
+  - incentiveController(): 0x7b06795D31482fef0213b24E8ad5f348692A73BD
+  - isHub(): true
+  - localEid(): 30184
+  - maxRequestAmount(): 100000000000000000000000
+  - needsRefill(): true
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - paused(): false
+  - refillAmount(): 50000000000000000000000
+  - refillThreshold(): 10000000000000000000000
+  - requestCooldown(): 3600
+  - stakingContract(): 0x929251E1e57678b9BcC6536bf5C33271a2fdD5AD
+  - stakingContractBalance(): 0
+  - totalAllocated(): 0
+- ABI functions:
+  - MSG_REPORT_BALANCE() [view]
+  - MSG_REQUEST_REWARDS() [view]
+  - MSG_SEND_REWARDS() [view]
+  - MSG_UPDATE_ALLOCATION() [view]
+  - allowInitializePath(tuple origin) [view]
+  - availableBalance(address token) [view]
+  - chainAllocations(uint32 arg) [view]
+  - checkAndRefill() [nonpayable]
+  - depositRewards(address token, uint256 amount) [nonpayable]
+  - emergencyRefill(uint256 amount) [nonpayable]
+  - emergencyWithdraw(address token, uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - getAllocationRemaining(uint32 eid) [view]
+  - getSupportedTokens() [view]
+  - hubChainEid() [view]
+  - incentiveController() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - isSupportedToken(address arg) [view]
+  - lastRequestTime(uint32 arg) [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - maxRequestAmount() [view]
+  - needsRefill() [view]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - pause() [nonpayable]
+  - paused() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - refillAmount() [view]
+  - refillThreshold() [view]
+  - renounceOwnership() [nonpayable]
+  - requestCooldown() [view]
+  - requestRewards(uint256 amount) [payable]
+  - sendRewards(uint32 dstEid, uint256 amount) [payable]
+  - setChainAllocation(uint32 eid, uint256 allocation) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setIncentiveController(address newController) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRateLimits(uint256 maxAmount, uint256 cooldown) [nonpayable]
+  - setRefillConfig(uint256 threshold, uint256 amount) [nonpayable]
+  - setStakingContract(address newContract) [nonpayable]
+  - setSupportedToken(address token, bool supported) [nonpayable]
+  - stakingContract() [view]
+  - stakingContractBalance() [view]
+  - supportedTokens(uint256 arg) [view]
+  - totalAllocated() [view]
+  - totalDistributed(uint32 arg) [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - unpause() [nonpayable]
+
+### Contract: yieldDistributor
+- Address: 0x8c91384EbF767C1C434d127c82020380F4A8afC7
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_DISTRIBUTE_YIELD(): 2
+  - MSG_REPORT_CLAIMS(): 3
+  - MSG_SYNC_SHARES(): 1
+  - accRewardsPerShare(): 0
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - hubChainEid(): 30184
+  - isHub(): true
+  - localEid(): 30184
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - totalShares(): 100000000000000000000
+- ABI functions:
+  - MSG_DISTRIBUTE_YIELD() [view]
+  - MSG_REPORT_CLAIMS() [view]
+  - MSG_SYNC_SHARES() [view]
+  - accRewardsPerShare() [view]
+  - addRewardDepositor(address depositor) [nonpayable]
+  - allowInitializePath(tuple origin) [view]
+  - batchUpdateShares(address[] userAddresses, uint256[] newShares) [nonpayable]
+  - claimRewards() [nonpayable]
+  - combineOptions(uint32 _eid, uint16 _msgType, bytes _extraOptions) [view]
+  - depositRewards(uint256 amount) [nonpayable]
+  - distributeYieldToChain(uint32 dstEid, uint256 amount) [payable]
+  - emergencyWithdraw(address token, uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - enforcedOptions(uint32 eid, uint16 msgType) [view]
+  - getUserInfo(address user) [view]
+  - hubChainEid() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - pendingRewards(address user) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - removeRewardDepositor(address depositor) [nonpayable]
+  - renounceOwnership() [nonpayable]
+  - rewardDepositors(address arg) [view]
+  - setDelegate(address _delegate) [nonpayable]
+  - setEnforcedOptions(tuple[] _enforcedOptions) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - syncSharesToHub(address user, uint256 shares) [payable]
+  - totalShares() [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - updateShares(address user, uint256 newShares) [nonpayable]
+  - users(address arg) [view]
+
+### Contract: achievementNFT
+- Address: 0x11EEEB62b2b2B66475642f82502989D671fC5855
+- Issues: none
+- Zero-arg view/pure calls:
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - localEid(): 30184
+  - name(): ONBT Achievement
+  - nextTokenId(): 1
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - stakingContract(): 0xFeBB5792d9315EAB47203553246529078f4880FD
+  - symbol(): ONBTACH
+  - totalMinted(): 0
+- ABI functions:
+  - achievementNames(uint256 arg) [view]
+  - achievementRarities(uint256 arg) [view]
+  - achievements(uint256 arg) [view]
+  - allowInitializePath(tuple origin) [view]
+  - approve(address to, uint256 tokenId) [nonpayable]
+  - balanceOf(address owner) [view]
+  - batchMintAchievements(address recipient, uint8[] achievementTypes) [nonpayable]
+  - combineOptions(uint32 _eid, uint16 _msgType, bytes _extraOptions) [view]
+  - endpoint() [view]
+  - enforcedOptions(uint32 eid, uint16 msgType) [view]
+  - getAchievement(uint256 tokenId) [view]
+  - getAchievementsByOwner(address owner) [view]
+  - getApproved(uint256 tokenId) [view]
+  - getRarityName(uint8 rarity) [pure]
+  - hasAchievement(address user, uint8 achievementType) [view]
+  - isApprovedForAll(address owner, address operator) [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - mintAchievement(address recipient, uint8 achievementType) [nonpayable]
+  - name() [view]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - nextTokenId() [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - ownerOf(uint256 tokenId) [view]
+  - peers(uint32 eid) [view]
+  - renounceOwnership() [nonpayable]
+  - safeTransferFrom(address from, address to, uint256 tokenId) [nonpayable]
+  - safeTransferFrom(address from, address to, uint256 tokenId, bytes data) [nonpayable]
+  - setAchievementName(uint8 index, string name) [nonpayable]
+  - setApprovalForAll(address operator, bool approved) [nonpayable]
+  - setBaseURI(string newURI) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setEnforcedOptions(tuple[] _enforcedOptions) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setStakingContract(address newContract) [nonpayable]
+  - stakingContract() [view]
+  - supportsInterface(bytes4 interfaceId) [view]
+  - symbol() [view]
+  - tokenURI(uint256 tokenId) [view]
+  - totalMinted() [view]
+  - transferFrom(address from, address to, uint256 tokenId) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+
+### Contract: stakingRouter
+- Address: 0x7b1E4982755A17bfBbD2d249BC1079C2d31E959B
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_CLAIM_REWARDS(): 2
+  - MSG_DISTRIBUTE_YIELD(): 3
+  - MSG_SHARE_UPDATE(): 1
+  - MSG_SYNC_METRICS(): 4
+  - defaultLzReceiveGas(): 200000
+  - defaultLzReceiveValue(): 0
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - getGlobalMetrics(): [0, 0, 0]
+  - globalTotalStaked(): 0
+  - hubChainEid(): 30184
+  - isHub(): true
+  - localEid(): 30184
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - rewardsPool(): 0x0e2a7bA0A315fa4A0702f54161D8D571E2F04D85
+  - stakingContract(): 0x929251E1e57678b9BcC6536bf5C33271a2fdD5AD
+  - yieldDistributor(): 0x383Be7aBD6D696f09D5087A3F77f75eC669acf33
+- ABI functions:
+  - MSG_CLAIM_REWARDS() [view]
+  - MSG_DISTRIBUTE_YIELD() [view]
+  - MSG_SHARE_UPDATE() [view]
+  - MSG_SYNC_METRICS() [view]
+  - allowInitializePath(tuple origin) [view]
+  - chainTotalShares(uint32 arg) [view]
+  - chainTotalStaked(uint32 arg) [view]
+  - chainYieldRatio(uint32 arg) [view]
+  - claimRewards(address user) [nonpayable]
+  - defaultLzReceiveGas() [view]
+  - defaultLzReceiveValue() [view]
+  - distributeYieldToChains(uint32[] chainEids, uint256[] amounts) [payable]
+  - endpoint() [view]
+  - getChainMetrics(uint32 eid) [view]
+  - getGlobalMetrics() [view]
+  - globalTotalStaked() [view]
+  - hubChainEid() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - lastSyncTime(uint32 arg) [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - pendingYield(uint32 arg) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - requestRewardRefill(uint256 amount) [payable]
+  - rewardsPool() [view]
+  - setChainYieldRatio(uint32 eid, uint256 ratio) [nonpayable]
+  - setDefaultLzReceiveOptions(uint128 gas, uint128 value) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - stakingContract() [view]
+  - syncToHub() [payable]
+  - transferOwnership(address newOwner) [nonpayable]
+  - updateContracts(address _staking, address _yieldDist, address _rewards) [nonpayable]
+  - updateShares(address user, uint256 newShares) [nonpayable]
+  - yieldDistributor() [view]
+
+### Contract: governor
+- Address: 0xf41971b179C0ae6f2CdBdA9b57F407b1C9bF20c9
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_PROPOSAL_CREATED(): 1
+  - MSG_PROPOSAL_EXECUTED(): 3
+  - MSG_SYNC_VOTING_POWER(): 4
+  - MSG_VOTE_CAST(): 2
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - hubChainEid(): 30184
+  - incentiveController(): 0x7b06795D31482fef0213b24E8ad5f348692A73BD
+  - insuranceFund(): 0xD9df789dc6BA5C27D3b591d58F9A02a87C6250FE
+  - isHub(): true
+  - liquidityManager(): 0xb362Af3da1497A551C08F79bC03CbA12D2b7e908
+  - localEid(): 30184
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - proposalCount(): 0
+  - proposalThreshold(): 10000000000000000000000
+  - quorumPercentage(): 400
+  - revenueRouter(): 0xCBFFd3F88d5C97D06F6306181493D56f70E7fBb0
+  - rewardsPool(): 0x0e2a7bA0A315fa4A0702f54161D8D571E2F04D85
+  - stabilizer(): 0x26D75024c2491636a1A1145a3d6966788EF54667
+  - stakingContract(): 0x929251E1e57678b9BcC6536bf5C33271a2fdD5AD
+  - timelockDelay(): 86400
+  - vault(): 0xFd06Ecbd22b208f398E4d822904F7114642eF9b9
+  - votingPeriod(): 216000
+- ABI functions:
+  - MSG_PROPOSAL_CREATED() [view]
+  - MSG_PROPOSAL_EXECUTED() [view]
+  - MSG_SYNC_VOTING_POWER() [view]
+  - MSG_VOTE_CAST() [view]
+  - allowInitializePath(tuple origin) [view]
+  - buildApproveInsurancePayoutAction(bytes32 incidentId) [view]
+  - buildApproveInsurancePayoutDirectAction(bytes32 incidentId) [view]
+  - buildBurnFromBuybackAction(uint256 amount) [view]
+  - buildBurnFromBuybackDirectAction(uint256 amount) [view]
+  - buildExecuteBuybackAction(uint256 amountIn, uint256 minOut) [view]
+  - buildExecuteBuybackDirectAction(uint256 amountIn, uint256 minOut) [view]
+  - buildFundInsuranceReserveAction(uint256 amount) [view]
+  - buildFundInsuranceReserveDirectAction(uint256 amount) [view]
+  - buildFundLiquidityAction(uint32 eid, address pool, uint256 amount) [view]
+  - buildFundLiquidityManagerAction(uint32 eid, address pool, uint256 amount) [view]
+  - buildRequestInsurancePayoutAction(address to, uint256 amount, bytes32 incidentId) [view]
+  - buildRequestInsurancePayoutDirectAction(address to, uint256 amount, bytes32 incidentId) [view]
+  - buildRouteRevenueAction(address token, uint256 amount) [view]
+  - buildRouteRevenueDirectAction(address token, uint256 amount) [view]
+  - buildSetChainAllocationAction(uint32 eid, uint256 allocation) [view]
+  - buildSetIncentiveControllerAddressAction(address newController) [view]
+  - buildSetInsuranceFundAddressAction(address newFund) [view]
+  - buildSetLiquidityManagerAddressAction(address newManager) [view]
+  - buildSetPoolAllocationAction(uint32 eid, address pool, uint256 amount) [view]
+  - buildSetRateLimitsAction(uint256 maxAmount, uint256 cooldown) [view]
+  - buildSetRefillConfigAction(uint256 threshold, uint256 amount) [view]
+  - buildSetRevenueRouterAddressAction(address newRouter) [view]
+  - buildSetRevenueSplitsAction(uint256 toVault, uint256 toRewards, uint256 toInsurance) [view]
+  - buildSetRevenueSplitsDirectAction(uint256 toVault, uint256 toRewards, uint256 toInsurance) [view]
+  - buildSetRewardRateAction(uint32 eid, uint256 rateBps) [view]
+  - buildSetRewardsPoolAddressAction(address newPool) [view]
+  - buildSetStabilizerAddressAction(address newStabilizer) [view]
+  - buildSetStabilizerStrategyAction(bytes32 strategyId) [view]
+  - buildSetStabilizerStrategyDirectAction(bytes32 strategyId) [view]
+  - buildSetSupportedTokenAction(address token, bool supported) [view]
+  - buildSetVaultAddressAction(address newVault) [view]
+  - buildWithdrawLiquidityAction(uint32 eid, address pool, uint256 amount) [view]
+  - buildWithdrawLiquidityManagerAction(uint32 eid, address pool, uint256 amount) [view]
+  - cancel(uint256 proposalId) [nonpayable]
+  - castVote(uint256 proposalId, uint8 support) [nonpayable]
+  - chainAbstainVotes(uint256 arg, uint32 arg) [view]
+  - chainAgainstVotes(uint256 arg, uint32 arg) [view]
+  - chainForVotes(uint256 arg, uint32 arg) [view]
+  - chainVotingPower(uint32 arg) [view]
+  - endpoint() [view]
+  - execute(uint256 proposalId) [payable]
+  - executeIncentiveControllerAction(bytes data) [nonpayable]
+  - executeInsuranceFundAction(bytes data) [nonpayable]
+  - executeLiquidityManagerAction(bytes data) [nonpayable]
+  - executeRevenueRouterAction(bytes data) [nonpayable]
+  - executeRewardsPoolAction(bytes data) [nonpayable]
+  - executeStabilizerAction(bytes data) [nonpayable]
+  - executeVaultAction(bytes data) [nonpayable]
+  - getProposal(uint256 proposalId) [view]
+  - getReceipt(uint256 proposalId, address voter) [view]
+  - hubChainEid() [view]
+  - incentiveController() [view]
+  - insuranceFund() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - liquidityManager() [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - proposalCount() [view]
+  - proposalThreshold() [view]
+  - proposals(uint256 arg) [view]
+  - propose(string title, string description, address[] targets, uint256[] values, bytes[] calldatas) [nonpayable]
+  - queue(uint256 proposalId) [nonpayable]
+  - quorumPercentage() [view]
+  - receipts(uint256 arg, address arg) [view]
+  - renounceOwnership() [nonpayable]
+  - revenueRouter() [view]
+  - rewardsPool() [view]
+  - setDelegate(address _delegate) [nonpayable]
+  - setGovernanceParams(uint256 threshold, uint256 quorum, uint256 period, uint256 delay) [nonpayable]
+  - setIncentiveController(address newController) [nonpayable]
+  - setInsuranceFund(address newFund) [nonpayable]
+  - setLiquidityManager(address newManager) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRevenueRouter(address newRouter) [nonpayable]
+  - setRewardsPool(address newPool) [nonpayable]
+  - setStabilizer(address newStabilizer) [nonpayable]
+  - setStakingContract(address newContract) [nonpayable]
+  - setVault(address newVault) [nonpayable]
+  - stabilizer() [view]
+  - stakingContract() [view]
+  - state(uint256 proposalId) [view]
+  - timelockDelay() [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - vault() [view]
+  - votingPeriod() [view]
+
+### Contract: liquidityManager
+- Address: 0xb362Af3da1497A551C08F79bC03CbA12D2b7e908
+- Issues: none
+- Zero-arg view/pure calls:
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - allowInitializePath(tuple origin) [view]
+  - endpoint() [view]
+  - fundLiquidity(uint32 eid, address pool, uint256 amount) [nonpayable]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - poolAllocations(uint32 arg, address arg) [view]
+  - poolFunded(uint32 arg, address arg) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setPoolAllocation(uint32 eid, address pool, uint256 amount) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+  - withdrawLiquidity(uint32 eid, address pool, uint256 amount) [nonpayable]
+
+### Contract: insuranceFund
+- Address: 0xD9df789dc6BA5C27D3b591d58F9A02a87C6250FE
+- Issues: none
+- Zero-arg view/pure calls:
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - allowInitializePath(tuple origin) [view]
+  - approvePayout(bytes32 incidentId) [nonpayable]
+  - endpoint() [view]
+  - fundReserve(uint256 amount) [nonpayable]
+  - incidents(bytes32 arg) [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - requestPayout(address to, uint256 amount, bytes32 incidentId) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+
+### Contract: stabilizer
+- Address: 0x26D75024c2491636a1A1145a3d6966788EF54667
+- Issues: none
+- Zero-arg view/pure calls:
+  - activeStrategy(): 0x0000000000000000000000000000000000000000000000000000000000000000
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - activeStrategy() [view]
+  - allowInitializePath(tuple origin) [view]
+  - burnFromBuyback(uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - executeBuyback(uint256 amountIn, uint256 minOut) [nonpayable]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setStrategy(bytes32 strategyId) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+
+### Contract: incentiveController
+- Address: 0x7b06795D31482fef0213b24E8ad5f348692A73BD
+- Issues: none
+- Zero-arg view/pure calls:
+  - defaultRateBps(): 10000
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - allowInitializePath(tuple origin) [view]
+  - chainRewardRateBps(uint32 arg) [view]
+  - computeRewards(address arg) [pure]
+  - defaultRateBps() [view]
+  - endpoint() [view]
+  - getRewardRate(uint32 eid) [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - setDefaultRate(uint256 rateBps) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRewardRate(uint32 eid, uint256 rateBps) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+
+### Contract: revenueRouter
+- Address: 0xCBFFd3F88d5C97D06F6306181493D56f70E7fBb0
+- Issues: none
+- Zero-arg view/pure calls:
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - insurance(): 0xD9df789dc6BA5C27D3b591d58F9A02a87C6250FE
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - rewards(): 0x0e2a7bA0A315fa4A0702f54161D8D571E2F04D85
+  - toInsuranceBps(): 1000
+  - toRewardsBps(): 3000
+  - toVaultBps(): 6000
+  - vault(): 0xFd06Ecbd22b208f398E4d822904F7114642eF9b9
+- ABI functions:
+  - allowInitializePath(tuple origin) [view]
+  - endpoint() [view]
+  - insurance() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - rewards() [view]
+  - routeFees(address token, uint256 amount) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setDestinations(address _vault, address _rewards, address _insurance) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setSplits(uint256 toVault, uint256 toRewards, uint256 toInsurance) [nonpayable]
+  - toInsuranceBps() [view]
+  - toRewardsBps() [view]
+  - toVaultBps() [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - vault() [view]
+
+## Network: arbitrum
+- Deployment file: deployment-lzv2-resume-arbitrum-contractfix-1771497392397.json
+
+### Contract: onbtToken
+- Address: 0x169aC761Ebb210B5A93B68B44DA394776a7B230C
+- Skipped: OFT audit and fixes disabled by user request
+
+### Contract: vault
+- Address: 0x85fE97c69350Be8B9A6bC026006907E34324CD6A
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_ALLOCATE_BUDGET(): 3
+  - MSG_EMERGENCY_WITHDRAW(): 5
+  - MSG_REPORT_BALANCE(): 2
+  - MSG_REQUEST_FUNDS(): 4
+  - MSG_TRANSFER_FUNDS(): 1
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - governance(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - hubChainEid(): 30184
+  - insuranceFund(): 0x85BB4B6268446a71110db6f296885AA1EE36c695
+  - isHub(): false
+  - liquidityManager(): 0x5889E566a2175C2d504d8e4D1Ad0A979dCa854a3
+  - localEid(): 30110
+  - nextRequestId(): 0
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - paused(): false
+  - revenueRouter(): 0xa66CA14df740B142d8E2DE515A8743ad1eE25850
+  - stabilizer(): 0x6e6C6d7Fc80bD1d52c291Fad3425dEC43f464587
+  - treasuryManager(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - MSG_ALLOCATE_BUDGET() [view]
+  - MSG_EMERGENCY_WITHDRAW() [view]
+  - MSG_REPORT_BALANCE() [view]
+  - MSG_REQUEST_FUNDS() [view]
+  - MSG_TRANSFER_FUNDS() [view]
+  - allocateBudget(uint32 destinationEid, address token, uint256 amount) [payable]
+  - allowInitializePath(tuple origin) [view]
+  - approveInsurancePayout(bytes32 incidentId) [nonpayable]
+  - budgetAllocations(uint32 arg, address arg) [view]
+  - burnFromBuyback(uint256 amount) [nonpayable]
+  - depositNative() [payable]
+  - depositToken(address token, uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - executeBuyback(uint256 amountIn, uint256 minOut) [nonpayable]
+  - executeWithdrawal(uint256 requestId) [nonpayable]
+  - fundInsuranceReserve(uint256 amount) [nonpayable]
+  - fundLiquidity(uint32 eid, address pool, uint256 amount) [nonpayable]
+  - getAvailableBalance(address token) [view]
+  - getBalance(address token) [view]
+  - getBudgetAllocation(uint32 eid, address token) [view]
+  - getRemainingBudget(uint32 eid, address token) [view]
+  - getSpentAmount(uint32 eid, address token) [view]
+  - governance() [view]
+  - hubChainEid() [view]
+  - insuranceFund() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - liquidityManager() [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - nextRequestId() [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - pause() [nonpayable]
+  - paused() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - releaseReserved(uint32 destinationEid, address token, uint256 amount) [nonpayable]
+  - renounceOwnership() [nonpayable]
+  - reportBalance(address token) [payable]
+  - requestFunds(address token, uint256 amount) [payable]
+  - requestInsurancePayout(address to, uint256 amount, bytes32 incidentId) [nonpayable]
+  - reservedForChain(uint32 arg, address arg) [view]
+  - revenueCollected(uint32 arg, address arg) [view]
+  - revenueRouter() [view]
+  - routeRevenue(address token, uint256 amount) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setGovernance(address _governance) [nonpayable]
+  - setInsuranceFund(address _fund) [nonpayable]
+  - setLiquidityManager(address _manager) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRevenueRouter(address _router) [nonpayable]
+  - setRevenueSplits(uint256 toVault, uint256 toRewards, uint256 toInsurance) [nonpayable]
+  - setStabilizer(address _stabilizer) [nonpayable]
+  - setStabilizerStrategy(bytes32 strategyId) [nonpayable]
+  - setTreasuryManager(address _manager) [nonpayable]
+  - spentAmounts(uint32 arg, address arg) [view]
+  - stabilizer() [view]
+  - tokenBalances(address arg) [view]
+  - totalReserved(address arg) [view]
+  - transferFundsToChain(uint32 destinationEid, address token, uint256 amount) [payable]
+  - transferOwnership(address newOwner) [nonpayable]
+  - treasuryManager() [view]
+  - unpause() [nonpayable]
+  - whitelistToken(address token, bool whitelisted) [nonpayable]
+  - whitelistedTokens(address arg) [view]
+  - withdraw(address token, uint256 amount, address recipient) [nonpayable]
+  - withdrawLiquidity(uint32 eid, address pool, uint256 amount) [nonpayable]
+  - withdrawalRequests(uint256 arg) [view]
+
+### Contract: staking
+- Address: 0xFB5E02591d39193c3c3A6eA02A51bE5056ae56d1
+- Issues: none
+- Zero-arg view/pure calls:
+  - MAX_LOCKUP(): 31536000
+  - MIN_STAKE(): 1000000000000000000
+  - MSG_CLAIM_REWARDS(): 4
+  - MSG_COMPOUND(): 5
+  - MSG_STAKE(): 1
+  - MSG_SYNC_REWARDS(): 3
+  - MSG_UNSTAKE(): 2
+  - achievementNFT(): 0x0000000000000000000000000000000000000000
+  - baseRewardRate(): 1000
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - getRewardTokens(): [0x169aC761Ebb210B5A93B68B44DA394776a7B230C]
+  - globalTotalStaked(): 0
+  - hubChainEid(): 30184
+  - isHub(): false
+  - localEid(): 30110
+  - localTotalStaked(): 0
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x169aC761Ebb210B5A93B68B44DA394776a7B230C
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - paused(): false
+  - rewardPerSecond(): 3170979198
+  - totalVotingPower(): 0
+- ABI functions:
+  - MAX_LOCKUP() [view]
+  - MIN_STAKE() [view]
+  - MSG_CLAIM_REWARDS() [view]
+  - MSG_COMPOUND() [view]
+  - MSG_STAKE() [view]
+  - MSG_SYNC_REWARDS() [view]
+  - MSG_UNSTAKE() [view]
+  - achievementNFT() [view]
+  - achievementsBitmap(address arg) [view]
+  - addRewardToken(address token) [nonpayable]
+  - allowInitializePath(tuple origin) [view]
+  - baseRewardRate() [view]
+  - claimRewards() [nonpayable]
+  - combineOptions(uint32 _eid, uint16 _msgType, bytes _extraOptions) [view]
+  - compound() [nonpayable]
+  - compoundWithFee() [payable]
+  - crossChainStakes(address arg, uint32 arg) [view]
+  - delegate(address delegatee) [nonpayable]
+  - delegatedVotes(address arg) [view]
+  - delegates(address arg) [view]
+  - delegatorCount(address arg) [view]
+  - earned(address user) [view]
+  - emergencyWithdraw(address token, uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - enforcedOptions(uint32 eid, uint16 msgType) [view]
+  - getCurrentDelegate(address user) [view]
+  - getLeaderboardRank(address user) [view]
+  - getLockupBonus(uint8 lockup) [view]
+  - getLockupDuration(uint8 lockup) [view]
+  - getRewardTokens() [view]
+  - getStakeInfo(address user) [view]
+  - getTopStakers(uint256 count) [view]
+  - getVotingPower(address user) [view]
+  - globalTotalStaked() [view]
+  - hasAchievement(address user, uint8 achievement) [view]
+  - hubChainEid() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - isRewardToken(address arg) [view]
+  - localEid() [view]
+  - localTotalStaked() [view]
+  - lockupBonuses(uint8 arg) [view]
+  - lockupDurations(uint8 arg) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - pause() [nonpayable]
+  - paused() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - quoteStakeSyncFee(address user, uint256 amount, bool isStake) [view]
+  - removeRewardToken(address token) [nonpayable]
+  - renounceOwnership() [nonpayable]
+  - rewardPerSecond() [view]
+  - rewardTokens(uint256 arg) [view]
+  - setAchievementNFT(address nftContract) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setEnforcedOptions(tuple[] _enforcedOptions) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRewardRate(uint256 newRate) [nonpayable]
+  - stake(uint256 amount, uint8 lockup) [nonpayable]
+  - stakeWithFee(uint256 amount, uint8 lockup) [payable]
+  - stakes(address arg) [view]
+  - topStakers(uint256 arg) [view]
+  - totalClaimedByToken(address arg, address arg) [view]
+  - totalVotingPower() [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - unpause() [nonpayable]
+  - unstake(uint256 amount) [nonpayable]
+  - unstakeWithFee(uint256 amount) [payable]
+  - userRank(address arg) [view]
+
+### Contract: rewardsPool
+- Address: 0x794171E674B0D06fe6FCBF9D0446Ff0C57b2b9E1
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_REPORT_BALANCE(): 3
+  - MSG_REQUEST_REWARDS(): 1
+  - MSG_SEND_REWARDS(): 2
+  - MSG_UPDATE_ALLOCATION(): 4
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - getSupportedTokens(): [0x169aC761Ebb210B5A93B68B44DA394776a7B230C]
+  - hubChainEid(): 30184
+  - incentiveController(): 0xc19273A6F0BBC4Fe6B9B8717FeAa0980448dDA50
+  - isHub(): false
+  - localEid(): 30110
+  - maxRequestAmount(): 100000000000000000000000
+  - needsRefill(): true
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x169aC761Ebb210B5A93B68B44DA394776a7B230C
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - paused(): false
+  - refillAmount(): 50000000000000000000000
+  - refillThreshold(): 10000000000000000000000
+  - requestCooldown(): 3600
+  - stakingContract(): 0x309Da7B0C81d1e5b0467967edC4c10B926172D1c
+  - stakingContractBalance(): 0
+  - totalAllocated(): 0
+- ABI functions:
+  - MSG_REPORT_BALANCE() [view]
+  - MSG_REQUEST_REWARDS() [view]
+  - MSG_SEND_REWARDS() [view]
+  - MSG_UPDATE_ALLOCATION() [view]
+  - allowInitializePath(tuple origin) [view]
+  - availableBalance(address token) [view]
+  - chainAllocations(uint32 arg) [view]
+  - checkAndRefill() [nonpayable]
+  - depositRewards(address token, uint256 amount) [nonpayable]
+  - emergencyRefill(uint256 amount) [nonpayable]
+  - emergencyWithdraw(address token, uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - getAllocationRemaining(uint32 eid) [view]
+  - getSupportedTokens() [view]
+  - hubChainEid() [view]
+  - incentiveController() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - isSupportedToken(address arg) [view]
+  - lastRequestTime(uint32 arg) [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - maxRequestAmount() [view]
+  - needsRefill() [view]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - pause() [nonpayable]
+  - paused() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - refillAmount() [view]
+  - refillThreshold() [view]
+  - renounceOwnership() [nonpayable]
+  - requestCooldown() [view]
+  - requestRewards(uint256 amount) [payable]
+  - sendRewards(uint32 dstEid, uint256 amount) [payable]
+  - setChainAllocation(uint32 eid, uint256 allocation) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setIncentiveController(address newController) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRateLimits(uint256 maxAmount, uint256 cooldown) [nonpayable]
+  - setRefillConfig(uint256 threshold, uint256 amount) [nonpayable]
+  - setStakingContract(address newContract) [nonpayable]
+  - setSupportedToken(address token, bool supported) [nonpayable]
+  - stakingContract() [view]
+  - stakingContractBalance() [view]
+  - supportedTokens(uint256 arg) [view]
+  - totalAllocated() [view]
+  - totalDistributed(uint32 arg) [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - unpause() [nonpayable]
+
+### Contract: yieldDistributor
+- Address: 0x2085ca5081480e8634eF4295ef477fe8cE97B892
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_DISTRIBUTE_YIELD(): 2
+  - MSG_REPORT_CLAIMS(): 3
+  - MSG_SYNC_SHARES(): 1
+  - accRewardsPerShare(): 0
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - hubChainEid(): 30184
+  - isHub(): false
+  - localEid(): 30110
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x169aC761Ebb210B5A93B68B44DA394776a7B230C
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - totalShares(): 0
+- ABI functions:
+  - MSG_DISTRIBUTE_YIELD() [view]
+  - MSG_REPORT_CLAIMS() [view]
+  - MSG_SYNC_SHARES() [view]
+  - accRewardsPerShare() [view]
+  - addRewardDepositor(address depositor) [nonpayable]
+  - allowInitializePath(tuple origin) [view]
+  - batchUpdateShares(address[] userAddresses, uint256[] newShares) [nonpayable]
+  - claimRewards() [nonpayable]
+  - combineOptions(uint32 _eid, uint16 _msgType, bytes _extraOptions) [view]
+  - depositRewards(uint256 amount) [nonpayable]
+  - distributeYieldToChain(uint32 dstEid, uint256 amount) [payable]
+  - emergencyWithdraw(address token, uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - enforcedOptions(uint32 eid, uint16 msgType) [view]
+  - getUserInfo(address user) [view]
+  - hubChainEid() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - pendingRewards(address user) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - removeRewardDepositor(address depositor) [nonpayable]
+  - renounceOwnership() [nonpayable]
+  - rewardDepositors(address arg) [view]
+  - setDelegate(address _delegate) [nonpayable]
+  - setEnforcedOptions(tuple[] _enforcedOptions) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - syncSharesToHub(address user, uint256 shares) [payable]
+  - totalShares() [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - updateShares(address user, uint256 newShares) [nonpayable]
+  - users(address arg) [view]
+
+### Contract: achievementNFT
+- Address: 0xe01194AE772Bf7f7eD55F94681efDc6FFeBf0BEb
+- Issues: none
+- Zero-arg view/pure calls:
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - localEid(): 30110
+  - name(): ONBT Achievement
+  - nextTokenId(): 1
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - stakingContract(): 0xFB5E02591d39193c3c3A6eA02A51bE5056ae56d1
+  - symbol(): ONBTACH
+  - totalMinted(): 0
+- ABI functions:
+  - achievementNames(uint256 arg) [view]
+  - achievementRarities(uint256 arg) [view]
+  - achievements(uint256 arg) [view]
+  - allowInitializePath(tuple origin) [view]
+  - approve(address to, uint256 tokenId) [nonpayable]
+  - balanceOf(address owner) [view]
+  - batchMintAchievements(address recipient, uint8[] achievementTypes) [nonpayable]
+  - combineOptions(uint32 _eid, uint16 _msgType, bytes _extraOptions) [view]
+  - endpoint() [view]
+  - enforcedOptions(uint32 eid, uint16 msgType) [view]
+  - getAchievement(uint256 tokenId) [view]
+  - getAchievementsByOwner(address owner) [view]
+  - getApproved(uint256 tokenId) [view]
+  - getRarityName(uint8 rarity) [pure]
+  - hasAchievement(address user, uint8 achievementType) [view]
+  - isApprovedForAll(address owner, address operator) [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - mintAchievement(address recipient, uint8 achievementType) [nonpayable]
+  - name() [view]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - nextTokenId() [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - ownerOf(uint256 tokenId) [view]
+  - peers(uint32 eid) [view]
+  - renounceOwnership() [nonpayable]
+  - safeTransferFrom(address from, address to, uint256 tokenId) [nonpayable]
+  - safeTransferFrom(address from, address to, uint256 tokenId, bytes data) [nonpayable]
+  - setAchievementName(uint8 index, string name) [nonpayable]
+  - setApprovalForAll(address operator, bool approved) [nonpayable]
+  - setBaseURI(string newURI) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setEnforcedOptions(tuple[] _enforcedOptions) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setStakingContract(address newContract) [nonpayable]
+  - stakingContract() [view]
+  - supportsInterface(bytes4 interfaceId) [view]
+  - symbol() [view]
+  - tokenURI(uint256 tokenId) [view]
+  - totalMinted() [view]
+  - transferFrom(address from, address to, uint256 tokenId) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+
+### Contract: stakingRouter
+- Address: 0xd731eAA2c32d85B55cdf8c9cEba114350ba46c64
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_CLAIM_REWARDS(): 2
+  - MSG_DISTRIBUTE_YIELD(): 3
+  - MSG_SHARE_UPDATE(): 1
+  - MSG_SYNC_METRICS(): 4
+  - defaultLzReceiveGas(): 200000
+  - defaultLzReceiveValue(): 0
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - getGlobalMetrics(): error call revert exception; VM Exception while processing transaction: reverted with reason string "Only hub tracks global metrics" [ See: https://links.ethers.org/v5-errors-CALL_EXCEPTION ] (method="getGlobalMetrics()", data="0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001e4f6e6c792068756220747261636b7320676c6f62616c206d6574726963730000", errorArgs=["Only hub tracks global metrics"], errorName="Error", errorSignature="Error(string)", reason="Only hub tracks global metrics", code=CALL_EXCEPTION, version=abi/5.8.0)
+  - globalTotalStaked(): 0
+  - hubChainEid(): 30184
+  - isHub(): false
+  - localEid(): 30110
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - rewardsPool(): 0x794171E674B0D06fe6FCBF9D0446Ff0C57b2b9E1
+  - stakingContract(): 0x309Da7B0C81d1e5b0467967edC4c10B926172D1c
+  - yieldDistributor(): 0x871A14b07e147c08d9480A1ACaB3835fB8F31c10
+- ABI functions:
+  - MSG_CLAIM_REWARDS() [view]
+  - MSG_DISTRIBUTE_YIELD() [view]
+  - MSG_SHARE_UPDATE() [view]
+  - MSG_SYNC_METRICS() [view]
+  - allowInitializePath(tuple origin) [view]
+  - chainTotalShares(uint32 arg) [view]
+  - chainTotalStaked(uint32 arg) [view]
+  - chainYieldRatio(uint32 arg) [view]
+  - claimRewards(address user) [nonpayable]
+  - defaultLzReceiveGas() [view]
+  - defaultLzReceiveValue() [view]
+  - distributeYieldToChains(uint32[] chainEids, uint256[] amounts) [payable]
+  - endpoint() [view]
+  - getChainMetrics(uint32 eid) [view]
+  - getGlobalMetrics() [view]
+  - globalTotalStaked() [view]
+  - hubChainEid() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - lastSyncTime(uint32 arg) [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - pendingYield(uint32 arg) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - requestRewardRefill(uint256 amount) [payable]
+  - rewardsPool() [view]
+  - setChainYieldRatio(uint32 eid, uint256 ratio) [nonpayable]
+  - setDefaultLzReceiveOptions(uint128 gas, uint128 value) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - stakingContract() [view]
+  - syncToHub() [payable]
+  - transferOwnership(address newOwner) [nonpayable]
+  - updateContracts(address _staking, address _yieldDist, address _rewards) [nonpayable]
+  - updateShares(address user, uint256 newShares) [nonpayable]
+  - yieldDistributor() [view]
+
+### Contract: governor
+- Address: 0x1e8C140ab269de2E1b1ff76113eb7C9F01F92854
+- Issues: none
+- Zero-arg view/pure calls:
+  - MSG_PROPOSAL_CREATED(): 1
+  - MSG_PROPOSAL_EXECUTED(): 3
+  - MSG_SYNC_VOTING_POWER(): 4
+  - MSG_VOTE_CAST(): 2
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - hubChainEid(): 30184
+  - incentiveController(): 0xc19273A6F0BBC4Fe6B9B8717FeAa0980448dDA50
+  - insuranceFund(): 0x85BB4B6268446a71110db6f296885AA1EE36c695
+  - isHub(): false
+  - liquidityManager(): 0x5889E566a2175C2d504d8e4D1Ad0A979dCa854a3
+  - localEid(): 30110
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - proposalCount(): 0
+  - proposalThreshold(): 10000000000000000000000
+  - quorumPercentage(): 400
+  - revenueRouter(): 0xa66CA14df740B142d8E2DE515A8743ad1eE25850
+  - rewardsPool(): 0x794171E674B0D06fe6FCBF9D0446Ff0C57b2b9E1
+  - stabilizer(): 0x6e6C6d7Fc80bD1d52c291Fad3425dEC43f464587
+  - stakingContract(): 0x309Da7B0C81d1e5b0467967edC4c10B926172D1c
+  - timelockDelay(): 1
+  - vault(): 0x85fE97c69350Be8B9A6bC026006907E34324CD6A
+  - votingPeriod(): 50400
+- ABI functions:
+  - MSG_PROPOSAL_CREATED() [view]
+  - MSG_PROPOSAL_EXECUTED() [view]
+  - MSG_SYNC_VOTING_POWER() [view]
+  - MSG_VOTE_CAST() [view]
+  - allowInitializePath(tuple origin) [view]
+  - buildApproveInsurancePayoutAction(bytes32 incidentId) [view]
+  - buildApproveInsurancePayoutDirectAction(bytes32 incidentId) [view]
+  - buildBurnFromBuybackAction(uint256 amount) [view]
+  - buildBurnFromBuybackDirectAction(uint256 amount) [view]
+  - buildExecuteBuybackAction(uint256 amountIn, uint256 minOut) [view]
+  - buildExecuteBuybackDirectAction(uint256 amountIn, uint256 minOut) [view]
+  - buildFundInsuranceReserveAction(uint256 amount) [view]
+  - buildFundInsuranceReserveDirectAction(uint256 amount) [view]
+  - buildFundLiquidityAction(uint32 eid, address pool, uint256 amount) [view]
+  - buildFundLiquidityManagerAction(uint32 eid, address pool, uint256 amount) [view]
+  - buildRequestInsurancePayoutAction(address to, uint256 amount, bytes32 incidentId) [view]
+  - buildRequestInsurancePayoutDirectAction(address to, uint256 amount, bytes32 incidentId) [view]
+  - buildRouteRevenueAction(address token, uint256 amount) [view]
+  - buildRouteRevenueDirectAction(address token, uint256 amount) [view]
+  - buildSetChainAllocationAction(uint32 eid, uint256 allocation) [view]
+  - buildSetIncentiveControllerAddressAction(address newController) [view]
+  - buildSetInsuranceFundAddressAction(address newFund) [view]
+  - buildSetLiquidityManagerAddressAction(address newManager) [view]
+  - buildSetPoolAllocationAction(uint32 eid, address pool, uint256 amount) [view]
+  - buildSetRateLimitsAction(uint256 maxAmount, uint256 cooldown) [view]
+  - buildSetRefillConfigAction(uint256 threshold, uint256 amount) [view]
+  - buildSetRevenueRouterAddressAction(address newRouter) [view]
+  - buildSetRevenueSplitsAction(uint256 toVault, uint256 toRewards, uint256 toInsurance) [view]
+  - buildSetRevenueSplitsDirectAction(uint256 toVault, uint256 toRewards, uint256 toInsurance) [view]
+  - buildSetRewardRateAction(uint32 eid, uint256 rateBps) [view]
+  - buildSetRewardsPoolAddressAction(address newPool) [view]
+  - buildSetStabilizerAddressAction(address newStabilizer) [view]
+  - buildSetStabilizerStrategyAction(bytes32 strategyId) [view]
+  - buildSetStabilizerStrategyDirectAction(bytes32 strategyId) [view]
+  - buildSetSupportedTokenAction(address token, bool supported) [view]
+  - buildSetVaultAddressAction(address newVault) [view]
+  - buildWithdrawLiquidityAction(uint32 eid, address pool, uint256 amount) [view]
+  - buildWithdrawLiquidityManagerAction(uint32 eid, address pool, uint256 amount) [view]
+  - cancel(uint256 proposalId) [nonpayable]
+  - castVote(uint256 proposalId, uint8 support) [nonpayable]
+  - chainAbstainVotes(uint256 arg, uint32 arg) [view]
+  - chainAgainstVotes(uint256 arg, uint32 arg) [view]
+  - chainForVotes(uint256 arg, uint32 arg) [view]
+  - chainVotingPower(uint32 arg) [view]
+  - endpoint() [view]
+  - execute(uint256 proposalId) [payable]
+  - executeIncentiveControllerAction(bytes data) [nonpayable]
+  - executeInsuranceFundAction(bytes data) [nonpayable]
+  - executeLiquidityManagerAction(bytes data) [nonpayable]
+  - executeRevenueRouterAction(bytes data) [nonpayable]
+  - executeRewardsPoolAction(bytes data) [nonpayable]
+  - executeStabilizerAction(bytes data) [nonpayable]
+  - executeVaultAction(bytes data) [nonpayable]
+  - getProposal(uint256 proposalId) [view]
+  - getReceipt(uint256 proposalId, address voter) [view]
+  - hubChainEid() [view]
+  - incentiveController() [view]
+  - insuranceFund() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - isHub() [view]
+  - liquidityManager() [view]
+  - localEid() [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - proposalCount() [view]
+  - proposalThreshold() [view]
+  - proposals(uint256 arg) [view]
+  - propose(string title, string description, address[] targets, uint256[] values, bytes[] calldatas) [nonpayable]
+  - queue(uint256 proposalId) [nonpayable]
+  - quorumPercentage() [view]
+  - receipts(uint256 arg, address arg) [view]
+  - renounceOwnership() [nonpayable]
+  - revenueRouter() [view]
+  - rewardsPool() [view]
+  - setDelegate(address _delegate) [nonpayable]
+  - setGovernanceParams(uint256 threshold, uint256 quorum, uint256 period, uint256 delay) [nonpayable]
+  - setIncentiveController(address newController) [nonpayable]
+  - setInsuranceFund(address newFund) [nonpayable]
+  - setLiquidityManager(address newManager) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRevenueRouter(address newRouter) [nonpayable]
+  - setRewardsPool(address newPool) [nonpayable]
+  - setStabilizer(address newStabilizer) [nonpayable]
+  - setStakingContract(address newContract) [nonpayable]
+  - setVault(address newVault) [nonpayable]
+  - stabilizer() [view]
+  - stakingContract() [view]
+  - state(uint256 proposalId) [view]
+  - timelockDelay() [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - vault() [view]
+  - votingPeriod() [view]
+
+### Contract: liquidityManager
+- Address: 0x5889E566a2175C2d504d8e4D1Ad0A979dCa854a3
+- Issues: none
+- Zero-arg view/pure calls:
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x169aC761Ebb210B5A93B68B44DA394776a7B230C
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - allowInitializePath(tuple origin) [view]
+  - endpoint() [view]
+  - fundLiquidity(uint32 eid, address pool, uint256 amount) [nonpayable]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - poolAllocations(uint32 arg, address arg) [view]
+  - poolFunded(uint32 arg, address arg) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setPoolAllocation(uint32 eid, address pool, uint256 amount) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+  - withdrawLiquidity(uint32 eid, address pool, uint256 amount) [nonpayable]
+
+### Contract: insuranceFund
+- Address: 0x85BB4B6268446a71110db6f296885AA1EE36c695
+- Issues: none
+- Zero-arg view/pure calls:
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x169aC761Ebb210B5A93B68B44DA394776a7B230C
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - allowInitializePath(tuple origin) [view]
+  - approvePayout(bytes32 incidentId) [nonpayable]
+  - endpoint() [view]
+  - fundReserve(uint256 amount) [nonpayable]
+  - incidents(bytes32 arg) [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - requestPayout(address to, uint256 amount, bytes32 incidentId) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+
+### Contract: stabilizer
+- Address: 0x6e6C6d7Fc80bD1d52c291Fad3425dEC43f464587
+- Issues: none
+- Zero-arg view/pure calls:
+  - activeStrategy(): 0x0000000000000000000000000000000000000000000000000000000000000000
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - oAppVersion(): [1, 2]
+  - onbtToken(): 0x169aC761Ebb210B5A93B68B44DA394776a7B230C
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - activeStrategy() [view]
+  - allowInitializePath(tuple origin) [view]
+  - burnFromBuyback(uint256 amount) [nonpayable]
+  - endpoint() [view]
+  - executeBuyback(uint256 amountIn, uint256 minOut) [nonpayable]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - onbtToken() [view]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setStrategy(bytes32 strategyId) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+
+### Contract: incentiveController
+- Address: 0xc19273A6F0BBC4Fe6B9B8717FeAa0980448dDA50
+- Issues: none
+- Zero-arg view/pure calls:
+  - defaultRateBps(): 10000
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+- ABI functions:
+  - allowInitializePath(tuple origin) [view]
+  - chainRewardRateBps(uint32 arg) [view]
+  - computeRewards(address arg) [pure]
+  - defaultRateBps() [view]
+  - endpoint() [view]
+  - getRewardRate(uint32 eid) [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - setDefaultRate(uint256 rateBps) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setRewardRate(uint32 eid, uint256 rateBps) [nonpayable]
+  - transferOwnership(address newOwner) [nonpayable]
+
+### Contract: revenueRouter
+- Address: 0xa66CA14df740B142d8E2DE515A8743ad1eE25850
+- Issues: none
+- Zero-arg view/pure calls:
+  - endpoint(): 0x1a44076050125825900e736c501f859c50fE728c
+  - insurance(): 0x85BB4B6268446a71110db6f296885AA1EE36c695
+  - oAppVersion(): [1, 2]
+  - owner(): 0x44497B9FF645A995b18967b34eFeFDe82AeC8144
+  - rewards(): 0x794171E674B0D06fe6FCBF9D0446Ff0C57b2b9E1
+  - toInsuranceBps(): 1000
+  - toRewardsBps(): 3000
+  - toVaultBps(): 6000
+  - vault(): 0x85fE97c69350Be8B9A6bC026006907E34324CD6A
+- ABI functions:
+  - allowInitializePath(tuple origin) [view]
+  - endpoint() [view]
+  - insurance() [view]
+  - isComposeMsgSender(tuple arg, bytes arg, address _sender) [view]
+  - lzReceive(tuple _origin, bytes32 _guid, bytes _message, address _executor, bytes _extraData) [payable]
+  - nextNonce(uint32 arg, bytes32 arg) [view]
+  - oAppVersion() [pure]
+  - owner() [view]
+  - peers(uint32 eid) [view]
+  - quote(uint32 _dstEid, bytes _message, bytes _options, bool _payInLzToken) [view]
+  - renounceOwnership() [nonpayable]
+  - rewards() [view]
+  - routeFees(address token, uint256 amount) [nonpayable]
+  - setDelegate(address _delegate) [nonpayable]
+  - setDestinations(address _vault, address _rewards, address _insurance) [nonpayable]
+  - setPeer(uint32 _eid, bytes32 _peer) [nonpayable]
+  - setSplits(uint256 toVault, uint256 toRewards, uint256 toInsurance) [nonpayable]
+  - toInsuranceBps() [view]
+  - toRewardsBps() [view]
+  - toVaultBps() [view]
+  - transferOwnership(address newOwner) [nonpayable]
+  - vault() [view]

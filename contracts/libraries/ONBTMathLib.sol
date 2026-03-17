@@ -158,9 +158,6 @@ library ONBTMathLib {
     ) internal pure returns (uint256 impact) {
         if (reserveIn == 0 || reserveOut == 0) return 0;
         
-        // Price before = reserveOut / reserveIn
-        uint256 priceBefore = divFixed(reserveOut, reserveIn);
-        
         // Price after = (reserveOut - amountOut) / (reserveIn + amountIn)
         // Simplified: we can approximate impact as amountIn / (reserveIn + amountIn)
         uint256 denominator = reserveIn + amountIn;

@@ -1,0 +1,57 @@
+--- a/package.json
++++ b/package.json
+@@
+-    "hardhat": "2.28.6",
+-    "@nomiclabs/hardhat-ethers": "^2.2.1",
+-    "@nomicfoundation/hardhat-verify": "^2.0.11",
++    "hardhat": "^3.1.9",
++    "@nomicfoundation/hardhat-ethers": "^4.0.4",
++    "@nomicfoundation/hardhat-verify": "^3.0.10",
+
+--- a/hardhat.config.cjs
++++ b/hardhat.config.cjs
+@@
+-require("@nomiclabs/hardhat-ethers");
++require("@nomicfoundation/hardhat-ethers");
+@@
+ require("@nomicfoundation/hardhat-verify");
+ require("@layerzerolabs/toolbox-hardhat");
+
+--- a/hardhat-minimal.config.cjs
++++ b/hardhat-minimal.config.cjs
+@@
+ require("@nomicfoundation/hardhat-ethers");
+ 
+ module.exports = {
+   solidity: {
+
+--- a/package.json
++++ b/package.json
+@@
+-    "@typechain/ethers-v5": "^11.0.0",
++    "@typechain/ethers-v5": "^11.0.0",
++    "@typechain/ethers-v6": "^0.5.1",
+
+--- a/package.json
++++ b/package.json
+@@
+-    "generate:types:frontend": "typechain --target ethers-v5 --out-dir frontend/src/types/typechain \"frontend/src/contracts/abi/**/*.json\""
++    "generate:types:frontend": "typechain --target ethers-v5 --out-dir frontend/src/types/typechain \"frontend/src/contracts/abi/**/*.json\"",
++    "generate:types:frontend:v6": "typechain --target ethers-v6 --out-dir frontend/src/types/typechain-v6 \"frontend/src/contracts/abi/**/*.json\""
+
+--- a/hardhat.config.cjs
++++ b/hardhat.config.cjs
+@@
+ module.exports = {
+   solidity: {
+@@
+   etherscan: {
+@@
+   },
+ };
+
+# Notes (apply manually in migration branch only)
+# 1) Keep `@layerzerolabs/toolbox-hardhat` unchanged until LayerZero Hardhat 3-compatible release is confirmed.
+# 2) Keep `hardhat-deploy@0.12.x` unchanged in Phase A; migrate to 2.x in Phase C with rocketh mapping.
+# 3) Do not remove ethers v5 in Phase A; dual-track type generation is intentional.
+# 4) Preserve all custom network and etherscan customChains configuration while swapping plugin import.

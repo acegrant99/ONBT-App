@@ -6,38 +6,97 @@ type TabsSectionProps = {
   activeTab: TabType;
   onChangeTab: (tab: TabType) => void;
   featuredTabs?: TabType[];
+  freshnessByTab?: Partial<Record<TabType, { ageMs: number; refreshing?: boolean; staleAfterMs?: number }>>;
+  onRefreshStale?: () => void;
 };
 
-export function TabsSection({ tabs, activeTab, onChangeTab, featuredTabs = [] }: TabsSectionProps) {
+export function TabsSection({ tabs, activeTab, onChangeTab, featuredTabs = [], freshnessByTab = {}, onRefreshStale }: TabsSectionProps) {
   const activeTabMeta = tabs.find((item) => item.key === activeTab);
+  const staleTabs = tabs.filter((tab) => {
+    const freshness = freshnessByTab[tab.key];
+    if (!freshness) return false;
+    const staleAfter = freshness.staleAfterMs ?? 30_000;
+    return freshness.ageMs > staleAfter;
+  });
+
+  const formatAge = (ageMs: number) => {
+    if (!Number.isFinite(ageMs) || ageMs < 0) return '--';
+    if (ageMs < 1000) return '<1s';
+    if (ageMs < 60_000) return `${Math.floor(ageMs / 1000)}s`;
+    return `${Math.floor(ageMs / 60_000)}m`;
+  };
 
   return (
-    <section className="mb-6 rounded-3xl border border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)]/72 p-3 sm:p-4 brand-surface">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+    <section className="brand-panel reveal-up mb-6 p-3 sm:p-4">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
         {tabs.map((tab) => {
           const isFeatured = featuredTabs.includes(tab.key);
+          const freshness = freshnessByTab[tab.key];
+          const freshnessText = freshness
+            ? (freshness.refreshing ?? false)
+              ? 'live'
+              : `age ${formatAge(freshness.ageMs ?? 0)}`
+            : undefined;
           return (
-          <button
-            key={tab.key}
-            onClick={() => onChangeTab(tab.key)}
-            className={`tab-pill px-3 py-2.5 rounded-2xl border text-sm font-medium transition-all duration-300 ${
-              activeTab === tab.key
-                ? 'border-[color:var(--brand-forest)] bg-[color:var(--brand-forest)] text-white shadow-md scale-[1.01]'
-                : isFeatured
-                  ? 'border-emerald-300 bg-emerald-50/90 text-emerald-900 shadow-sm'
-                  : 'border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)]/95 text-[color:var(--brand-ink)]/85 hover:border-[color:var(--brand-forest)]/50 hover:text-[color:var(--brand-forest)] hover:-translate-y-0.5'
-            }`}
-          >
-            <span className="mr-1.5" aria-hidden="true">{tab.icon}</span>
-            {tab.label}
-            {isFeatured && activeTab !== tab.key ? ' *' : ''}
-          </button>
+            <button
+              key={tab.key}
+              onClick={() => onChangeTab(tab.key)}
+              aria-label={freshnessText ? `${tab.label} ${freshnessText}` : tab.label}
+              className={`tab-pill flex min-h-[56px] items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                activeTab === tab.key ? 'tab-pill-active' : ''
+              } ${
+                activeTab === tab.key
+                  ? 'border-slate-900/20 bg-slate-900 text-white shadow-[0_12px_24px_rgba(15,23,42,0.22)]'
+                  : isFeatured
+                    ? 'border-blue-300/60 bg-blue-50/70 text-blue-900'
+                    : 'border-slate-900/12 bg-white/92 text-slate-700 hover:border-slate-900/28 hover:bg-white'
+              }`}
+            >
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span aria-hidden="true">{tab.icon}</span>
+                <span className="truncate">{tab.label}</span>
+              </span>
+              {freshness && (
+                <span
+                  aria-hidden="true"
+                  className={`shrink-0 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                    (freshness.refreshing ?? false)
+                      ? 'bg-white/20 text-white'
+                      : activeTab === tab.key
+                        ? 'bg-white/20 text-white'
+                        : (freshness.ageMs ?? 0) > (freshness.staleAfterMs ?? 30_000)
+                          ? 'bg-amber-100 text-amber-900'
+                          : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  {freshnessText}
+                </span>
+              )}
+            </button>
           );
         })}
       </div>
-      <p className="mt-3 text-xs text-[color:var(--brand-ink)]/60">
-        Active module: <span className="font-medium text-[color:var(--brand-forest)]">{activeTabMeta?.label}</span>
-      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-700">
+          Active {activeTabMeta?.label}
+        </button>
+      </div>
+      {staleTabs.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/35 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <button type="button" className="rounded-full border border-amber-400/65 bg-white px-3 py-1 font-medium text-amber-900">
+            Stale {staleTabs.map((tab) => tab.label).join(', ')}
+          </button>
+          {onRefreshStale && (
+            <button
+              type="button"
+              onClick={onRefreshStale}
+              className="rounded-md border border-amber-400/65 bg-white px-2 py-1 font-medium text-amber-900 transition-colors hover:bg-amber-100"
+            >
+              Refresh
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }

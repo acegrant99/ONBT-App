@@ -73,11 +73,11 @@ export function OnchainSdkPanel() {
   return (
     <div className="space-y-4">
       <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-leaf)]/20">
-        <h3 className="font-semibold text-[color:var(--brand-ink)] mb-2">🧩 Onchain SDK Stack</h3>
-        <p className="text-sm text-[color:var(--brand-ink)]/75">
+        <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-semibold text-[color:var(--brand-ink)]">🧩 Onchain SDK Stack</button>
+        <button type="button" className="w-full rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-2 text-left text-sm font-semibold text-[color:var(--brand-ink)]/75">
           This miniapp now uses the onchain SDK modules mapped from your integrations workspace for wallet UX,
           transactions, and chain-ready expansion.
-        </p>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -88,32 +88,32 @@ export function OnchainSdkPanel() {
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-[color:var(--brand-ink)]">{sdk.name}</p>
-                <p className="text-xs text-[color:var(--brand-ink)]/60 mt-0.5">{sdk.network}</p>
+                <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 text-sm font-semibold text-[color:var(--brand-ink)]">{sdk.name}</button>
+                <button type="button" className="mt-1 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/70">{sdk.network}</button>
               </div>
-              <span className="text-[10px] px-2 py-1 rounded-full border border-[color:var(--brand-leaf)]/30 text-[color:var(--brand-forest)] bg-[color:var(--brand-sand)]">
+              <button type="button" className="text-[10px] px-2 py-1 rounded-full border border-[color:var(--brand-leaf)]/30 text-[color:var(--brand-forest)] bg-[color:var(--brand-sand)]">
                 Active
-              </span>
+              </button>
             </div>
             <ul className="mt-3 space-y-1 text-xs text-[color:var(--brand-ink)]/75">
               {sdk.capabilities.map((capability) => (
                 <li key={capability}>• {capability}</li>
               ))}
             </ul>
-            <p className="mt-3 text-[10px] text-[color:var(--brand-ink)]/55">Source: {sdk.fileRef}</p>
+            <button type="button" className="mt-3 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--brand-ink)]/65">Source: {sdk.fileRef}</button>
           </div>
         ))}
       </div>
 
       <div className="p-4 rounded-lg border border-[color:var(--brand-sun)]/45 bg-[color:var(--brand-sun)]/20">
-        <h4 className="font-semibold text-[color:var(--brand-ink)] text-sm mb-2">⚙️ Runtime Readiness</h4>
+        <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-sm font-semibold text-[color:var(--brand-ink)]">⚙️ Runtime Readiness</button>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           {readinessItems.map((item) => (
             <div key={item.label} className="flex items-center justify-between gap-2 rounded-md bg-[color:var(--brand-cream)] px-3 py-2">
-              <span className="text-[color:var(--brand-ink)]/75">{item.label}</span>
-              <span className={item.ok ? 'text-[color:var(--brand-forest)]' : 'text-red-700'}>
+              <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 font-semibold text-[color:var(--brand-ink)]/75">{item.label}</button>
+              <button type="button" className={`rounded-full border px-2.5 py-1 font-semibold ${item.ok ? 'border-emerald-300 bg-emerald-50 text-[color:var(--brand-forest)]' : 'border-rose-300 bg-rose-50 text-red-700'}`}>
                 {item.ok ? 'Ready' : 'Missing'}
-              </span>
+              </button>
             </div>
           ))}
         </div>

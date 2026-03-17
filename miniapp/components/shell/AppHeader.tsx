@@ -1,61 +1,91 @@
+'use client';
+
 import React from 'react';
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-  WalletDropdownFundLink,
-  WalletDropdownLink,
-} from '@coinbase/onchainkit/wallet';
-import { Avatar, Name, Address, Identity } from '@coinbase/onchainkit/identity';
+import Image from 'next/image';
+import { Wallet, ConnectWallet, WalletDropdown, WalletDropdownDisconnect, WalletDropdownLink } from '@coinbase/onchainkit/wallet';
+import { useAccount } from 'wagmi';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
+
+const STACK_BUTTONS = ['Base', 'Arbitrum', 'MiniKit', 'AgentKit', 'CLI'];
 
 type AppHeaderProps = {
   aiTakeoverEnabled?: boolean;
 };
 
 export function AppHeader({ aiTakeoverEnabled = false }: AppHeaderProps) {
+  const { context } = useMiniKit();
+  const { address } = useAccount();
+  const clientLabel = context?.client?.platformType || 'browser';
+
   return (
-    <header className="brand-surface sticky top-0 z-50 border-b border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)]/90 backdrop-blur-xl">
+    <header className="brand-surface sticky top-0 z-50 border-b border-slate-900/10 bg-white/78 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-11 w-11 rounded-2xl bg-[color:var(--brand-cream)] border border-[color:var(--brand-leaf)]/40 flex items-center justify-center shadow-sm">
-              <picture>
-                <source srcSet="/branding/onabat-logo-light.png" media="(prefers-color-scheme: dark)" />
-                <img src="/branding/onabat-logo-dark.png" alt="ONabat logo" className="h-8 w-8 object-contain" />
-              </picture>
+        <div className="reveal-up rounded-[1.2rem] border border-slate-900/12 bg-white/90 px-3 py-3 shadow-[0_16px_34px_rgba(15,23,42,0.12)] sm:px-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-white via-slate-50 to-cyan-50 border border-slate-900/12 flex items-center justify-center shadow-sm ring-1 ring-blue-200/45">
+              <Image
+                src="/branding/onabat-logo-light.png"
+                alt="ONabat logo"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+                priority
+              />
+              </div>
+              <div className="min-w-0">
+                <button type="button" className="brand-display rounded-2xl border border-slate-900/12 bg-white px-3 py-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 truncate">ONabat</button>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-full border border-slate-900/10 bg-slate-50 px-2.5 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-700"
+                  >
+                    Client {clientLabel}
+                  </button>
+                  {STACK_BUTTONS.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className="rounded-full border border-cyan-300/40 bg-cyan-50 px-2.5 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-950"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                  {aiTakeoverEnabled && (
+                    <button
+                      type="button"
+                      className="rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-800"
+                    >
+                      RAYAY Takeover Active
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="brand-display text-lg sm:text-2xl font-semibold tracking-tight truncate">ONabat</h1>
-              <p className="text-xs text-[color:var(--brand-ink)]/65 truncate">Omnichain ONBT • Base + Arbitrum</p>
-              {aiTakeoverEnabled && (
-                <span className="mt-1 inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
-                  ONBT AI Takeover Active
-                </span>
-              )}
+
+            <div className="flex items-center justify-between gap-3 lg:min-w-[290px] lg:justify-end">
+              <Wallet>
+                <ConnectWallet />
+                <WalletDropdown>
+                  {address && (
+                    <div className="px-4 pb-2 pt-3">
+                      <p className="font-['IBM_Plex_Mono'] text-xs text-slate-500">
+                        {address.slice(0, 6)}…{address.slice(-4)}
+                      </p>
+                    </div>
+                  )}
+                  <WalletDropdownLink
+                    icon="wallet"
+                    href={address ? `https://basescan.org/address/${address}` : 'https://basescan.org'}
+                    rel="noopener noreferrer"
+                  >
+                    View on Basescan
+                  </WalletDropdownLink>
+                  <WalletDropdownDisconnect />
+                </WalletDropdown>
+              </Wallet>
             </div>
           </div>
-
-          <Wallet>
-            <ConnectWallet>
-              <div className="flex items-center gap-2">
-                <Avatar />
-                <Name />
-              </div>
-            </ConnectWallet>
-            <WalletDropdown>
-              <Identity className="px-4 pt-3 pb-2">
-                <Avatar />
-                <Name />
-                <Address className="text-[color:var(--brand-ink)]/60" />
-              </Identity>
-              <WalletDropdownLink icon="wallet" href="https://www.nabat.finance" target="_blank">
-                Website
-              </WalletDropdownLink>
-              <WalletDropdownFundLink text="Fund wallet" />
-              <WalletDropdownDisconnect text="Disconnect" />
-            </WalletDropdown>
-          </Wallet>
         </div>
       </div>
     </header>

@@ -28,6 +28,16 @@ type DependencyUpdate = {
   notes?: string;
 };
 
+type FeaturePack = {
+  key: string;
+  title: string;
+  objective: string;
+  dependencies: string[];
+  installedCount: number;
+  coverage: number;
+  status: 'ready' | 'partial' | 'missing';
+};
+
 type CachedResult = {
   result: {
     ok: boolean;
@@ -41,6 +51,7 @@ type CachedResult = {
       status: 'pass' | 'warn' | 'fail';
       detail: string;
     }>;
+    featurePacks: FeaturePack[];
   };
   expiresAt: number;
 };
@@ -66,6 +77,44 @@ const CRITICAL_PACKAGES = new Set<string>([
   '@coinbase/onchainkit',
   '@coinbase/agentkit',
 ]);
+
+const FEATURE_PACK_DEFINITIONS: Array<{
+  key: string;
+  title: string;
+  objective: string;
+  dependencies: string[];
+}> = [
+  {
+    key: 'data-viz-pro',
+    title: 'Data Viz Pro',
+    objective: 'Richer quantum and onchain charts for decision-grade dashboards.',
+    dependencies: ['recharts', 'd3-scale', 'lightweight-charts'],
+  },
+  {
+    key: 'motion-cinema',
+    title: 'Motion Cinema',
+    objective: 'Intentional motion scenes and orchestration for premium UI moments.',
+    dependencies: ['framer-motion', 'gsap'],
+  },
+  {
+    key: 'validation-safety',
+    title: 'Validation Safety',
+    objective: 'Schema-safe API boundaries and stronger runtime parsing.',
+    dependencies: ['zod', 'valibot'],
+  },
+  {
+    key: 'observability-core',
+    title: 'Observability Core',
+    objective: 'Actionable production diagnostics and user-impact tracking.',
+    dependencies: ['@sentry/nextjs', 'posthog-js'],
+  },
+  {
+    key: 'testing-velocity',
+    title: 'Testing Velocity',
+    objective: 'Fast confidence loops for UI and integration behavior.',
+    dependencies: ['vitest', '@testing-library/react', '@playwright/test'],
+  },
+];
 
 function normalizeVersion(raw: string): string {
   const withoutAlias = raw.startsWith('npm:') ? raw.split('@').pop() || raw : raw;
@@ -143,6 +192,27 @@ export async function GET() {
   }
 
   const criticalUpdates = updates.filter((item) => item.critical);
+
+  const featurePacks: FeaturePack[] = FEATURE_PACK_DEFINITIONS.map((pack) => {
+    const installedCount = pack.dependencies.filter((dep) => Boolean(installed[dep])).length;
+    const coverage = pack.dependencies.length > 0 ? installedCount / pack.dependencies.length : 0;
+    const status: FeaturePack['status'] =
+      coverage >= 0.99 ? 'ready' : coverage > 0 ? 'partial' : 'missing';
+
+    return {
+      key: pack.key,
+      title: pack.title,
+      objective: pack.objective,
+      dependencies: pack.dependencies,
+      installedCount,
+      coverage: Number(coverage.toFixed(2)),
+      status,
+    };
+  });
+
+  const packCoverageAvg = featurePacks.length > 0
+    ? featurePacks.reduce((sum, item) => sum + item.coverage, 0) / featurePacks.length
+    : 0;
   const packageLockPresent = await readFile(packageLockPath, 'utf-8')
     .then(() => true)
     .catch(() => false);
@@ -169,6 +239,14 @@ export async function GET() {
           ? 'No critical major/minor updates detected.'
           : `${criticalUpdates.length} critical package update(s) detected.`,
     },
+    {
+      label: 'Feature Pack Coverage',
+      status: packCoverageAvg >= 0.75 ? 'pass' : packCoverageAvg >= 0.35 ? 'warn' : 'fail',
+      detail:
+        packCoverageAvg >= 0.75
+          ? `Feature foundations are strong (${Math.round(packCoverageAvg * 100)}% average coverage).`
+          : `Feature expansion opportunity detected (${Math.round(packCoverageAvg * 100)}% average coverage).`,
+    },
   ];
 
   const summary =
@@ -184,6 +262,7 @@ export async function GET() {
     criticalUpdates,
     updates,
     checks,
+    featurePacks,
   };
 
   cache = {

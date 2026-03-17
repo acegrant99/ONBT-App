@@ -1,0 +1,6 @@
+export { default as RewardsDashboard } from './RewardsDashboard'
+export { default as RewardsBreakdown } from './RewardsBreakdown'
+export { default as APYCalculator } from './APYCalculator'
+export { default as HistoricalRewards } from './HistoricalRewards'
+export { default as RewardsClaimPanel } from './RewardsClaimPanel'
+export { default as RewardSources } from './RewardSources'

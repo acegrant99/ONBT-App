@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "target": "ES2020",
+        "jsx": "react-jsx",
+        "allowImportingTsExtensions": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "noEmit": true
+    },
+    "exclude": [
+        "node_modules",
+        "**/node_modules/*"
+    ],
+    "include": [
+        "**/*.js",
+        "**/*.mjs",
+        "**/*.cjs",
+        "**/*.ts",
+        "**/*.tsx"
+    ]
+}

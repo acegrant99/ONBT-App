@@ -1,0 +1,48 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "contractName": "OmnichainNabatOFT",
+  "address": "0x7047e54EA5E23Ee8d2693382Ec4500f3426fF3fD",
+  "deployer": "0x44497B9FF645A995b18967b34eFeFDe82AeC8144",
+  "endpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+  "endpointId": 30184,
+  "isHub": true,
+  "supply": "1000000000000000000000000000",
+  "sharedDecimals": 8,
+  "peers": {
+    "arbitrum": {
+      "address": "0xb7b38d4E869b55B6E879d8dCF80362d1Fc0939Da",
+      "endpointId": 30110,
+      "configured": true,
+      "configTx": "0xba9e3927c2805292ad7dc995432a5c1c35036ead4008b276d0bd1bdabbedbcc2"
+    }
+  },
+  "branding": {
+    "logoURI": "ipfs://bafybeiathkcuucabxdrikkk7ew5hryc7bapldu2winwelohc3n6nuuwdwy",
+    "website": "https://nabat.finance",
+    "description": "ONabat (ONBT) is an immutable omnichain fungible token built on LayerZero"
+  },
+  "timestamp": "2026-02-08T00:00:00.000Z",
+  "version": "v3",
+  "complianceUpdates": [
+    "Enhanced documentation with OFT Technical Reference",
+    "Full LayerZero V2 documentation compliance",
+    "Removed duplicate message type constants (inherited from OFTCore)"
+  ],
+  "verification": {
+    "verified": true,
+    "explorer": "basescan",
+    "url": "https://basescan.org/address/0x7047e54EA5E23Ee8d2693382Ec4500f3426fF3fD#code",
+    "verifiedAt": "2026-02-08T00:00:00.000Z"
+  },
+  "configuration": {
+    "enforcedOptions": {
+      "configured": true,
+      "gasLimit": 200000,
+      "messageType": 1,
+      "tx": "0xe3b5473e90a257c63674a2d8ad3285043ba63e830c462eeaee279421746c8500"
+    },
+    "status": "production-ready",
+    "configuredAt": "2026-02-08T00:00:00.000Z"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "deploymentType": "hub",
+  "timestamp": "2026-02-19T01:52:42.384Z",
+  "deployer": "0x44497B9FF645A995b18967b34eFeFDe82AeC8144",
+  "layerZero": {
+    "endpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+    "eid": 30184,
+    "peerEid": 30110
+  },
+  "contracts": {
+    "onbtToken": "0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5",
+    "vault": "0xFd06Ecbd22b208f398E4d822904F7114642eF9b9",
+    "staking": "0x929251E1e57678b9BcC6536bf5C33271a2fdD5AD",
+    "rewardsPool": "0x0e2a7bA0A315fa4A0702f54161D8D571E2F04D85",
+    "yieldDistributor": "0x383Be7aBD6D696f09D5087A3F77f75eC669acf33",
+    "achievementNFT": "0x1C8b47C76Dc486176b670C153aa5CB73547d2495",
+    "stakingRouter": "0x75B83747cfa1BE6A75de37f5C677F8ABae25BD95",
+    "governor": "0x49fB57e21a4a91A9864900e542F393043cdc4316",
+    "liquidityManager": "0x2085ca5081480e8634eF4295ef477fe8cE97B892",
+    "insuranceFund": "0xFB5E02591d39193c3c3A6eA02A51bE5056ae56d1",
+    "stabilizer": "0xe01194AE772Bf7f7eD55F94681efDc6FFeBf0BEb",
+    "incentiveController": "0x0343D0D7f03FF6f20A2a0Bce7F49dd48e6459c82",
+    "revenueRouter": "0x99482a142F74af0f2C27635970A6fD9a20065883"
+  },
+  "config": {
+    "vault": {
+      "initialFunding": {
+        "type": "BigNumber",
+        "hex": "0x084595161401484a000000"
+      }
+    },
+    "rewardsPool": {
+      "maxRequestAmount": {
+        "type": "BigNumber",
+        "hex": "0x152d02c7e14af6800000"
+      },
+      "requestCooldown": 3600,
+      "refillThreshold": {
+        "type": "BigNumber",
+        "hex": "0x021e19e0c9bab2400000"
+      },
+      "refillAmount": {
+        "type": "BigNumber",
+        "hex": "0x0a968163f0a57b400000"
+      }
+    },
+    "staking": {
+      "rewardRate": {
+        "type": "BigNumber",
+        "hex": "0x038d7ea4c68000"
+      },
+      "minimumStake": {
+        "type": "BigNumber",
+        "hex": "0x056bc75e2d63100000"
+      },
+      "lockupMultipliers": [
+        10000,
+        11000,
+        12500,
+        15000,
+        20000
+      ]
+    },
+    "governor": {
+      "votingDelay": 1,
+      "votingPeriod": 50400,
+      "proposalThreshold": {
+        "type": "BigNumber",
+        "hex": "0x021e19e0c9bab2400000"
+      },
+      "quorumPercentage": 4
+    },
+    "achievementNFT": {
+      "baseURI": "ipfs://QmYourAchievementMetadataHash/",
+      "maxSupplyPerAchievement": 10000
+    }
+  }
+}

@@ -32,7 +32,7 @@ contract OmnichainNabatOFT is OFT {
     constructor(
         address _lzEndpoint,
         address _delegate
-    ) OFT("Nabat Token", "NBT", _lzEndpoint, _delegate) Ownable(_delegate) {}
+    ) OFT("Nabat Token", "NBT", _lzEndpoint, _delegate) Ownable() {}
 
     /**
      * @notice Mints initial supply to a specified address

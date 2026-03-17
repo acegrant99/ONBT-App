@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
 import { useAccount, useSignMessage } from 'wagmi';
 import type {
   AgentAccessProfileResult,
   AgentAdvisorMessage,
+  AgentCloudDeployResult,
+  AgentQpandaTaskResult,
   AgentDependencyHealthResult,
   AiTakeoverPlan,
   AiWalletMode,
@@ -15,6 +18,8 @@ import type {
   AgentPreflightResult,
   AgentAdvisorResponse,
   AgentTaskResult,
+  AgentStrategyLabResult,
+  QuantumDiagnosticsSnapshot,
   QuantumPrediction,
   TabType,
 } from '@/types/app-shell';
@@ -38,6 +43,7 @@ export function QuantumAgentKitPanel({
   onApplyAbiConfiguration,
   onResetAbiConfiguration,
 }: QuantumAgentKitPanelProps) {
+  const DEPENDENCY_CHECK_INTERVAL_MS = 5 * 60 * 1000;
   const AUTO_TAKEOVER_CONFIDENCE_THRESHOLD = 0.72;
   const AUTO_TAKEOVER_CONFIDENCE_FALLBACK = 0.8;
   const agentkitAdminToken =
@@ -57,14 +63,45 @@ export function QuantumAgentKitPanel({
   const [dependencyHealth, setDependencyHealth] = useState<AgentDependencyHealthResult | null>(null);
   const [websiteEdit, setWebsiteEdit] = useState<AgentWebsiteEditResult | null>(null);
   const [abiConfig, setAbiConfig] = useState<AgentAbiConfiguratorResult | null>(null);
+  const [strategyLab, setStrategyLab] = useState<AgentStrategyLabResult | null>(null);
+  const [cloudDeploy, setCloudDeploy] = useState<AgentCloudDeployResult | null>(null);
+  const [qpandaTask, setQpandaTask] = useState<AgentQpandaTaskResult | null>(null);
+  const [qpandaShots, setQpandaShots] = useState('1024');
+  const [qpandaChipId, setQpandaChipId] = useState('');
+  const [qpandaTaskIdInput, setQpandaTaskIdInput] = useState('');
+  const [qpandaOriginIr, setQpandaOriginIr] = useState('');
+  const [qpandaDescribe, setQpandaDescribe] = useState('ONBT Bell-state check');
+  const [qpandaWaitResult, setQpandaWaitResult] = useState(false);
+  const [quantumDiagnostics, setQuantumDiagnostics] = useState<QuantumDiagnosticsSnapshot | null>(null);
+  const [autoStrategyEnabled, setAutoStrategyEnabled] = useState(false);
+  const [dependencyClockMs, setDependencyClockMs] = useState(() => Date.now());
   const [autoTakeoverEnabled, setAutoTakeoverEnabled] = useState(false);
   const [autoTakeoverStatus, setAutoTakeoverStatus] = useState<string | null>(null);
   const [walletMode, setWalletMode] = useState<AiWalletMode>('auto');
   const [accessProfile, setAccessProfile] = useState<AgentAccessProfileResult | null>(null);
   const [accessLoading, setAccessLoading] = useState(false);
   const lastAutoTakeoverKey = useRef('');
+  const lastAutoStrategyKey = useRef('');
   const { address: connectedWallet } = useAccount();
   const { signMessageAsync } = useSignMessage();
+
+  const toSafeHeaderValue = (value: string) =>
+    value
+      .replace(/[\r\n]/g, '')
+      .replace(/[^\x20-\xFF]/g, '')
+      .trim();
+
+  const buildSafeHeaders = (headers: Record<string, string>) => {
+    const sanitized = Object.entries(headers).reduce<Record<string, string>>((acc, [key, value]) => {
+      const safeValue = toSafeHeaderValue(String(value || ''));
+      if (safeValue) {
+        acc[key] = safeValue;
+      }
+      return acc;
+    }, {});
+
+    return sanitized;
+  };
 
   const buildWalletProofMessage = (input: {
     walletAddress: string;
@@ -75,7 +112,7 @@ export function QuantumAgentKitPanel({
     nonce: string;
   }) => {
     return [
-      'ONBT AI privileged action authorization',
+      'RAYAY privileged action authorization',
       `Wallet: ${input.walletAddress}`,
       `Method: ${input.method.toUpperCase()}`,
       `Path: ${input.path}`,
@@ -112,13 +149,13 @@ export function QuantumAgentKitPanel({
     });
 
     const signature = await signMessageAsync({ message });
-    return {
+    return buildSafeHeaders({
       'x-ai-wallet-address': connectedWallet,
       'x-ai-wallet-signature': signature,
       'x-ai-wallet-timestamp': timestamp,
       'x-ai-wallet-nonce': nonce,
       'x-ai-wallet-purpose': params.purpose,
-    };
+    });
   };
 
   const quickPrompts = useMemo(() => {
@@ -199,10 +236,10 @@ export function QuantumAgentKitPanel({
     onActivateTakeover?.({
       enabled: true,
       focus: activeTab,
-      headline: `ONBT AI auto-takeover engaged for ${activeTab === 'private-sale' ? 'private sale' : activeTab} (${confidencePct} confidence)`,
+      headline: `RAYAY auto-takeover engaged for ${activeTab === 'private-sale' ? 'private sale' : activeTab} (${confidencePct} confidence)`,
       subline:
         summaryHint ||
-        'Visibility routing is now auto-tuned by ONBT AI based on quantum confidence and stack intelligence.',
+        'Visibility routing is now auto-tuned by RAYAY based on quantum confidence and stack intelligence.',
       featuredTabs,
     });
     setAutoTakeoverStatus(
@@ -251,6 +288,8 @@ export function QuantumAgentKitPanel({
             envHealth: false,
             websiteEditor: false,
             abiConfigurator: false,
+            cloudDeploy: false,
+            quantumTasks: false,
           },
           checkedAt: new Date().toISOString(),
         });
@@ -271,6 +310,8 @@ export function QuantumAgentKitPanel({
     envHealth: accessProfile?.capabilities.envHealth ?? false,
     websiteEditor: accessProfile?.capabilities.websiteEditor ?? false,
     abiConfigurator: accessProfile?.capabilities.abiConfigurator ?? false,
+    cloudDeploy: accessProfile?.capabilities.cloudDeploy ?? false,
+    quantumTasks: accessProfile?.capabilities.quantumTasks ?? false,
   };
 
   const accessLevel = accessLoading ? 'resolving' : (accessProfile?.effectiveRole || 'user');
@@ -292,11 +333,24 @@ export function QuantumAgentKitPanel({
     envHealth: 'Env Health',
     websiteEditor: 'Website Planner',
     abiConfigurator: 'ABI Config Sync',
+    cloudDeploy: 'Cloud Deploy',
+    quantumTasks: 'Quantum Tasks',
   };
 
   const enabledCapabilities = (Object.keys(canUse) as Array<keyof typeof canUse>)
     .filter((key) => canUse[key])
     .map((key) => capabilityLabelMap[key]);
+
+  const criticalDependencyCount = dependencyHealth?.criticalUpdates?.length || 0;
+  const dependencyLastCheckedMs = dependencyHealth ? new Date(dependencyHealth.checkedAt).getTime() : 0;
+  const dependencyNextCheckMs = dependencyLastCheckedMs
+    ? dependencyLastCheckedMs + DEPENDENCY_CHECK_INTERVAL_MS
+    : 0;
+  const dependencyCheckLagMs = dependencyLastCheckedMs
+    ? Math.max(0, dependencyClockMs - dependencyLastCheckedMs)
+    : 0;
+  const dependencyCheckAgeMinutes = Math.floor(dependencyCheckLagMs / 60000);
+  const dependencyCheckIsStale = dependencyCheckLagMs > DEPENDENCY_CHECK_INTERVAL_MS * 2;
 
   const denySensitiveAction = (feature: string) => {
     setError(
@@ -361,10 +415,16 @@ export function QuantumAgentKitPanel({
       return;
     }
 
+    const parsedShots = Number.parseInt(qpandaShots || '1024', 10);
+    const safeShots = Number.isFinite(parsedShots)
+      ? Math.max(1, Math.min(20000, parsedShots))
+      : 1024;
+
     setIsRunningTask(true);
     setError(null);
 
     try {
+      const safeAdminToken = toSafeHeaderValue(agentkitAdminToken);
       const walletProofHeaders = await buildPrivilegedHeaders({
         method: 'POST',
         path: '/api/agentkit/integrity',
@@ -375,7 +435,7 @@ export function QuantumAgentKitPanel({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-agentkit-admin-token': agentkitAdminToken,
+          ...(safeAdminToken ? { 'x-agentkit-admin-token': safeAdminToken } : {}),
           ...walletProofHeaders,
         },
         body: JSON.stringify({ task }),
@@ -407,6 +467,7 @@ export function QuantumAgentKitPanel({
     setError(null);
 
     try {
+      const safeAdminToken = toSafeHeaderValue(agentkitAdminToken);
       const walletProofHeaders = await buildPrivilegedHeaders({
         method: 'POST',
         path: '/api/agentkit/preflight',
@@ -417,7 +478,7 @@ export function QuantumAgentKitPanel({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-agentkit-admin-token': agentkitAdminToken,
+          ...(safeAdminToken ? { 'x-agentkit-admin-token': safeAdminToken } : {}),
           ...walletProofHeaders,
         },
       });
@@ -492,6 +553,7 @@ export function QuantumAgentKitPanel({
     setError(null);
 
     try {
+      const safeAdminToken = toSafeHeaderValue(agentkitAdminToken);
       const walletProofHeaders = await buildPrivilegedHeaders({
         method: 'GET',
         path: '/api/agentkit/env-health',
@@ -501,7 +563,7 @@ export function QuantumAgentKitPanel({
       const apiResponse = await fetch('/api/agentkit/env-health', {
         method: 'GET',
         headers: {
-          'x-agentkit-admin-token': agentkitAdminToken,
+          ...(safeAdminToken ? { 'x-agentkit-admin-token': safeAdminToken } : {}),
           ...walletProofHeaders,
         },
       });
@@ -553,9 +615,17 @@ export function QuantumAgentKitPanel({
     void runDependencyHealth(true);
     const intervalId = window.setInterval(() => {
       void runDependencyHealth(true);
-    }, 5 * 60 * 1000);
+    }, DEPENDENCY_CHECK_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const clockId = window.setInterval(() => {
+      setDependencyClockMs(Date.now());
+    }, 30 * 1000);
+
+    return () => window.clearInterval(clockId);
   }, []);
 
   const runWebsiteEditor = async () => {
@@ -568,6 +638,7 @@ export function QuantumAgentKitPanel({
     setError(null);
 
     try {
+      const safeAdminToken = toSafeHeaderValue(agentkitAdminToken);
       const walletProofHeaders = await buildPrivilegedHeaders({
         method: 'POST',
         path: '/api/agentkit/website-editor',
@@ -578,7 +649,7 @@ export function QuantumAgentKitPanel({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-agentkit-admin-token': agentkitAdminToken,
+          ...(safeAdminToken ? { 'x-agentkit-admin-token': safeAdminToken } : {}),
           ...walletProofHeaders,
         },
         body: JSON.stringify({
@@ -612,6 +683,7 @@ export function QuantumAgentKitPanel({
     setError(null);
 
     try {
+      const safeAdminToken = toSafeHeaderValue(agentkitAdminToken);
       const walletProofHeaders = await buildPrivilegedHeaders({
         method: 'GET',
         path: '/api/agentkit/abi-configurator',
@@ -621,7 +693,7 @@ export function QuantumAgentKitPanel({
       const apiResponse = await fetch('/api/agentkit/abi-configurator', {
         method: 'GET',
         headers: {
-          'x-agentkit-admin-token': agentkitAdminToken,
+          ...(safeAdminToken ? { 'x-agentkit-admin-token': safeAdminToken } : {}),
           ...walletProofHeaders,
         },
       });
@@ -641,6 +713,209 @@ export function QuantumAgentKitPanel({
     }
   };
 
+  const runCloudDeploy = async (action: 'deploy' | 'status' | 'list' = 'deploy') => {
+    if (!canUse.cloudDeploy) {
+      denySensitiveAction('Cloud Deploy');
+      return;
+    }
+
+    setIsRunningTask(true);
+    setError(null);
+
+    try {
+      const safeAdminToken = toSafeHeaderValue(agentkitAdminToken);
+      const walletProofHeaders = await buildPrivilegedHeaders({
+        method: 'POST',
+        path: '/api/agentkit/cloud-deploy',
+        purpose: 'cloud-deploy',
+      });
+
+      const apiResponse = await fetch('/api/agentkit/cloud-deploy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(safeAdminToken ? { 'x-agentkit-admin-token': safeAdminToken } : {}),
+          ...walletProofHeaders,
+        },
+        body: JSON.stringify({
+          action,
+          deploymentId: action === 'status' && cloudDeploy?.deploymentId
+            ? cloudDeploy.deploymentId
+            : undefined,
+        }),
+      });
+
+      const payload = (await apiResponse.json()) as AgentCloudDeployResult;
+      setCloudDeploy(payload);
+
+      if (!apiResponse.ok && !payload.ok) {
+        setError(payload.message || `Cloud deploy failed with status ${apiResponse.status}`);
+      }
+    } catch (deployError) {
+      setError(deployError instanceof Error ? deployError.message : 'Cloud deploy request failed');
+    } finally {
+      setIsRunningTask(false);
+    }
+  };
+
+  const runQpandaTask = async (action: 'submit' | 'query' = 'submit') => {
+    if (!canUse.quantumTasks) {
+      denySensitiveAction('Quantum task submission');
+      return;
+    }
+
+    const parsedShots = Number.parseInt(qpandaShots || '1024', 10);
+    const safeShots = Number.isFinite(parsedShots)
+      ? Math.max(1, Math.min(20000, parsedShots))
+      : 1024;
+
+    const resolvedTaskId = (qpandaTaskIdInput || qpandaTask?.taskId || '').trim();
+
+    if (action === 'query' && !resolvedTaskId) {
+      setError('No QPanda task id available. Paste one in Task ID or submit a task first.');
+      return;
+    }
+
+    setIsRunningTask(true);
+    setError(null);
+
+    try {
+      const safeAdminToken = toSafeHeaderValue(agentkitAdminToken);
+      const walletProofHeaders = await buildPrivilegedHeaders({
+        method: 'POST',
+        path: '/api/quantum/qpanda',
+        purpose: 'quantum-qpanda',
+      });
+
+      const apiResponse = await fetch('/api/quantum/qpanda', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(safeAdminToken ? { 'x-agentkit-admin-token': safeAdminToken } : {}),
+          ...walletProofHeaders,
+        },
+        body: JSON.stringify({
+          action,
+          taskId: action === 'query' ? resolvedTaskId : undefined,
+          shots: safeShots,
+          chipId: qpandaChipId.trim() || undefined,
+          originIr: qpandaOriginIr.trim() || undefined,
+          describe: qpandaDescribe.trim() || undefined,
+          waitResult: qpandaWaitResult,
+        }),
+      });
+
+      const payload = (await apiResponse.json()) as AgentQpandaTaskResult;
+      setQpandaTask(payload);
+      if (payload.taskId) {
+        setQpandaTaskIdInput(payload.taskId);
+      }
+
+      if (!apiResponse.ok && !payload.ok) {
+        setError(payload.error || `QPanda request failed with status ${apiResponse.status}`);
+      }
+    } catch (taskError) {
+      setError(taskError instanceof Error ? taskError.message : 'QPanda request failed');
+    } finally {
+      setIsRunningTask(false);
+    }
+  };
+
+  const runStrategyLab = async (silent = false) => {
+    if (!silent) {
+      setIsRunningTask(true);
+      setError(null);
+    }
+
+    try {
+      const apiResponse = await fetch('/api/agentkit/strategy-lab', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          activeTab,
+          quantum: prediction
+            ? {
+                signal: prediction.signal,
+                confidence: prediction.confidence,
+                recommendation: prediction.recommendation,
+                confidenceEngine: prediction.confidenceEngine,
+              }
+            : undefined,
+        }),
+      });
+
+      if (!apiResponse.ok) {
+        const failure = (await apiResponse.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(failure?.error || `Strategy lab failed with status ${apiResponse.status}`);
+      }
+
+      const payload = (await apiResponse.json()) as AgentStrategyLabResult;
+      setStrategyLab(payload);
+    } catch (strategyError) {
+      if (!silent) {
+        setError(strategyError instanceof Error ? strategyError.message : 'Failed to run strategy lab');
+      }
+    } finally {
+      if (!silent) {
+        setIsRunningTask(false);
+      }
+    }
+  };
+
+  const executeStrategyAction = async (actionId: AgentStrategyLabResult['actionPlan'][number]['id']) => {
+    if (actionId === 'dependency-health') {
+      await runDependencyHealth(false);
+      return;
+    }
+
+    if (actionId === 'github-scout') {
+      await runGithubScout(false);
+      return;
+    }
+
+    if (actionId === 'advisor-transfer-safety') {
+      await runAdvisor(
+        'Focus on transfer safety cues, allowance visibility, and recipient validation. Keep normal UX friction but preserve high-risk confirmations.'
+      );
+      return;
+    }
+
+    if (actionId === 'abi-sync') {
+      await runAbiConfigurator();
+      return;
+    }
+
+    if (actionId === 'preflight') {
+      await runPreflight();
+    }
+  };
+
+  const snapshotQuantumDiagnostics = () => {
+    if (!prediction) {
+      setError('Quantum prediction not available yet. Retry after next signal refresh.');
+      return;
+    }
+
+    setError(null);
+    setQuantumDiagnostics({
+      capturedAt: new Date().toISOString(),
+      confidence: prediction.confidence,
+      signal: prediction.signal,
+      recommendation: prediction.recommendation,
+      components: prediction.confidenceEngine?.components,
+    });
+  };
+
+  useEffect(() => {
+    if (!autoStrategyEnabled || !prediction) return;
+    const key = `${activeTab}:${prediction.signal}:${prediction.confidence.toFixed(3)}`;
+    if (lastAutoStrategyKey.current === key) return;
+    lastAutoStrategyKey.current = key;
+    void runStrategyLab(true);
+  }, [autoStrategyEnabled, activeTab, prediction]);
+
   const activateTakeover = () => {
     if (!canUse.takeover) {
       denySensitiveAction('Takeover controls');
@@ -652,7 +927,7 @@ export function QuantumAgentKitPanel({
     onActivateTakeover?.({
       enabled: true,
       focus: focusTab,
-      headline: `ONBT AI is amplifying ${focusTab === 'private-sale' ? 'private sale' : focusTab} visibility for growth`,
+      headline: `RAYAY is amplifying ${focusTab === 'private-sale' ? 'private sale' : focusTab} visibility for growth`,
       subline: 'High-impact modules are promoted and CTAs are tuned for stronger discovery and conversion.',
       featuredTabs,
     });
@@ -662,10 +937,10 @@ export function QuantumAgentKitPanel({
     <section className="mb-6 rounded-2xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/80 p-4 sm:p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm sm:text-base font-semibold">ONBT AI AgentKit Integrity Advisor</h3>
-          <p className="text-xs text-[color:var(--brand-ink)]/65">
-            ONBT AI interactive component for integrity assurance and UX upgrades from your current module stack.
-          </p>
+          <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-sm sm:text-base font-semibold">RAYAY AgentKit Integrity Advisor</button>
+          <button type="button" className="mt-1 rounded-2xl border border-slate-900/10 bg-white/90 px-3 py-2 text-left text-xs font-semibold text-[color:var(--brand-ink)]/65">
+            RAYAY interactive component for integrity assurance and UX upgrades from your current module stack.
+          </button>
         </div>
         <span
           className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs ${
@@ -679,15 +954,30 @@ export function QuantumAgentKitPanel({
         <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${accessLevelClass}`}>
           Access: {accessLevel === 'resolving' ? 'Resolving...' : accessLevel.toUpperCase()}
         </span>
+        {dependencyHealth && (
+          <span
+            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${
+              criticalDependencyCount > 0
+                ? 'border-rose-300 bg-rose-50 text-rose-900'
+                : 'border-emerald-300 bg-emerald-50 text-emerald-900'
+            }`}
+          >
+            {criticalDependencyCount > 0
+              ? `${criticalDependencyCount} critical package update${criticalDependencyCount === 1 ? '' : 's'}`
+              : 'No critical package updates'}
+          </span>
+        )}
       </div>
 
       <div className="mb-3 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/70 px-3 py-2 text-xs">
         <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="ai-wallet-mode" className="font-semibold text-[color:var(--brand-ink)]/85">
+          <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 font-semibold text-[color:var(--brand-ink)]/85">
             AI Wallet Toggle
-          </label>
+          </button>
           <select
             id="ai-wallet-mode"
+            aria-label="AI Wallet Toggle"
+            title="AI Wallet Toggle"
             value={walletMode}
             onChange={(event) => setWalletMode(event.target.value as AiWalletMode)}
             className="rounded-md border border-[color:var(--brand-leaf)]/30 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]"
@@ -704,17 +994,18 @@ export function QuantumAgentKitPanel({
             Wallet: {connectedWallet ? `${connectedWallet.slice(0, 6)}...${connectedWallet.slice(-4)}` : 'not connected'}
           </span>
         </div>
-        <p className="mt-1 text-[11px] text-[color:var(--brand-ink)]/70">
+        <button type="button" className="mt-1 rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-[11px] font-semibold text-[color:var(--brand-ink)]/70">
           {accessProfile?.reason || 'User-safe mode is active until wallet role is resolved.'}
-        </p>
+        </button>
         <div className="mt-2 flex flex-wrap gap-1">
           {enabledCapabilities.map((capability) => (
-            <span
+            <button
               key={capability}
+              type="button"
               className="rounded-full border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] px-2 py-0.5 text-[11px] text-[color:var(--brand-ink)]/80"
             >
               {capability}
-            </span>
+            </button>
           ))}
         </div>
       </div>
@@ -739,7 +1030,7 @@ export function QuantumAgentKitPanel({
           disabled={!canUse.takeover}
           className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-900 hover:border-emerald-500"
         >
-          {takeoverEnabled ? 'Refresh ONBT AI Takeover' : 'Activate ONBT AI Takeover'}
+          {takeoverEnabled ? 'Refresh RAYAY Takeover' : 'Activate RAYAY Takeover'}
         </button>
 
         <button
@@ -825,11 +1116,168 @@ export function QuantumAgentKitPanel({
 
         <button
           type="button"
+          onClick={() => void runCloudDeploy('deploy')}
+          disabled={isRunningTask || !canUse.cloudDeploy}
+          className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-left text-xs font-semibold text-sky-900 hover:border-sky-500 disabled:opacity-60"
+        >
+          {isRunningTask ? 'Deploying...' : '🚀 Deploy to Cloud'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void runCloudDeploy('list')}
+          disabled={isRunningTask || !canUse.cloudDeploy}
+          className="rounded-lg border border-sky-200 bg-white px-3 py-2 text-left text-xs font-semibold text-sky-800 hover:border-sky-400 disabled:opacity-60"
+        >
+          {isRunningTask ? 'Loading...' : 'List Deployments'}
+        </button>
+
+        <div className="col-span-full rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2">
+          <button type="button" className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800/80 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1">QPanda Controls</button>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="text-xs text-[color:var(--brand-ink)]/80">
+              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Shots</button>
+              <input
+                type="number"
+                aria-label="Shots"
+                title="Shots"
+                min={1}
+                step={1}
+                value={qpandaShots}
+                onChange={(event) => setQpandaShots(event.target.value)}
+                className="mt-1 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
+                placeholder="1024"
+              />
+            </div>
+
+            <div className="text-xs text-[color:var(--brand-ink)]/80">
+              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Chip ID (optional)</button>
+              <input
+                type="text"
+                aria-label="Chip ID optional"
+                title="Chip ID optional"
+                value={qpandaChipId}
+                onChange={(event) => setQpandaChipId(event.target.value)}
+                className="mt-1 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
+                placeholder="e.g. OriginQ-72"
+              />
+            </div>
+
+            <div className="text-xs text-[color:var(--brand-ink)]/80 sm:col-span-2">
+              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Task ID (for manual query)</button>
+              <input
+                type="text"
+                aria-label="Task ID for manual query"
+                title="Task ID for manual query"
+                value={qpandaTaskIdInput}
+                onChange={(event) => setQpandaTaskIdInput(event.target.value)}
+                className="mt-1 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
+                placeholder="Paste task id to query"
+              />
+            </div>
+
+            <div className="text-xs text-[color:var(--brand-ink)]/80 sm:col-span-2">
+              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Description</button>
+              <input
+                type="text"
+                aria-label="Description"
+                title="Description"
+                value={qpandaDescribe}
+                onChange={(event) => setQpandaDescribe(event.target.value)}
+                className="mt-1 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
+                placeholder="Task description"
+              />
+            </div>
+
+            <div className="text-xs text-[color:var(--brand-ink)]/80 sm:col-span-2">
+              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">OriginIR (optional, defaults to Bell circuit)</button>
+              <textarea
+                aria-label="OriginIR optional defaults to Bell circuit"
+                title="OriginIR optional defaults to Bell circuit"
+                value={qpandaOriginIr}
+                onChange={(event) => setQpandaOriginIr(event.target.value)}
+                className="mt-1 h-24 w-full rounded-md border border-emerald-200 bg-white px-2 py-1 text-xs text-[color:var(--brand-ink)]/90"
+                placeholder="QINIT 2&#10;CREG 2&#10;H q[0]&#10;CNOT q[0],q[1]&#10;MEASURE q[0],c[0]&#10;MEASURE q[1],c[1]"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-[color:var(--brand-ink)]/85 sm:col-span-2">
+              <input
+                type="checkbox"
+                aria-label="Wait for final result on submit"
+                title="Wait for final result on submit"
+                checked={qpandaWaitResult}
+                onChange={(event) => setQpandaWaitResult(event.target.checked)}
+              />
+              <button type="button" className="rounded-full border border-emerald-300 bg-white px-2.5 py-1 font-semibold">Wait for final result on submit (sync mode)</button>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void runQpandaTask('submit')}
+          disabled={isRunningTask || !canUse.quantumTasks}
+          className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-900 hover:border-emerald-500 disabled:opacity-60"
+        >
+          {isRunningTask ? 'Submitting...' : 'Submit Quantum Task'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void runQpandaTask('query')}
+          disabled={isRunningTask || !canUse.quantumTasks || !qpandaTask?.taskId}
+          className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-left text-xs font-semibold text-emerald-800 hover:border-emerald-400 disabled:opacity-60"
+        >
+          {isRunningTask ? 'Querying...' : 'Query Quantum Task'}
+        </button>
+
+        <button
+          type="button"
           onClick={() => void runAbiConfigurator()}
           disabled={isRunningTask || !canUse.abiConfigurator}
           className="rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-left text-xs font-semibold text-cyan-900 hover:border-cyan-500 disabled:opacity-60"
         >
           {isRunningTask ? 'Running...' : 'Sync ABI Config (Base+Arb)'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void runStrategyLab()}
+          disabled={isRunningTask}
+          className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-left text-xs font-semibold text-violet-900 hover:border-violet-500 disabled:opacity-60"
+        >
+          {isRunningTask ? 'Running...' : 'Run Strategy Lab'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setAutoStrategyEnabled((prev) => {
+              const next = !prev;
+              if (next) {
+                setAutoTakeoverStatus('Auto Strategy enabled. Strategy Lab will rerun on tab/signal changes.');
+              } else {
+                setAutoTakeoverStatus('Auto Strategy disabled.');
+              }
+              return next;
+            });
+          }}
+          className={`rounded-lg border px-3 py-2 text-left text-xs font-semibold ${
+            autoStrategyEnabled
+              ? 'border-violet-400 bg-violet-100 text-violet-900 hover:border-violet-600'
+              : 'border-violet-300 bg-violet-50 text-violet-900 hover:border-violet-500'
+          }`}
+        >
+          Auto Strategy: {autoStrategyEnabled ? 'ON' : 'OFF'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => snapshotQuantumDiagnostics()}
+          className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-900 hover:border-emerald-500"
+        >
+          Snapshot Quantum Diagnostics
         </button>
 
         <button
@@ -847,7 +1295,7 @@ export function QuantumAgentKitPanel({
             if (autoTakeoverEnabled) {
               setAutoTakeoverStatus('Auto mode disabled. Manual takeover controls remain available.');
             } else {
-              setAutoTakeoverStatus('Auto mode enabled. ONBT AI will auto-activate takeover when thresholds are met.');
+              setAutoTakeoverStatus('Auto mode enabled. RAYAY will auto-activate takeover when thresholds are met.');
             }
           }}
           disabled={!canUse.takeover}
@@ -863,7 +1311,7 @@ export function QuantumAgentKitPanel({
 
       {takeoverEnabled && (
         <div className="mb-3 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
-          ONBT AI Takeover is active. Graphics and feature visibility are being amplified.
+          RAYAY Takeover is active. Graphics and feature visibility are being amplified.
         </div>
       )}
 
@@ -911,48 +1359,49 @@ export function QuantumAgentKitPanel({
 
           {response.agentkit && (
             <div className="mb-3 rounded-xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-              <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">AgentKit Capabilities</p>
+              <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">AgentKit Capabilities</button>
               <div className="mt-1 grid grid-cols-1 gap-1 text-xs sm:grid-cols-2 text-[color:var(--brand-ink)]/85">
-                <p>Package installed: <span className="font-semibold">{response.agentkit.packageInstalled ? 'yes' : 'no'}</span></p>
-                <p>Credentials configured: <span className="font-semibold">{response.agentkit.credentialsConfigured ? 'yes' : 'no'}</span></p>
-                <p>Network: <span className="font-semibold">{response.agentkit.networkId || '--'}</span></p>
-                <p>Actions discovered: <span className="font-semibold">{response.agentkit.actionCount ?? 0}</span></p>
+                <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Package installed: {response.agentkit.packageInstalled ? 'yes' : 'no'}</button>
+                <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Credentials configured: {response.agentkit.credentialsConfigured ? 'yes' : 'no'}</button>
+                <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Network: {response.agentkit.networkId || '--'}</button>
+                <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Actions discovered: {response.agentkit.actionCount ?? 0}</button>
               </div>
               {response.agentkit.cdpConfig && (
                 <div className="mt-2 rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/75 px-2 py-1 text-xs text-[color:var(--brand-ink)]/85">
-                  <p className="font-semibold">CDP Wiring</p>
-                  <p>Project ID: {response.agentkit.cdpConfig.projectId || '--'}</p>
-                  <p>Base App owner: {response.agentkit.cdpConfig.baseAppOwner || '--'}</p>
-                  <p>API key kind: {response.agentkit.cdpConfig.apiKeyIdKind}</p>
-                  <p>API key: {response.agentkit.cdpConfig.apiKeyIdPreview || '--'}</p>
-                  <p>Org from key: {response.agentkit.cdpConfig.orgIdFromApiKeyId || '--'}</p>
-                  <p>Key id from resource: {response.agentkit.cdpConfig.apiKeyIdFromResourceName || '--'}</p>
-                  <p>Secret format: {response.agentkit.cdpConfig.secretFormat}</p>
-                  <p>Server env only: {response.agentkit.cdpConfig.usesServerEnvOnly ? 'yes' : 'no'}</p>
+                  <button type="button" className="font-semibold rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">CDP Wiring</button>
+                  <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Project ID: {response.agentkit.cdpConfig.projectId || '--'}</button>
+                  <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Base App owner: {response.agentkit.cdpConfig.baseAppOwner || '--'}</button>
+                  <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">API key kind: {response.agentkit.cdpConfig.apiKeyIdKind}</button>
+                  <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">API key: {response.agentkit.cdpConfig.apiKeyIdPreview || '--'}</button>
+                  <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Org from key: {response.agentkit.cdpConfig.orgIdFromApiKeyId || '--'}</button>
+                  <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Key id from resource: {response.agentkit.cdpConfig.apiKeyIdFromResourceName || '--'}</button>
+                  <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Secret format: {response.agentkit.cdpConfig.secretFormat}</button>
+                  <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Server env only: {response.agentkit.cdpConfig.usesServerEnvOnly ? 'yes' : 'no'}</button>
                 </div>
               )}
               {response.agentkit.initError && (
                 <div className="mt-1 rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-800">
-                  <p>Init error: {response.agentkit.initError}</p>
+                  <button type="button" className="w-full rounded-2xl border border-rose-300 bg-rose-50 px-2.5 py-1 text-left font-semibold">Init error: {response.agentkit.initError}</button>
                   {response.agentkit.initErrorDetails && (
-                    <p className="mt-1">
+                    <button type="button" className="mt-1 w-full rounded-2xl border border-rose-300 bg-rose-50 px-2.5 py-1 text-left font-semibold">
                       {response.agentkit.initErrorDetails.name ? `${response.agentkit.initErrorDetails.name} ` : ''}
                       {response.agentkit.initErrorDetails.code !== undefined ? `code=${response.agentkit.initErrorDetails.code} ` : ''}
                       {response.agentkit.initErrorDetails.status !== undefined ? `status=${response.agentkit.initErrorDetails.status} ` : ''}
                       {response.agentkit.initErrorDetails.type ? `type=${response.agentkit.initErrorDetails.type}` : ''}
-                    </p>
+                    </button>
                   )}
                 </div>
               )}
               {(response.agentkit.actionNames || []).length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {(response.agentkit.actionNames || []).map((name) => (
-                    <span
+                    <button
                       key={name}
+                      type="button"
                       className="rounded-full border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] px-2 py-0.5 text-[11px] text-[color:var(--brand-ink)]/80"
                     >
                       {name}
-                    </span>
+                    </button>
                   ))}
                 </div>
               )}
@@ -971,15 +1420,15 @@ export function QuantumAgentKitPanel({
                       : 'border-rose-300 bg-rose-50 text-rose-900'
                 }`}
               >
-                <p className="font-semibold">{check.label}</p>
-                <p className="mt-1">{check.detail}</p>
+                <button type="button" className="rounded-full border border-current/35 bg-white/70 px-2.5 py-1 font-semibold">{check.label}</button>
+                <button type="button" className="mt-1 w-full rounded-2xl border border-current/35 bg-white/70 px-2.5 py-1 text-left font-semibold">{check.detail}</button>
               </div>
             ))}
           </div>
 
           <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-              <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">UX Enhancements</p>
+              <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">UX Enhancements</button>
               <ul className="mt-1 space-y-1 text-xs text-[color:var(--brand-ink)]/85">
                 {response.uxEnhancements.map((item) => (
                   <li key={item}>- {item}</li>
@@ -988,7 +1437,7 @@ export function QuantumAgentKitPanel({
             </div>
 
             <div className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-              <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Agent Suggestions</p>
+              <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Agent Suggestions</button>
               <ul className="mt-1 space-y-1 text-xs text-[color:var(--brand-ink)]/85">
                 {response.suggestions.map((item) => (
                   <li key={item}>- {item}</li>
@@ -1001,11 +1450,11 @@ export function QuantumAgentKitPanel({
 
       {taskResult && (
         <div className="mb-3 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Task Result</p>
-          <p className="mt-1 text-xs text-[color:var(--brand-ink)]/85">{taskResult.summary}</p>
-          <p className="mt-1 text-[11px] text-[color:var(--brand-ink)]/65">
+          <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Task Result</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/85">{taskResult.summary}</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-[11px] font-semibold text-[color:var(--brand-ink)]/65">
             Task: {taskResult.task} | Exit: {taskResult.exitCode}
-          </p>
+          </button>
           {taskResult.output && (
             <pre className="mt-2 max-h-44 overflow-auto rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/75 p-2 text-[11px] text-[color:var(--brand-ink)]/80">
               {taskResult.output}
@@ -1016,40 +1465,40 @@ export function QuantumAgentKitPanel({
 
       {preflight && (
         <div className="mb-3 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">CDP Preflight</p>
+          <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">CDP Preflight</button>
           <div className="mt-1 grid grid-cols-1 gap-1 text-xs sm:grid-cols-2 text-[color:var(--brand-ink)]/85">
-            <p>Credentials present: <span className="font-semibold">{preflight.credentialsPresent ? 'yes' : 'no'}</span></p>
-            <p>Project reachable: <span className="font-semibold">{preflight.projectReachable ? 'yes' : 'no'}</span></p>
-            <p>Network: <span className="font-semibold">{preflight.networkId}</span></p>
-            <p>Policy count: <span className="font-semibold">{preflight.policyCount ?? 0}</span></p>
+            <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Credentials present: {preflight.credentialsPresent ? 'yes' : 'no'}</button>
+            <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Project reachable: {preflight.projectReachable ? 'yes' : 'no'}</button>
+            <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Network: {preflight.networkId}</button>
+            <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Policy count: {preflight.policyCount ?? 0}</button>
           </div>
           {preflight.cdpConfig && (
             <div className="mt-2 rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/75 px-2 py-1 text-xs text-[color:var(--brand-ink)]/85">
-              <p className="font-semibold">Resolved Config</p>
-              <p>Project ID: {preflight.cdpConfig.projectId || '--'}</p>
-              <p>Base App owner: {preflight.cdpConfig.baseAppOwner || '--'}</p>
-              <p>API key kind: {preflight.cdpConfig.apiKeyIdKind}</p>
-              <p>API key: {preflight.cdpConfig.apiKeyIdPreview || '--'}</p>
-              <p>Org from key: {preflight.cdpConfig.orgIdFromApiKeyId || '--'}</p>
-              <p>Key id from resource: {preflight.cdpConfig.apiKeyIdFromResourceName || '--'}</p>
-              <p>Secret format: {preflight.cdpConfig.secretFormat}</p>
-              <p>Server env only: {preflight.cdpConfig.usesServerEnvOnly ? 'yes' : 'no'}</p>
+              <button type="button" className="font-semibold rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Resolved Config</button>
+              <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Project ID: {preflight.cdpConfig.projectId || '--'}</button>
+              <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Base App owner: {preflight.cdpConfig.baseAppOwner || '--'}</button>
+              <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">API key kind: {preflight.cdpConfig.apiKeyIdKind}</button>
+              <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">API key: {preflight.cdpConfig.apiKeyIdPreview || '--'}</button>
+              <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Org from key: {preflight.cdpConfig.orgIdFromApiKeyId || '--'}</button>
+              <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Key id from resource: {preflight.cdpConfig.apiKeyIdFromResourceName || '--'}</button>
+              <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Secret format: {preflight.cdpConfig.secretFormat}</button>
+              <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">Server env only: {preflight.cdpConfig.usesServerEnvOnly ? 'yes' : 'no'}</button>
             </div>
           )}
           {preflight.diagnostics && (
             <div className="mt-2 rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-800">
-              <p>{preflight.diagnostics.message || 'Preflight diagnostic details available.'}</p>
-              <p className="mt-1">
+              <button type="button" className="w-full rounded-2xl border border-rose-300 bg-rose-50 px-2.5 py-1 text-left font-semibold">{preflight.diagnostics.message || 'Preflight diagnostic details available.'}</button>
+              <button type="button" className="mt-1 w-full rounded-2xl border border-rose-300 bg-rose-50 px-2.5 py-1 text-left font-semibold">
                 {preflight.diagnostics.name ? `${preflight.diagnostics.name} ` : ''}
                 {preflight.diagnostics.statusCode !== undefined ? `status=${preflight.diagnostics.statusCode} ` : ''}
                 {preflight.diagnostics.errorType ? `type=${preflight.diagnostics.errorType} ` : ''}
                 {preflight.diagnostics.correlationId ? `corr=${preflight.diagnostics.correlationId}` : ''}
-              </p>
+              </button>
             </div>
           )}
           {(preflight.remediationHints || []).length > 0 && (
             <div className="mt-2 rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
-              <p className="font-semibold">Recommended Fixes</p>
+              <button type="button" className="font-semibold rounded-full border border-amber-300 bg-white px-2.5 py-1">Recommended Fixes</button>
               <ul className="mt-1 space-y-1">
                 {(preflight.remediationHints || []).map((hint) => (
                   <li key={hint}>- {hint}</li>
@@ -1062,12 +1511,12 @@ export function QuantumAgentKitPanel({
 
       {githubScout && (
         <div className="mb-3 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">GitHub Usecase Scout</p>
-          <p className="mt-1 text-xs text-[color:var(--brand-ink)]/85">Prompt: {githubScout.prompt}</p>
+          <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">GitHub Usecase Scout</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/85">Prompt: {githubScout.prompt}</button>
 
           {(githubScout.enhancements || []).length > 0 && (
             <div className="mt-2 rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/75 px-2 py-1 text-xs text-[color:var(--brand-ink)]/85">
-              <p className="font-semibold">Stack Enhancements</p>
+              <button type="button" className="font-semibold rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Stack Enhancements</button>
               <ul className="mt-1 space-y-1">
                 {(githubScout.enhancements || []).map((hint) => (
                   <li key={hint}>- {hint}</li>
@@ -1078,18 +1527,17 @@ export function QuantumAgentKitPanel({
 
           {(githubScout.repositories || []).length > 0 && (
             <div className="mt-2 rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/75 px-2 py-1 text-xs text-[color:var(--brand-ink)]/85">
-              <p className="font-semibold">Top Repositories</p>
+              <button type="button" className="font-semibold rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Top Repositories</button>
               <ul className="mt-1 space-y-1">
                 {githubScout.repositories.map((repo) => (
                   <li key={repo.full_name}>
-                    <a
+                    <MiniAppExternalLink
                       href={repo.html_url}
-                      target="_blank"
                       rel="noreferrer"
                       className="font-medium text-[color:var(--brand-forest)] underline-offset-2 hover:underline"
                     >
                       {repo.full_name}
-                    </a>{' '}
+                    </MiniAppExternalLink>{' '}
                     ({repo.stargazers_count} stars{repo.language ? `, ${repo.language}` : ''})
                     {repo.description ? ` - ${repo.description}` : ''}
                   </li>
@@ -1102,12 +1550,10 @@ export function QuantumAgentKitPanel({
 
       {envHealth && (
         <div className="mb-3 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Environment Health</p>
-          <p className="mt-1 text-xs text-[color:var(--brand-ink)]/85">{envHealth.summary}</p>
+          <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Environment Health</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/85">{envHealth.summary}</button>
           {envHealth.diagnostics?.walletProofNonceStorage && (
-            <p className="mt-1 text-xs text-[color:var(--brand-ink)]/75">
-              Wallet proof nonce storage: <span className="font-semibold">{envHealth.diagnostics.walletProofNonceStorage}</span>
-            </p>
+            <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/75">Wallet proof nonce storage: {envHealth.diagnostics.walletProofNonceStorage}</button>
           )}
           <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
             {envHealth.checks.map((check) => (
@@ -1121,11 +1567,11 @@ export function QuantumAgentKitPanel({
                       : 'border-amber-300 bg-amber-50 text-amber-900'
                 }`}
               >
-                <p className="font-semibold">{check.key}</p>
-                <p>
+                <button type="button" className="rounded-full border border-current/35 bg-white/70 px-2.5 py-1 font-semibold">{check.key}</button>
+                <button type="button" className="mt-1 w-full rounded-2xl border border-current/35 bg-white/70 px-2.5 py-1 text-left font-semibold">
                   {check.present ? 'present' : check.required ? 'missing (required)' : 'missing (optional)'} | {check.source}
-                </p>
-                {check.note && <p className="mt-1">{check.note}</p>}
+                </button>
+                {check.note && <button type="button" className="mt-1 w-full rounded-2xl border border-current/35 bg-white/70 px-2.5 py-1 text-left font-semibold">{check.note}</button>}
               </div>
             ))}
           </div>
@@ -1134,9 +1580,19 @@ export function QuantumAgentKitPanel({
 
       {dependencyHealth && (
         <div className="mb-3 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Dependency Integrity</p>
-          <p className="mt-1 text-xs text-[color:var(--brand-ink)]/85">{dependencyHealth.summary}</p>
-          <p className="mt-1 text-[11px] text-[color:var(--brand-ink)]/65">Last checked: {new Date(dependencyHealth.checkedAt).toLocaleString()}</p>
+          <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Dependency Integrity</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/85">{dependencyHealth.summary}</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-[11px] font-semibold text-[color:var(--brand-ink)]/65">Last checked: {new Date(dependencyHealth.checkedAt).toLocaleString()}</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-[11px] font-semibold text-[color:var(--brand-ink)]/70">
+            Next auto-check:{' '}
+            {dependencyNextCheckMs ? new Date(dependencyNextCheckMs).toLocaleTimeString() : 'pending'}
+            {' | '}Snapshot age: {dependencyCheckAgeMinutes}m
+          </button>
+          {dependencyCheckIsStale && (
+            <button type="button" className="mt-1 w-full rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-left text-[11px] font-semibold text-amber-900">
+              Integrity snapshot is stale. Run Dependency Health now to refresh package risk status.
+            </button>
+          )}
 
           <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-3">
             {dependencyHealth.checks.map((check) => (
@@ -1150,15 +1606,49 @@ export function QuantumAgentKitPanel({
                       : 'border-rose-300 bg-rose-50 text-rose-900'
                 }`}
               >
-                <p className="font-semibold">{check.label}</p>
-                <p className="mt-1">{check.detail}</p>
+                <button type="button" className="rounded-full border border-current/35 bg-white/70 px-2.5 py-1 font-semibold">{check.label}</button>
+                <button type="button" className="mt-1 w-full rounded-2xl border border-current/35 bg-white/70 px-2.5 py-1 text-left font-semibold">{check.detail}</button>
               </div>
             ))}
           </div>
 
+          {(dependencyHealth.featurePacks || []).length > 0 && (
+            <div className="mt-2 rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/75 px-2 py-2 text-xs text-[color:var(--brand-ink)]/85">
+              <button type="button" className="font-semibold rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Splendid Feature Packs</button>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {(dependencyHealth.featurePacks || []).map((pack) => {
+                  const badgeClass =
+                    pack.status === 'ready'
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                      : pack.status === 'partial'
+                        ? 'border-amber-300 bg-amber-50 text-amber-900'
+                        : 'border-slate-300 bg-slate-50 text-slate-800';
+
+                  return (
+                    <div
+                      key={pack.key}
+                      className="rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/85 px-2 py-1.5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <button type="button" className="font-semibold rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">{pack.title}</button>
+                        <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${badgeClass}`}>
+                          {Math.round(pack.coverage * 100)}% {pack.status}
+                        </span>
+                      </div>
+                      <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-[11px] font-semibold text-[color:var(--brand-ink)]/75">{pack.objective}</button>
+                      <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-[11px] font-semibold text-[color:var(--brand-ink)]/70">
+                        Installed {pack.installedCount}/{pack.dependencies.length}: {pack.dependencies.join(', ')}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {(dependencyHealth.criticalUpdates || []).length > 0 ? (
             <div className="mt-2 rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-900">
-              <p className="font-semibold">Critical Package Updates</p>
+              <button type="button" className="font-semibold rounded-full border border-rose-300 bg-white px-2.5 py-1">Critical Package Updates</button>
               <ul className="mt-1 space-y-1">
                 {dependencyHealth.criticalUpdates.map((update) => (
                   <li key={update.name}>
@@ -1175,17 +1665,98 @@ export function QuantumAgentKitPanel({
         </div>
       )}
 
+      {quantumDiagnostics && (
+        <div className="mb-3 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2">
+          <button type="button" className="text-[11px] uppercase tracking-wide text-emerald-900 rounded-full border border-emerald-300 bg-white px-2.5 py-1">Quantum Diagnostics Snapshot</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-emerald-300 bg-white px-2.5 py-1 text-left text-xs font-semibold text-emerald-900">
+            Signal: <span className="font-semibold">{quantumDiagnostics.signal}</span>
+            {' | '}Confidence: <span className="font-semibold">{(quantumDiagnostics.confidence * 100).toFixed(1)}%</span>
+          </button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-emerald-300 bg-white px-2.5 py-1 text-left text-xs font-semibold text-emerald-900/90">{quantumDiagnostics.recommendation}</button>
+          {quantumDiagnostics.components && (
+            <div className="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-5">
+              <div className="rounded-md border border-emerald-300 bg-white px-2 py-1 text-[11px] text-emerald-900">margin {(quantumDiagnostics.components.modelMargin * 100).toFixed(0)}%</div>
+              <div className="rounded-md border border-emerald-300 bg-white px-2 py-1 text-[11px] text-emerald-900">consensus {(quantumDiagnostics.components.featureConsensus * 100).toFixed(0)}%</div>
+              <div className="rounded-md border border-emerald-300 bg-white px-2 py-1 text-[11px] text-emerald-900">stability {(quantumDiagnostics.components.temporalStability * 100).toFixed(0)}%</div>
+              <div className="rounded-md border border-emerald-300 bg-white px-2 py-1 text-[11px] text-emerald-900">backend {(quantumDiagnostics.components.backendReliability * 100).toFixed(0)}%</div>
+              <div className="rounded-md border border-emerald-300 bg-white px-2 py-1 text-[11px] text-emerald-900">trend {(quantumDiagnostics.components.trendAlignment * 100).toFixed(0)}%</div>
+            </div>
+          )}
+          <button type="button" className="mt-1 w-full rounded-2xl border border-emerald-300 bg-white px-2.5 py-1 text-left text-[11px] font-semibold text-emerald-900/70">Captured: {new Date(quantumDiagnostics.capturedAt).toLocaleString()}</button>
+        </div>
+      )}
+
+      {strategyLab && (
+        <div className="mb-3 rounded-lg border border-violet-300 bg-violet-50 px-3 py-2">
+          <button type="button" className="text-[11px] uppercase tracking-wide text-violet-900 rounded-full border border-violet-300 bg-white px-2.5 py-1">Strategy Lab</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-violet-300 bg-white px-2.5 py-1 text-left text-xs font-semibold text-violet-900">Objective: {strategyLab.objective}</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-violet-300 bg-white px-2.5 py-1 text-left text-xs font-semibold text-violet-900/90">{strategyLab.recommendation}</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-violet-300 bg-white px-2.5 py-1 text-left text-[11px] font-semibold text-violet-900/80">
+            Confidence {(strategyLab.confidence * 100).toFixed(1)}% | Weak components: {strategyLab.diagnostics.weakComponents.join(', ') || 'none'}
+          </button>
+
+          {(strategyLab.actionPlan || []).length > 0 && (
+            <div className="mt-2 rounded-md border border-violet-300 bg-white px-2 py-2 text-xs text-violet-900">
+              <button type="button" className="font-semibold rounded-full border border-violet-300 bg-violet-50 px-2.5 py-1">One-Click Actions</button>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {strategyLab.actionPlan.map((action) => (
+                  <div key={action.id} className="rounded-md border border-violet-300 bg-violet-50/50 px-2 py-1.5">
+                    <button type="button" className="font-semibold rounded-full border border-violet-300 bg-white px-2.5 py-1">{action.label}</button>
+                    <button type="button" className="mt-1 w-full rounded-2xl border border-violet-300 bg-white px-2.5 py-1 text-left text-[11px] font-semibold text-violet-900/85">{action.reason}</button>
+                    <button
+                      type="button"
+                      onClick={() => void executeStrategyAction(action.id)}
+                      disabled={isRunningTask}
+                      className="mt-2 rounded-md border border-violet-400 bg-white px-2 py-1 text-[11px] font-semibold text-violet-900 hover:bg-violet-100 disabled:opacity-60"
+                    >
+                      {isRunningTask ? 'Running...' : 'Execute'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="rounded-md border border-violet-300 bg-white px-2 py-1 text-xs text-violet-900">
+              <button type="button" className="font-semibold rounded-full border border-violet-300 bg-violet-50 px-2.5 py-1">Quick Wins</button>
+              <ul className="mt-1 space-y-1">
+                {strategyLab.quickWins.map((item) => (
+                  <li key={item}>- {item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-md border border-violet-300 bg-white px-2 py-1 text-xs text-violet-900">
+              <button type="button" className="font-semibold rounded-full border border-violet-300 bg-violet-50 px-2.5 py-1">Growth Bets</button>
+              <ul className="mt-1 space-y-1">
+                {strategyLab.growthBets.map((item) => (
+                  <li key={item}>- {item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-md border border-violet-300 bg-white px-2 py-1 text-xs text-violet-900">
+              <button type="button" className="font-semibold rounded-full border border-violet-300 bg-violet-50 px-2.5 py-1">Risk Guards</button>
+              <ul className="mt-1 space-y-1">
+                {strategyLab.riskGuards.map((item) => (
+                  <li key={item}>- {item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {websiteEdit && (
         <div className="mb-3 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Website Edit Plan</p>
-          <p className="mt-1 text-xs text-[color:var(--brand-ink)]/85">{websiteEdit.summary}</p>
-          <p className="mt-1 text-xs text-[color:var(--brand-ink)]/70">Target: {websiteEdit.targetSite}</p>
+          <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Website Edit Plan</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/85">{websiteEdit.summary}</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/70">Target: {websiteEdit.targetSite}</button>
 
           <div className="mt-2 space-y-2">
             {websiteEdit.edits.map((entry) => (
               <div key={entry.area} className="rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/75 px-2 py-1 text-xs text-[color:var(--brand-ink)]/85">
-                <p className="font-semibold">{entry.area}</p>
-                <p className="mt-1">{entry.objective}</p>
+                <button type="button" className="font-semibold rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">{entry.area}</button>
+                <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">{entry.objective}</button>
                 <ul className="mt-1 space-y-1">
                   {entry.changes.map((change) => (
                     <li key={change}>- {change}</li>
@@ -1199,13 +1770,13 @@ export function QuantumAgentKitPanel({
 
       {abiConfig && (
         <div className="mb-3 rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">ABI Config Sync</p>
-          <p className="mt-1 text-xs text-[color:var(--brand-ink)]/85">{abiConfig.summary}</p>
+          <button type="button" className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">ABI Config Sync</button>
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/85">{abiConfig.summary}</button>
 
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {abiConfig.networks.map((network) => (
               <div key={network.network} className="rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/75 px-2 py-1 text-xs text-[color:var(--brand-ink)]/85">
-                <p className="font-semibold">{network.network.toUpperCase()} ({network.chainId})</p>
+                <button type="button" className="font-semibold rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">{network.network.toUpperCase()} ({network.chainId})</button>
                 <ul className="mt-1 space-y-1">
                   {network.contracts.map((contract) => (
                     <li key={`${network.network}-${contract.key}`}>
@@ -1218,7 +1789,7 @@ export function QuantumAgentKitPanel({
           </div>
 
           <div className="mt-2 rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/75 px-2 py-1 text-xs text-[color:var(--brand-ink)]/85">
-            <p className="font-semibold">Tab Configuration</p>
+            <button type="button" className="font-semibold rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Tab Configuration</button>
             <ul className="mt-1 space-y-1">
               {abiConfig.tabConfiguration.map((entry) => (
                 <li key={entry.tab}>
@@ -1230,9 +1801,131 @@ export function QuantumAgentKitPanel({
         </div>
       )}
 
+      {cloudDeploy && (
+        <div className={`mb-3 rounded-lg border px-3 py-2 ${
+          cloudDeploy.status === 'ready' || cloudDeploy.status === 'triggered'
+            ? 'border-sky-300 bg-sky-50'
+            : cloudDeploy.status === 'no-credentials'
+              ? 'border-amber-300 bg-amber-50'
+              : cloudDeploy.status === 'error'
+                ? 'border-rose-300 bg-rose-50'
+                : 'border-sky-200 bg-white'
+        }`}>
+          <div className="flex items-center gap-2">
+            <button type="button" className="text-[11px] uppercase tracking-wide text-sky-700/70 rounded-full border border-sky-300 bg-white px-2.5 py-1">
+              Cloud Deploy — {cloudDeploy.platform.toUpperCase()}
+            </button>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+              cloudDeploy.status === 'ready' || cloudDeploy.status === 'triggered'
+                ? 'bg-sky-100 text-sky-800'
+                : cloudDeploy.status === 'error'
+                  ? 'bg-rose-100 text-rose-800'
+                  : cloudDeploy.status === 'no-credentials'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-slate-100 text-slate-700'
+            }`}>
+              {cloudDeploy.status}
+            </span>
+          </div>
+
+          <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/85">{cloudDeploy.message}</button>
+
+          {cloudDeploy.deploymentUrl && (
+            <MiniAppExternalLink
+              href={cloudDeploy.deploymentUrl}
+              className="mt-1 inline-block text-xs font-medium text-sky-700 underline underline-offset-2 hover:text-sky-900"
+            >
+              {cloudDeploy.deploymentUrl}
+            </MiniAppExternalLink>
+          )}
+
+          {cloudDeploy.buildLogsUrl && (
+            <MiniAppExternalLink
+              href={cloudDeploy.buildLogsUrl}
+              className="mt-1 ml-3 inline-block text-xs text-sky-600 underline underline-offset-2 hover:text-sky-800"
+            >
+              View build logs →
+            </MiniAppExternalLink>
+          )}
+
+          {cloudDeploy.deployments && cloudDeploy.deployments.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {cloudDeploy.deployments.map((d) => (
+                <div key={d.id} className="flex items-center justify-between rounded-md border border-sky-200 bg-white px-2 py-1 text-xs">
+                  <span className="font-medium text-sky-800">{d.name}</span>
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                    d.state === 'READY' || d.state === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                  }`}>{d.state}</span>
+                  <MiniAppExternalLink href={d.url} className="text-sky-600 underline">
+                    {d.url.replace('https://', '').slice(0, 32)}…
+                  </MiniAppExternalLink>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {cloudDeploy.guidance.length > 0 && (
+            <div className="mt-2 rounded-md border border-sky-200 bg-white px-2 py-1">
+              <button type="button" className="text-[10px] font-semibold uppercase text-sky-700/70 rounded-full border border-sky-300 bg-sky-50 px-2.5 py-1">Next Steps</button>
+              <ul className="mt-1 space-y-1">
+                {cloudDeploy.guidance.map((item) => (
+                  <li key={item} className="text-xs text-sky-900">→ {item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {cloudDeploy.deploymentId && cloudDeploy.status !== 'ready' && (
+            <button
+              type="button"
+              onClick={() => void runCloudDeploy('status')}
+              disabled={isRunningTask}
+              className="mt-2 rounded-md border border-sky-300 bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-200 disabled:opacity-60"
+            >
+              {isRunningTask ? 'Checking...' : 'Refresh Status'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {qpandaTask && (
+        <div className={`mb-3 rounded-lg border px-3 py-2 ${
+          qpandaTask.ok
+            ? 'border-emerald-300 bg-emerald-50'
+            : 'border-rose-300 bg-rose-50'
+        }`}>
+          <div className="flex items-center gap-2">
+            <button type="button" className="text-[11px] uppercase tracking-wide text-emerald-700/70 rounded-full border border-emerald-300 bg-white px-2.5 py-1">QPanda Task</button>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+              qpandaTask.ok ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+            }`}>
+              {qpandaTask.action}
+            </span>
+          </div>
+
+          {qpandaTask.taskId && (
+            <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/85">Task ID: {qpandaTask.taskId}</button>
+          )}
+
+          {qpandaTask.status && (
+            <button type="button" className="mt-1 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left text-xs font-semibold text-[color:var(--brand-ink)]/85">Status: {qpandaTask.status}</button>
+          )}
+
+          {qpandaTask.error && (
+            <button type="button" className="mt-1 w-full rounded-2xl border border-rose-300 bg-rose-50 px-2.5 py-1 text-left text-xs font-semibold text-rose-900">{qpandaTask.error}</button>
+          )}
+
+          {qpandaTask.result && (
+            <pre className="mt-2 max-h-40 overflow-auto rounded-md border border-emerald-200 bg-white px-2 py-1 text-[11px] text-emerald-900">
+              {JSON.stringify(qpandaTask.result, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
+
       {messages.length > 0 && (
         <div className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-2">
-          <p className="mb-2 text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Conversation</p>
+          <button type="button" className="mb-2 text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1">Conversation</button>
           <div className="max-h-48 space-y-2 overflow-auto">
             {messages.slice(-6).map((message, idx) => (
               <div
@@ -1243,8 +1936,8 @@ export function QuantumAgentKitPanel({
                     : 'bg-[color:var(--brand-forest)]/10 text-[color:var(--brand-ink)]/85'
                 }`}
               >
-                <p className="mb-1 font-semibold capitalize">{message.role}</p>
-                <p>{message.text}</p>
+                <button type="button" className="mb-1 rounded-full border border-slate-900/10 bg-white/90 px-2 py-0.5 font-semibold capitalize">{message.role}</button>
+                <button type="button" className="w-full rounded-2xl border border-slate-900/10 bg-white/90 px-2.5 py-1 text-left font-semibold">{message.text}</button>
               </div>
             ))}
           </div>

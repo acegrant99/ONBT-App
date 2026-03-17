@@ -1,0 +1,53 @@
+name: Security Critical Gate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/workspace-guard.mjs'
+      - '.workspace-guard-baseline.json'
+      - '.gitignore'
+      - '.github/workflows/workspace-guard-pr.yml'
+      - 'deploy/**'
+      - 'frontend/**'
+      - 'contracts/**'
+      - 'docs/WORKSPACE_GUARD.md'
+    paths-ignore:
+      - 'artifacts/**'
+      - 'cache/**'
+      - 'reports/**'
+      - 'coverage/**'
+      - 'frontend/.next/**'
+      - '**/*.tsbuildinfo'
+  push:
+    branches:
+      - main
+
+jobs:
+  critical-vulnerability-gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Enforce no critical vulnerabilities
+        run: npm run security:audit-deps:critical
+
+      - name: Upload dependency audit summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-summary-critical-gate
+          path: reports/security/dependency-audit-summary.json

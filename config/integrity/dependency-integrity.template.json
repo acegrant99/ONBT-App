@@ -1,0 +1,28 @@
+{
+  "component": "dependency-and-contract-ui-integrity",
+  "requiredPackages": {
+    "root": [
+      "hardhat",
+      "ethers",
+      "@layerzerolabs/lz-v2-utilities",
+      "@chainbase/sdk"
+    ],
+    "frontend": [
+      "react",
+      "viem",
+      "wagmi"
+    ]
+  },
+  "policies": {
+    "lockfileRequired": true,
+    "disallowCriticalVulnerabilities": true,
+    "disallowDeprecatedCoreLibraries": true,
+    "enforceSingleEthersMajor": true
+  },
+  "contractUiCompatibilityChecks": [
+    "abi_matches_deployed_contract",
+    "frontend_chain_mapping_complete",
+    "token_decimals_consistent",
+    "multichain_address_registry_present"
+  ]
+}

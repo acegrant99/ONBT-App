@@ -1,0 +1,13 @@
+{
+  "description": "Nabat quantum AI training template",
+  "feature_columns": [
+    "liquidity_health",
+    "bridge_reliability",
+    "governance_participation"
+  ],
+  "target_column": "label",
+  "label_meaning": {
+    "0": "risk_off_or_caution",
+    "1": "risk_on_or_healthy"
+  }
+}

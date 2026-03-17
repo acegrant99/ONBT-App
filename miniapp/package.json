@@ -11,6 +11,7 @@
     "build": "node --require ./scripts/punycode-resolver.cjs ./node_modules/next/dist/bin/next build",
     "start": "node --require ./scripts/punycode-resolver.cjs ./node_modules/next/dist/bin/next start",
     "lint": "eslint . --ext .ts,.tsx",
+    "test": "vitest run",
     "check": "npm run type-check && npm run lint",
     "verify": "npm run check && npm run rate:app:quick",
     "minikit:manifest": "create-onchain --manifest",
@@ -29,14 +30,29 @@
   "dependencies": {
     "@coinbase/agentkit": "^0.10.4",
     "@coinbase/onchainkit": "^1.1.2",
+    "@playwright/test": "^1.58.2",
+    "@sentry/nextjs": "^10.43.0",
     "@tanstack/react-query": "^5.0.0",
+    "@testing-library/react": "^16.3.2",
+    "d3-scale": "^4.0.2",
+    "framer-motion": "^12.36.0",
+    "gsap": "^3.14.2",
+    "ioredis": "^5.10.0",
+    "lightweight-charts": "^5.1.0",
     "next": "^16.1.6",
+    "posthog-js": "^1.360.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "recharts": "^3.8.0",
+    "server-only": "^0.0.1",
+    "valibot": "^1.2.0",
     "viem": "^2.47.0",
-    "wagmi": "^2.19.5"
+    "vitest": "^4.1.0",
+    "wagmi": "^2.19.5",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^25.3.5",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -44,7 +60,7 @@
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.1.6",
     "postcss": "^8.5.8",
-    "tailwindcss": "^3.3.6",
+    "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   },
   "overrides": {

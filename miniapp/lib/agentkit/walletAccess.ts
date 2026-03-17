@@ -117,7 +117,7 @@ export function configuredPrivilegedWallets(): string[] {
 
 export function buildWalletProofMessage(input: WalletProofInput): string {
   return [
-    'ONBT AI privileged action authorization',
+    'RAYAY privileged action authorization',
     `Wallet: ${input.walletAddress}`,
     `Method: ${input.method.toUpperCase()}`,
     `Path: ${input.path}`,
@@ -329,6 +329,8 @@ export function capabilitiesForRole(role: AiWalletRole) {
       envHealth: true,
       websiteEditor: true,
       abiConfigurator: true,
+      cloudDeploy: true,
+      quantumTasks: true,
     };
   }
 
@@ -341,6 +343,8 @@ export function capabilitiesForRole(role: AiWalletRole) {
     envHealth: false,
     websiteEditor: false,
     abiConfigurator: false,
+    cloudDeploy: false,
+    quantumTasks: false,
   };
 }
 

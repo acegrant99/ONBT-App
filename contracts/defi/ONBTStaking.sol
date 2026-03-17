@@ -126,17 +126,17 @@ contract ONBTStaking is Ownable, ReentrancyGuard, Pausable {
      * @notice Calculate earned rewards for an account
      */
     function earned(address account) public view returns (uint256) {
-        StakeInfo memory stake = stakes[account];
+        StakeInfo memory userStake = stakes[account];
         
-        if (stake.amount == 0) {
-            return stake.rewards;
+        if (userStake.amount == 0) {
+            return userStake.rewards;
         }
         
-        uint256 rewardDelta = rewardPerToken() - stake.rewardPerTokenPaid;
-        uint256 baseReward = stake.amount * rewardDelta / 1e18;
-        uint256 bonusReward = baseReward * stake.lockupBonus / 10000;
+        uint256 rewardDelta = rewardPerToken() - userStake.rewardPerTokenPaid;
+        uint256 baseReward = userStake.amount * rewardDelta / 1e18;
+        uint256 bonusReward = baseReward * userStake.lockupBonus / 10000;
         
-        return stake.rewards + bonusReward;
+        return userStake.rewards + bonusReward;
     }
     
     /**
@@ -150,14 +150,14 @@ contract ONBTStaking is Ownable, ReentrancyGuard, Pausable {
         uint256 stakedAt,
         bool isLocked
     ) {
-        StakeInfo memory stake = stakes[account];
+        StakeInfo memory userStake = stakes[account];
         return (
-            stake.amount,
-            stake.lockupEnd,
-            stake.lockupBonus,
+            userStake.amount,
+            userStake.lockupEnd,
+            userStake.lockupBonus,
             earned(account),
-            stake.stakedAt,
-            block.timestamp < stake.lockupEnd
+            userStake.stakedAt,
+            block.timestamp < userStake.lockupEnd
         );
     }
     

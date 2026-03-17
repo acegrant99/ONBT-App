@@ -2,7 +2,7 @@ import type { GlobalTxStatus } from '@/lib/txStatus';
 import { FEATURE_TABS } from '@/features';
 import type { TabMeta } from '@/types/app-shell';
 
-export const APP_TABS: TabMeta[] = [...FEATURE_TABS, { key: 'about', label: 'About', icon: 'ℹ️' }];
+export const APP_TABS: TabMeta[] = [...FEATURE_TABS, { key: 'about', label: 'About', icon: 'ℹ️' }, { key: 'quantum-ai', label: 'AI · Rayay', icon: '✦' }];
 
 export const TX_LABEL_BY_SOURCE: Record<GlobalTxStatus['source'], string> = {
   token: 'Token transfer',

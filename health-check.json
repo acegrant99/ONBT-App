@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-03-05T01:19:45.605Z",
+  "summary": {
+    "total": 12,
+    "passed": 12,
+    "warned": 0,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "timestamp": "2026-03-05T01:19:42.261Z",
+      "name": "base: RPC Connected",
+      "status": "pass",
+      "detail": "Block #42942117"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:42.494Z",
+      "name": "base: Token Contract",
+      "status": "pass",
+      "detail": "Omnichain Nabat (ONBT) - Supply: 877999998.0"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:42.625Z",
+      "name": "base: Staking Contract",
+      "status": "pass",
+      "detail": "AchievementNFT linked"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:42.754Z",
+      "name": "base: NFT Contract",
+      "status": "pass",
+      "detail": "0 achievements minted"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:43.000Z",
+      "name": "base: Contract Wiring",
+      "status": "pass",
+      "detail": "Staking↔NFT and RewardsPool↔Staking valid"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:43.184Z",
+      "name": "base: Gas Price",
+      "status": "pass",
+      "detail": "0.006 Gwei"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:43.996Z",
+      "name": "arbitrum: RPC Connected",
+      "status": "pass",
+      "detail": "Block #438429966"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:44.456Z",
+      "name": "arbitrum: Token Contract",
+      "status": "pass",
+      "detail": "Omnichain Nabat (ONBT) - Supply: 122000002.0"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:44.706Z",
+      "name": "arbitrum: Staking Contract",
+      "status": "pass",
+      "detail": "AchievementNFT linked"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:44.924Z",
+      "name": "arbitrum: NFT Contract",
+      "status": "pass",
+      "detail": "0 achievements minted"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:45.363Z",
+      "name": "arbitrum: Contract Wiring",
+      "status": "pass",
+      "detail": "Staking↔NFT and RewardsPool↔Staking valid"
+    },
+    {
+      "timestamp": "2026-03-05T01:19:45.596Z",
+      "name": "arbitrum: Gas Price",
+      "status": "pass",
+      "detail": "0.0202 Gwei"
+    }
+  ]
+}

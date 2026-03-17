@@ -1,0 +1,17 @@
+{
+  "network": "arbitrum",
+  "timestamp": "2026-02-22T13:11:00.818Z",
+  "deployer": "0x44497B9FF645A995b18967b34eFeFDe82AeC8144",
+  "contracts": {
+    "ONBTPoolManager": "0xD31b309b37F9f3452Ef0695826531918c0a5114f"
+  },
+  "config": {
+    "lzEndpoint": "0x1a44076050125825900e736c501f859c50fE728c",
+    "swapRouter": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+    "nftPositionManager": "0xc36442b4a4522e871399cd717abdd847ab11218f",
+    "onbtToken": "0x169aC761Ebb210B5A93B68B44DA394776a7B230C",
+    "feeCollector": "0xa66CA14df740B142d8E2DE515A8743ad1eE25850",
+    "rewardsCollector": "0x794171E674B0D06fe6FCBF9D0446Ff0C57b2b9E1",
+    "rewardsBps": 7000
+  }
+}

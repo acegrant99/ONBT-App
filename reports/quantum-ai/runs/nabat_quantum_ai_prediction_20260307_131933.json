@@ -1,0 +1,10 @@
+{
+  "source": "http://localhost:3000/api/chains/overview",
+  "probability_healthy": 0.859179,
+  "label": 1,
+  "features": {
+    "liquidity_health": 1.0,
+    "bridge_reliability": 1.0,
+    "governance_participation": 0.65
+  }
+}

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useMemo, useState } from 'react';
 import {
   useAccount,
@@ -8,7 +10,6 @@ import {
   useWriteContract,
 } from 'wagmi';
 import { formatEther, formatUnits, isAddress, parseEther, parseUnits } from 'viem';
-import { Avatar, Identity, Name } from '@coinbase/onchainkit/identity';
 import {
   ERC20_PAYMENT_ABI,
   ONBT_PRIVATE_SALE_ABI,
@@ -18,6 +19,9 @@ import {
 import { runActionPreflight } from '@/lib/transactions/actionPreflight';
 import { publishGlobalTxStatus } from '@/lib/txStatus';
 import { ChainSelector } from '@/components/ChainSelector';
+import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
+import { WalletIdentityBadge } from '@/components/WalletIdentityBadge';
+import { PrivateSaleReport } from './PrivateSaleReport';
 
 type PaymentAsset = 'ETH' | 'USDC' | 'USDT';
 
@@ -43,6 +47,8 @@ export function PrivateSaleInterface() {
   const [paymentAsset, setPaymentAsset] = useState<PaymentAsset>('ETH');
   const [payAmount, setPayAmount] = useState('');
   const [recipient, setRecipient] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [preflightDetail, setPreflightDetail] = useState<{ decodedReason?: string; rawError?: string } | null>(null);
   const [timeNow, setTimeNow] = useState(Date.now());
 
   const [txMode, setTxMode] = useState<'approve' | 'buy'>('buy');
@@ -219,6 +225,8 @@ export function PrivateSaleInterface() {
     recipientValid;
 
   const handleApprove = async () => {
+    setValidationError(null);
+    setPreflightDetail(null);
     if (!paymentTokenAddress || amountIn <= 0n) return;
     if (!isWalletOnSelectedChain) {
       switchChain({ chainId: selectedChainId });
@@ -240,7 +248,8 @@ export function PrivateSaleInterface() {
     });
 
     if (!preflight.ok) {
-      alert(preflight.copy);
+      setValidationError(preflight.copy);
+      setPreflightDetail({ decodedReason: preflight.decodedReason, rawError: preflight.rawError });
       return;
     }
 
@@ -255,6 +264,8 @@ export function PrivateSaleInterface() {
   };
 
   const handleBuy = async () => {
+    setValidationError(null);
+    setPreflightDetail(null);
     if (!canSubmit) return;
     if (!isWalletOnSelectedChain) {
       switchChain({ chainId: selectedChainId });
@@ -284,7 +295,8 @@ export function PrivateSaleInterface() {
     });
 
     if (!preflight.ok) {
-      alert(preflight.copy);
+      setValidationError(preflight.copy);
+      setPreflightDetail({ decodedReason: preflight.decodedReason, rawError: preflight.rawError });
       return;
     }
 
@@ -361,86 +373,84 @@ export function PrivateSaleInterface() {
   }, [writeError, isPending, isConfirming, isConfirmed, txHash, explorerBaseUrl]);
 
   return (
-    <div className="brand-card module-shell module-grid-bg max-w-3xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
-      <div className="mb-6 border-b border-[color:var(--brand-leaf)]/30 pb-4">
-        <h2 className="text-2xl font-semibold brand-display mb-2">🛡️ ONBT Private Sale OApp</h2>
-        <span className="module-accent-chip mb-2">Sale Window</span>
-        <div className="module-banner module-banner-sale text-xs text-[color:var(--brand-ink)]/85">
-          Entry lane: guarded sale windows, multi-asset rails, and recipient-verified purchase flow.
+    <div className="brand-card module-shell module-shell-sale module-grid-bg scanline-panel max-w-3xl mx-auto p-6 bg-[color:var(--brand-cream)]/90 rounded-2xl shadow-lg border border-[color:var(--brand-leaf)]/20">
+      <div className="mb-6 border-b border-sky-900/15 pb-4">
+        <div className="mb-3 flex flex-wrap gap-2">
+          <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">Sale Window</button>
+          <button type="button" className="rounded-full border border-slate-900/12 bg-white px-3 py-1 text-xs font-semibold text-slate-900">ONBT Private Sale</button>
+          <button type="button" className="rounded-full border border-cyan-300/35 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-950">Multi Asset</button>
+        </div>
+        <div className="status-rail mb-2">
+          <span className="status-rail-dot" />
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">Guarded Window</button>
+            <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">Recipient Verified</button>
+            <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">{selectedChainId === 8453 ? 'Base' : 'Arbitrum'}</button>
+          </div>
         </div>
         <ChainSelector
           label="Use case chain"
           selectedChainId={selectedChainId}
           onSelectChain={setSelectedChainId}
         />
-        <p className="text-sm text-[color:var(--brand-ink)]/65">
-          Base + Arbitrum private sale interface with time-window enforcement and ETH/USDC/USDT payment rails.
-        </p>
-        <div className="mt-3 inline-flex items-center rounded-full border border-[color:var(--brand-leaf)]/40 bg-[color:var(--brand-cream)] px-3 py-1 text-xs text-[color:var(--brand-ink)]/75">
-          Capability: Buy ONBT on Base and Arbitrum using ETH, USDC, or USDT
-        </div>
         {address && (
-          <Identity address={address} className="mt-3">
-            <Avatar />
-            <Name />
-          </Identity>
+          <WalletIdentityBadge address={address} className="mt-3" label="Purchase wallet" />
         )}
       </div>
 
       {!hasSaleContractsConfigured && (
-        <div className="mb-5 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-900">
-          Set `NEXT_PUBLIC_ONBT_PRIVATE_SALE_BASE_ADDRESS` and `NEXT_PUBLIC_ONBT_PRIVATE_SALE_ARBITRUM_ADDRESS` in miniapp env to enable purchases.
+        <div className="mb-4 flex flex-wrap gap-2">
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">⚠ Sale contracts not configured — set env vars to enable
+          </span>
         </div>
       )}
 
       {!chain && hasSaleContractsConfigured && (
-        <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
-          Connect your wallet to activate the private sale flow.
+        <div className="mb-4 flex flex-wrap gap-2">
+          <span className="rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-900">Connect wallet to continue</span>
         </div>
       )}
 
       {chain && isSupportedChain && !saleContractConfiguredForChain && (
-        <div className="mb-5 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-900">
-          Private sale contract is not configured for the selected chain.
+        <div className="mb-4 flex flex-wrap gap-2">
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">⚠ Sale not configured for this chain</span>
         </div>
       )}
 
       {chain && !isWalletOnSelectedChain && (
-        <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
-          Wallet chain and selected chain differ. Click Approve/Buy to switch wallet to {selectedChainId === 8453 ? 'Base' : 'Arbitrum'}.
+        <div className="mb-4 flex flex-wrap gap-2">
+          <span className="rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-900">⇄ Wallet chain differs — will auto-switch on Approve/Buy</span>
         </div>
       )}
 
       {chain && !isSupportedChain && (
-        <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-900">
-          Connect wallet to Base Mainnet (8453) or Arbitrum One (42161) to participate.
+        <div className="mb-4 flex flex-wrap gap-2">
+          <span className="rounded-full border border-rose-300 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">⛔ Switch to Base or Arbitrum</span>
         </div>
       )}
 
       {isPaused && (
-        <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800 font-medium">
-          ⛔ Private sale contract is currently paused. Purchases are temporarily disabled.
+        <div className="mb-4 flex flex-wrap gap-2">
+          <span className="rounded-full border border-rose-300 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">⏸ Sale paused</span>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="glass-tile motion-card p-4 rounded-lg">
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Sale Status</p>
-          <p className="font-semibold text-[color:var(--brand-forest)]">
+          <button type="button" className="w-full rounded-2xl border border-slate-900/10 bg-white/92 px-4 py-4 text-left font-semibold text-[color:var(--brand-forest)]">
             {isPaused ? '⏸️ Paused' : saleNotStarted ? 'Not Started' : saleEnded ? 'Ended' : saleActive ? 'Active' : 'Unknown'}
-          </p>
-          {saleNotStarted && <p className="text-xs text-[color:var(--brand-ink)]/60 mt-1">Starts in {formatCountdown(startsIn)}</p>}
-          {saleActive && <p className="text-xs text-[color:var(--brand-ink)]/60 mt-1">Ends in {formatCountdown(endsIn)}</p>}
+          </button>
+          {saleNotStarted && <button type="button" className="mt-2 rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/80">Starts in {formatCountdown(startsIn)}</button>}
+          {saleActive && <button type="button" className="mt-2 rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/80">Ends in {formatCountdown(endsIn)}</button>}
         </div>
 
-        <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-leaf)]/20">
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Sale Progress</p>
+        <div className="brand-stat-card p-4 rounded-lg">
           {saleAllocation && saleAllocation > 0n ? (
             <>
-              <p className="font-semibold text-[color:var(--brand-ink)]">
+              <button type="button" className="w-full rounded-2xl border border-slate-900/10 bg-white/92 px-4 py-4 text-left font-semibold text-[color:var(--brand-ink)]">
                 {Number(formatEther(totalSold ?? 0n)).toLocaleString(undefined, { maximumFractionDigits: 2 })} /
                 {' '}{Number(formatEther(saleAllocation as bigint)).toLocaleString(undefined, { maximumFractionDigits: 0 })} ONBT
-              </p>
+              </button>
               <progress
                 className="mt-2 w-full h-1.5 [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-[color:var(--brand-leaf)]/20 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[color:var(--brand-forest)] [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-[color:var(--brand-forest)]"
                 value={Number(totalSold ?? 0n)}
@@ -448,29 +458,29 @@ export function PrivateSaleInterface() {
               />
             </>
           ) : (
-            <p className="font-semibold text-[color:var(--brand-ink)]">
+            <button type="button" className="w-full rounded-2xl border border-slate-900/10 bg-white/92 px-4 py-4 text-left font-semibold text-[color:var(--brand-ink)]">
               Remaining: {remainingTokens ? Number(formatEther(remainingTokens as bigint)).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '--'} ONBT
-            </p>
+            </button>
           )}
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mt-1">
+          <button type="button" className="mt-2 rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/80">
             You purchased: {purchased ? Number(formatEther(purchased as bigint)).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'} ONBT
-          </p>
+          </button>
         </div>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-[color:var(--brand-ink)]/75 mb-2">Payment Asset</label>
-          <div className="flex gap-2">
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-sm font-semibold text-[color:var(--brand-ink)]/80">Payment Asset</button>
+          <div className="flex gap-2 rounded-2xl border border-[color:var(--brand-leaf)]/20 bg-[color:var(--brand-cream)]/55 p-1">
             {(['ETH', 'USDC', 'USDT'] as PaymentAsset[]).map(asset => (
               <button
                 key={asset}
                 type="button"
                 onClick={() => setPaymentAsset(asset)}
-                className={`px-4 py-2 rounded-lg border transition-colors ${
+                className={`flex-1 px-4 py-2 rounded-xl border transition-all ${
                   paymentAsset === asset
-                    ? 'bg-[color:var(--brand-forest)] text-white border-[color:var(--brand-forest)]'
-                    : 'bg-[color:var(--brand-cream)] border-[color:var(--brand-leaf)]/40 text-[color:var(--brand-ink)]/80 hover:border-[color:var(--brand-forest)]/40'
+                    ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 border-orange-300 shadow-[0_10px_20px_rgba(245,158,11,0.25)]'
+                    : 'bg-[color:var(--brand-cream)]/70 border-[color:var(--brand-leaf)]/40 text-[color:var(--brand-ink)]/80 hover:border-[color:var(--brand-forest)]/40'
                 }`}
               >
                 {asset}
@@ -480,9 +490,9 @@ export function PrivateSaleInterface() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[color:var(--brand-ink)]/75 mb-2">
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-sm font-semibold text-[color:var(--brand-ink)]/80">
             Amount ({PAYMENT_CONFIG[paymentAsset].symbol})
-          </label>
+          </button>
           <input
             type="number"
             min="0"
@@ -493,14 +503,14 @@ export function PrivateSaleInterface() {
             className="w-full px-4 py-3 border border-[color:var(--brand-leaf)]/40 rounded-lg focus:ring-2 focus:ring-[color:var(--brand-forest)] focus:border-transparent bg-[color:var(--brand-cream)]/80"
           />
           {isTokenPayment && (
-            <p className="text-xs text-[color:var(--brand-ink)]/60 mt-1">
+            <button type="button" className="mt-1 rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/75">
               Wallet {paymentAsset}: {paymentBalance ? Number(formatUnits(paymentBalance, decimals)).toLocaleString(undefined, { maximumFractionDigits: 4 }) : '--'}
-            </p>
+            </button>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[color:var(--brand-ink)]/75 mb-2">Recipient</label>
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 text-sm font-semibold text-[color:var(--brand-ink)]/80">Recipient</button>
           <input
             type="text"
             value={recipient}
@@ -508,16 +518,13 @@ export function PrivateSaleInterface() {
             placeholder={address || '0x...'}
             className="w-full px-4 py-3 border border-[color:var(--brand-leaf)]/40 rounded-lg focus:ring-2 focus:ring-[color:var(--brand-forest)] focus:border-transparent bg-[color:var(--brand-cream)]/80"
           />
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mt-1">
-            Leave empty to buy for connected wallet.
-          </p>
         </div>
 
-        <div className="p-4 bg-[color:var(--brand-cream)] rounded-lg border border-[color:var(--brand-leaf)]/20">
-          <p className="text-xs text-[color:var(--brand-ink)]/60 mb-1">Estimated ONBT Out</p>
-          <p className="font-semibold text-[color:var(--brand-ink)]">
+        <div className="brand-highlight-bar rounded-lg p-4">
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/75">Estimated ONBT Out</button>
+          <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-2 text-left font-semibold text-[color:var(--brand-ink)]">
             {quoteOut ? Number(formatEther(quoteOut)).toLocaleString(undefined, { maximumFractionDigits: 4 }) : '--'} ONBT
-          </p>
+          </button>
         </div>
 
         <button
@@ -542,28 +549,40 @@ export function PrivateSaleInterface() {
         </button>
 
         {txHash && (
-          <a
+          <MiniAppExternalLink
             href={`${explorerTxBaseUrl}${txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
             className="inline-flex text-sm text-[color:var(--brand-forest)] hover:underline"
           >
             View transaction on explorer
-          </a>
+          </MiniAppExternalLink>
         )}
 
         {writeError && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-            {writeError.message}
+          <div className="rounded-xl border border-rose-400/35 bg-rose-500/10 p-3 text-sm text-rose-100">
+            <button type="button" className="w-full rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-left text-sm font-semibold text-rose-700">{writeError.message}</button>
+          </div>
+        )}
+
+        {validationError && (
+          <div className="rounded-xl border border-rose-400/35 bg-rose-500/10 p-3 text-sm text-rose-100">
+            <button type="button" className="w-full rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-left text-sm font-semibold text-rose-700">{validationError}</button>
+            {preflightDetail?.decodedReason && <button type="button" className="mt-2 rounded-full border border-rose-300 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">Decoded: {preflightDetail.decodedReason}</button>}
           </div>
         )}
 
         {isConfirmed && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
-            {txMode === 'approve' ? 'Approval confirmed.' : 'Purchase confirmed.'}
+          <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 p-3 text-sm text-emerald-100">
+            <button type="button" className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">{txMode === 'approve' ? 'Approval confirmed.' : 'Purchase confirmed.'}</button>
           </div>
         )}
       </div>
+
+      <PrivateSaleReport
+        chainId={selectedChainId}
+        contractAddress={activeSaleAddress}
+        saleAllocation={saleAllocation as bigint | undefined}
+        totalSold={totalSold as bigint | undefined}
+      />
     </div>
   );
 }

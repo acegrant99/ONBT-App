@@ -89,6 +89,12 @@ const HIGH_RISK_WRITE_FUNCTIONS = new Set([
   'buyWithUSDT',
 ]);
 
+const ALLOWED_WRITE_FUNCTIONS: Record<ContractPreset['id'], Set<string>> = {
+  token: new Set(['approve', 'transfer', 'send']),
+  staking: new Set(['stake', 'unstake', 'claimRewards', 'compound', 'delegate']),
+  'private-sale': new Set(['buyWithETH', 'buyWithToken']),
+};
+
 const FUNCTION_LABELS: Record<string, string> = {
   balanceOf: 'Wallet Balance',
   totalSupply: 'Total Supply',
@@ -132,6 +138,19 @@ const CATEGORY_ORDER: FunctionCategory[] = [
   'admin',
   'other',
 ];
+
+const READ_CATEGORY_STYLES: Record<FunctionCategory, {
+  bg: string; border: string; text: string; ring: string; shadow: string; hover: string; icon: string;
+}> = {
+  balances:   { bg: 'from-sky-500/15 to-cyan-500/10',      border: 'border-sky-400/45',     text: 'text-sky-950',     ring: 'ring-sky-400',     shadow: 'shadow-[0_0_18px_rgba(14,165,233,0.35)]',    hover: 'hover:shadow-[0_0_12px_rgba(14,165,233,0.2)]',    icon: '💧' },
+  transfers:  { bg: 'from-indigo-500/15 to-blue-500/10',   border: 'border-indigo-400/45',  text: 'text-indigo-950',  ring: 'ring-indigo-400',  shadow: 'shadow-[0_0_18px_rgba(99,102,241,0.35)]',    hover: 'hover:shadow-[0_0_12px_rgba(99,102,241,0.2)]',    icon: '🚀' },
+  staking:    { bg: 'from-emerald-500/15 to-green-500/10', border: 'border-emerald-400/45', text: 'text-emerald-950', ring: 'ring-emerald-400', shadow: 'shadow-[0_0_18px_rgba(52,211,153,0.35)]',    hover: 'hover:shadow-[0_0_12px_rgba(52,211,153,0.2)]',    icon: '🔒' },
+  governance: { bg: 'from-violet-500/15 to-purple-500/10', border: 'border-violet-400/45',  text: 'text-violet-950',  ring: 'ring-violet-400',  shadow: 'shadow-[0_0_18px_rgba(139,92,246,0.35)]',    hover: 'hover:shadow-[0_0_12px_rgba(139,92,246,0.2)]',   icon: '🏛️' },
+  permissions:{ bg: 'from-amber-400/15 to-yellow-400/10',  border: 'border-amber-400/45',   text: 'text-amber-950',   ring: 'ring-amber-400',   shadow: 'shadow-[0_0_18px_rgba(251,191,36,0.35)]',    hover: 'hover:shadow-[0_0_12px_rgba(251,191,36,0.2)]',    icon: '🔐' },
+  admin:      { bg: 'from-slate-300/15 to-gray-200/10',    border: 'border-slate-300/45',   text: 'text-slate-600',   ring: 'ring-slate-300',   shadow: 'shadow-[0_0_12px_rgba(148,163,184,0.25)]',   hover: 'hover:shadow-[0_0_8px_rgba(148,163,184,0.15)]',   icon: '⚙️' },
+  pricing:    { bg: 'from-orange-400/15 to-amber-400/10',  border: 'border-orange-400/45',  text: 'text-orange-950',  ring: 'ring-orange-400',  shadow: 'shadow-[0_0_18px_rgba(251,146,60,0.35)]',    hover: 'hover:shadow-[0_0_12px_rgba(251,146,60,0.2)]',    icon: '💵' },
+  other:      { bg: 'from-slate-200/15 to-slate-100/10',   border: 'border-slate-200/45',   text: 'text-slate-700',   ring: 'ring-slate-200',   shadow: 'shadow-[0_0_10px_rgba(148,163,184,0.2)]',    hover: 'hover:shadow-[0_0_8px_rgba(148,163,184,0.1)]',    icon: '◦' },
+};
 
 function stringifyResult(value: unknown): string {
   return JSON.stringify(
@@ -293,7 +312,8 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
   const { data: walletClient } = useWalletClient();
 
   const [selectedContractId, setSelectedContractId] = useState<ContractPreset['id']>('token');
-  const [selectedChainId, setSelectedChainId] = useState<SupportedChainId>(chain?.id === 42161 ? 42161 : 8453);
+  // Keep SSR and initial client render deterministic to avoid hydration mismatch.
+  const [selectedChainId, setSelectedChainId] = useState<SupportedChainId>(8453);
   const [mode, setMode] = useState<Mode>('read');
   const [selectedFunctionName, setSelectedFunctionName] = useState('');
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
@@ -316,19 +336,27 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
     [selectedContract]
   );
 
-  const modeFunctions = useMemo(
+  const readFunctions = useMemo(
+    () => contractFunctions.filter((fn) => fn.stateMutability === 'view' || fn.stateMutability === 'pure'),
+    [contractFunctions]
+  );
+
+  const writeFunctions = useMemo(
     () =>
-      contractFunctions.filter((item) =>
-        mode === 'read'
-          ? item.stateMutability === 'view' || item.stateMutability === 'pure'
-          : item.stateMutability === 'nonpayable' || item.stateMutability === 'payable'
+      contractFunctions.filter(
+        (fn) =>
+          (fn.stateMutability === 'nonpayable' || fn.stateMutability === 'payable') &&
+          ALLOWED_WRITE_FUNCTIONS[selectedContractId].has(fn.name)
       ),
-    [contractFunctions, mode]
+    [contractFunctions, selectedContractId]
   );
 
   const selectedFunction = useMemo(
-    () => modeFunctions.find((fn) => fn.name === selectedFunctionName),
-    [modeFunctions, selectedFunctionName]
+    () =>
+      mode === 'read'
+        ? readFunctions.find((fn) => fn.name === selectedFunctionName)
+        : writeFunctions.find((fn) => fn.name === selectedFunctionName),
+    [mode, readFunctions, writeFunctions, selectedFunctionName]
   );
 
   const selectedFunctionLabel = selectedFunction ? humanizeFunctionName(selectedFunction.name) : '';
@@ -345,30 +373,11 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
     return names.filter((name) => contractFunctions.some((fn) => fn.name === name));
   }, [activeTab, contractFunctions, prediction?.signal]);
 
-  const groupedModeFunctions = useMemo(() => {
-    const grouped = new Map<FunctionCategory, AbiFunction[]>();
-    CATEGORY_ORDER.forEach((category) => grouped.set(category, []));
-
-    modeFunctions.forEach((fn) => {
-      const category = categorizeFunction(fn.name);
-      const bucket = grouped.get(category);
-      if (bucket) bucket.push(fn);
-    });
-
-    return CATEGORY_ORDER.map((category) => ({
-      category,
-      items: grouped.get(category) || [],
-    })).filter((group) => group.items.length > 0);
-  }, [modeFunctions]);
-
   useEffect(() => {
-    if (!selectedFunction && modeFunctions.length > 0) {
-      setSelectedFunctionName(modeFunctions[0].name);
+    if (chain?.id === 8453 || chain?.id === 42161) {
+      setSelectedChainId(chain.id);
     }
-    if (modeFunctions.length === 0) {
-      setSelectedFunctionName('');
-    }
-  }, [selectedFunction, modeFunctions]);
+  }, [chain?.id]);
 
   useEffect(() => {
     if (!selectedFunction) {
@@ -425,6 +434,28 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
     setInputValues(patched);
     if (template === 'numeric-smoke' && selectedFunction.stateMutability === 'payable') {
       setPayableValue('0.0001');
+    }
+  };
+
+  const runReadDirect = async (fn: AbiFunction) => {
+    if (!publicClient) return;
+    setMode('read');
+    setIsBusy(true);
+    setStatusText('Reading…');
+    setReadResult('');
+    try {
+      const result = await publicClient.readContract({
+        address: activeAddress,
+        abi: selectedContract.abi,
+        functionName: fn.name,
+        args: [],
+      });
+      setReadResult(stringifyResult(result));
+      setStatusText('Read successful.');
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : 'Read failed');
+    } finally {
+      setIsBusy(false);
     }
   };
 
@@ -535,23 +566,44 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
   };
 
   return (
-    <section className="mb-6 rounded-2xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/80 p-4 sm:p-5">
+    <section className="brand-panel scanline-panel mb-6 p-4 sm:p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 className="text-sm sm:text-base font-semibold">ABI-Driven Contract Studio</h3>
-          <p className="text-xs text-[color:var(--brand-ink)]/65">
-            Quantum-assisted interaction surface generated from live contract ABIs.
-          </p>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">
+            Contract Console
+          </button>
+          <button type="button" className="rounded-full border border-slate-900/12 bg-white px-3 py-1 text-xs font-semibold text-slate-900">
+            ABI Studio
+          </button>
+          <button type="button" className="rounded-full border border-cyan-300/35 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-950">
+            Live ABI Actions
+          </button>
         </div>
-        <span className="inline-flex items-center rounded-full border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] px-2.5 py-1 text-xs text-[color:var(--brand-ink)]/80">
+        <button type="button" className="brand-pill text-xs text-[color:var(--brand-ink)]/80">
           Quantum mode: {prediction?.signal ?? 'caution'}
-        </span>
+        </button>
+      </div>
+
+      <div className="status-rail mb-3">
+        <span className="status-rail-dot" aria-hidden="true" />
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">
+            {selectedContract.label}
+          </button>
+          <button type="button" className="rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900">
+            {selectedChainId === 8453 ? 'Base' : 'Arbitrum'}
+          </button>
+        </div>
       </div>
 
       <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <label className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/60 px-3 py-2">
-          <span className="mb-1 block text-xs uppercase tracking-wide text-[color:var(--brand-ink)]/55">Contract Profile</span>
+        <div className="brand-stat-card rounded-lg px-3 py-2">
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">
+            Contract Profile
+          </button>
           <select
+            aria-label="Contract profile"
+            title="Contract profile"
             value={selectedContractId}
             onChange={(event) => setSelectedContractId(event.target.value as ContractPreset['id'])}
             className="brand-input w-full rounded-md border border-[color:var(--brand-leaf)]/35 px-2 py-1.5 text-sm"
@@ -562,30 +614,38 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-[color:var(--brand-ink)]/65">{selectedContract.description}</p>
-        </label>
+          <button type="button" className="mt-2 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-3 py-2 text-left text-xs font-semibold text-slate-700">
+            {selectedContract.description}
+          </button>
+        </div>
 
-        <div className="rounded-lg border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/60 px-3 py-2">
-          <span className="mb-1 block text-xs uppercase tracking-wide text-[color:var(--brand-ink)]/55">Execution Chain</span>
+        <div className="brand-stat-card rounded-lg px-3 py-2">
+          <button type="button" className="mb-2 rounded-full border border-slate-900/12 bg-slate-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">
+            Execution Chain
+          </button>
           <ChainSelector
             label=""
             selectedChainId={selectedChainId}
             onSelectChain={setSelectedChainId}
           />
-          <p className="text-xs text-[color:var(--brand-ink)]/65 break-all">{activeAddress}</p>
+          <button type="button" className="mt-2 w-full rounded-2xl border border-slate-900/10 bg-white/90 px-3 py-2 text-left text-xs font-semibold text-slate-700 break-all">
+            {activeAddress}
+          </button>
         </div>
       </div>
 
       {suggestedFunctions.length > 0 && (
-        <div className="mb-3 rounded-xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-sun)]/10 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-[color:var(--brand-ink)]/55">Quantum Suggestions</p>
+        <div className="brand-highlight-bar mb-3 rounded-xl px-3 py-2">
+          <button type="button" className="rounded-full border border-slate-900/12 bg-white/90 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">
+            Quantum Suggestions
+          </button>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {suggestedFunctions.map((name) => (
               <button
                 key={name}
                 type="button"
-                onClick={() => setSelectedFunctionName(name)}
-                className="rounded-full border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] px-2.5 py-1 text-xs text-[color:var(--brand-ink)]/85 hover:border-[color:var(--brand-forest)]/45"
+                onClick={() => { setMode('read'); setSelectedFunctionName(name); }}
+                className="brand-pill text-xs text-[color:var(--brand-ink)]/85 hover:border-[color:var(--brand-forest)]/45"
               >
                 {humanizeFunctionName(name)}
               </button>
@@ -594,113 +654,147 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
         </div>
       )}
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setMode('read')}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-            mode === 'read'
-              ? 'bg-[color:var(--brand-forest)] text-white'
-              : 'border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] text-[color:var(--brand-ink)]/80'
-          }`}
-        >
-          Read
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('write')}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-            mode === 'write'
-              ? 'bg-[color:var(--brand-forest)] text-white'
-              : 'border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] text-[color:var(--brand-ink)]/80'
-          }`}
-        >
-          Write
-        </button>
-
-        <select
-          value={selectedFunctionName}
-          onChange={(event) => setSelectedFunctionName(event.target.value)}
-          className="brand-input min-w-[220px] rounded-md border border-[color:var(--brand-leaf)]/35 px-2 py-1.5 text-sm"
-        >
-          {modeFunctions.length === 0 && <option value="">No ABI functions in this mode</option>}
-          {groupedModeFunctions.map((group) => (
-            <optgroup key={group.category} label={CATEGORY_LABELS[group.category]}>
-              {group.items.map((fn) => (
-                <option key={fn.name} value={fn.name}>
-                  {humanizeFunctionName(fn.name)} ({fn.inputs.length} args)
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+      {/* ── Explore: contract reads ───────────────────────────────── */}
+      <div className="mb-4">
+        <div className="mb-2 flex items-center gap-2">
+          <button type="button" className="rounded-full border border-sky-300/50 bg-sky-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-800">
+            Explore
+          </button>
+          <span className="text-[11px] text-[color:var(--brand-ink)]/45">contract reads</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {readFunctions.map((fn) => {
+            const cat = categorizeFunction(fn.name);
+            const cs = READ_CATEGORY_STYLES[cat] ?? READ_CATEGORY_STYLES.other;
+            const isActive = mode === 'read' && selectedFunctionName === fn.name;
+            const isBusyHere = isBusy && isActive;
+            return (
+              <button
+                key={fn.name}
+                type="button"
+                onClick={() => {
+                  const alreadyActive = mode === 'read' && selectedFunctionName === fn.name;
+                  setMode('read');
+                  setSelectedFunctionName(fn.name);
+                  if (!alreadyActive && fn.inputs.length === 0) void runReadDirect(fn);
+                }}
+                className={[
+                  'relative flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 select-none',
+                  `bg-gradient-to-br ${cs.bg}`,
+                  cs.border,
+                  cs.text,
+                  isActive ? `ring-2 ring-offset-1 ${cs.ring} ${cs.shadow}` : cs.hover,
+                  isBusyHere ? 'animate-pulse' : '',
+                ].join(' ')}
+              >
+                <span className="leading-none">{cs.icon}</span>
+                <span>{humanizeFunctionName(fn.name)}</span>
+                {fn.inputs.length > 0 && (
+                  <span className="rounded-full bg-white/55 px-1 text-[9px] font-bold leading-tight">
+                    {fn.inputs.length}
+                  </span>
+                )}
+                {isBusyHere && (
+                  <span className="absolute -right-0.5 -top-0.5 size-2 animate-ping rounded-full bg-cyan-400 opacity-75" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
+      {/* ── Actions: on-chain writes ──────────────────────────────── */}
+      {writeFunctions.length > 0 && (
+        <div className="mb-4">
+          <div className="mb-2 flex items-center gap-2">
+            <button type="button" className="rounded-full border border-amber-300/50 bg-amber-50 px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-800">
+              Actions
+            </button>
+            <span className="text-[11px] text-[color:var(--brand-ink)]/45">on-chain writes · wallet required</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {writeFunctions.map((fn) => {
+              const isActive = mode === 'write' && selectedFunctionName === fn.name;
+              const isHighRisk = HIGH_RISK_WRITE_FUNCTIONS.has(fn.name);
+              const isBusyHere = isBusy && isActive;
+              return (
+                <button
+                  key={fn.name}
+                  type="button"
+                  onClick={() => { setMode('write'); setSelectedFunctionName(fn.name); }}
+                  className={[
+                    'relative flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 select-none',
+                    isHighRisk
+                      ? 'bg-gradient-to-br from-rose-500/15 to-red-400/10 border-rose-400/50 text-rose-950'
+                      : 'bg-gradient-to-br from-amber-400/15 to-orange-300/10 border-amber-400/50 text-amber-950',
+                    isActive
+                      ? isHighRisk
+                        ? 'ring-2 ring-offset-1 ring-rose-400 shadow-[0_0_18px_rgba(244,63,94,0.35)]'
+                        : 'ring-2 ring-offset-1 ring-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.35)]'
+                      : isHighRisk
+                        ? 'hover:shadow-[0_0_12px_rgba(244,63,94,0.2)]'
+                        : 'hover:shadow-[0_0_12px_rgba(251,191,36,0.2)]',
+                    isBusyHere ? 'animate-pulse' : '',
+                  ].join(' ')}
+                >
+                  <span className="leading-none">{isHighRisk ? '⚡' : '✍️'}</span>
+                  <span>{humanizeFunctionName(fn.name)}</span>
+                  {fn.inputs.length > 0 && (
+                    <span className="rounded-full bg-white/55 px-1 text-[9px] font-bold leading-tight">
+                      {fn.inputs.length}
+                    </span>
+                  )}
+                  {isBusyHere && (
+                    <span className="absolute -right-0.5 -top-0.5 size-2 animate-ping rounded-full bg-amber-400 opacity-75" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Inline expanded form for selected function ────────────── */}
       {selectedFunction && (
-        <div className="space-y-2 rounded-xl border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/65 px-3 py-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-full border border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)] px-2 py-0.5 text-xs text-[color:var(--brand-ink)]/80">
-              {selectedFunctionLabel}
-            </span>
-            <span className="rounded-full border border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)] px-2 py-0.5 text-xs text-[color:var(--brand-ink)]/70">
-              Category: {CATEGORY_LABELS[selectedFunctionCategory]}
-            </span>
-            <span className="rounded-full border border-[color:var(--brand-leaf)]/30 bg-[color:var(--brand-cream)] px-2 py-0.5 text-xs text-[color:var(--brand-ink)]/70">
-              ABI: {selectedFunction.name}
-            </span>
+        <div className="brand-stat-card space-y-2.5 rounded-xl px-3 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="brand-pill text-xs text-[color:var(--brand-ink)]/80">{selectedFunctionLabel}</span>
+              <span className="brand-pill brand-pill-soft text-xs text-[color:var(--brand-ink)]/60">{CATEGORY_LABELS[selectedFunctionCategory]}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setSelectedFunctionName(''); setReadResult(''); setStatusText(''); setWriteHash(''); }}
+              className="rounded-full border border-slate-200 bg-white/80 px-2.5 py-0.5 text-xs text-slate-500 transition-colors hover:text-slate-800"
+            >
+              ✕
+            </button>
           </div>
 
           {mode === 'write' && blockedWrite && (
-            <div className="rounded-md border border-rose-300 bg-rose-50 px-2.5 py-2 text-xs text-rose-800">
-              This function is blocked in ABI Studio safety policy: <span className="font-semibold">{selectedFunction.name}</span>
+            <div className="rounded-lg border border-rose-400/35 bg-rose-50/80 px-2.5 py-2 text-xs text-rose-900">
+              Blocked: <span className="font-semibold">{selectedFunction.name}</span>
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => applySmartTemplate('wallet-self')}
-              className="rounded-full border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] px-2.5 py-1 text-xs text-[color:var(--brand-ink)]/80 hover:border-[color:var(--brand-forest)]/45"
-            >
-              Fill wallet args
-            </button>
-            <button
-              type="button"
-              onClick={() => applySmartTemplate('numeric-smoke')}
-              className="rounded-full border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] px-2.5 py-1 text-xs text-[color:var(--brand-ink)]/80 hover:border-[color:var(--brand-forest)]/45"
-            >
-              Numeric smoke template
-            </button>
-            <button
-              type="button"
-              onClick={() => applySmartTemplate('reset')}
-              className="rounded-full border border-[color:var(--brand-leaf)]/35 bg-[color:var(--brand-cream)] px-2.5 py-1 text-xs text-[color:var(--brand-ink)]/80 hover:border-[color:var(--brand-forest)]/45"
-            >
-              Reset args
-            </button>
-          </div>
-
-          {selectedFunction.inputs.length === 0 && (
-            <p className="text-xs text-[color:var(--brand-ink)]/65">This function requires no arguments.</p>
+          {mode === 'read' && selectedFunction.inputs.length === 0 && (
+            <p className="text-xs italic text-[color:var(--brand-ink)]/50">No arguments — result loaded on click.</p>
           )}
 
           {selectedFunction.inputs.map((input, index) => {
             const key = `${input.name || 'arg'}:${index}`;
             const value = inputValues[key] ?? '';
             return (
-              <label key={key} className="block">
-                <span className="mb-1 block text-xs text-[color:var(--brand-ink)]/75">
-                  {input.name || `arg${index}`} ({input.type})
-                </span>
+              <div key={key}>
+                <button type="button" className="mb-1 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--brand-ink)]/70">
+                  {input.name || `arg${index}`} <span className="opacity-55">({input.type})</span>
+                </button>
                 {input.type === 'bool' ? (
                   <select
+                    aria-label={`${input.name || `arg${index}`} (${input.type})`}
+                    title={`${input.name || `arg${index}`} (${input.type})`}
                     value={value}
-                    onChange={(event) =>
-                      setInputValues((current) => ({
-                        ...current,
-                        [key]: event.target.value,
-                      }))
-                    }
+                    onChange={(e) => setInputValues((c) => ({ ...c, [key]: e.target.value }))}
                     className="brand-input w-full rounded-md border border-[color:var(--brand-leaf)]/35 px-2 py-1.5 text-sm"
                   >
                     <option value="false">false</option>
@@ -710,77 +804,93 @@ export function AbiDrivenStudio({ activeTab, prediction }: AbiDrivenStudioProps)
                   <input
                     type="text"
                     value={value}
-                    onChange={(event) =>
-                      setInputValues((current) => ({
-                        ...current,
-                        [key]: event.target.value,
-                      }))
-                    }
+                    onChange={(e) => setInputValues((c) => ({ ...c, [key]: e.target.value }))}
                     className="brand-input w-full rounded-md border border-[color:var(--brand-leaf)]/35 px-2 py-1.5 text-sm"
                     placeholder={
                       input.type === 'tuple' || input.type.startsWith('tuple')
                         ? '{"field":"value"}'
                         : input.type.endsWith('[]')
-                          ? 'comma,separated,values (tuple[]: JSON array)'
+                          ? 'comma,separated'
                           : input.type
                     }
                   />
                 )}
-              </label>
+              </div>
             );
           })}
 
           {requiresRiskConfirmation && (
-            <label className="block">
-              <span className="mb-1 block text-xs text-[color:var(--brand-ink)]/75">
-                Confirmation phrase required for high-risk write
-              </span>
+            <div>
+              <button type="button" className="mb-1 rounded-full border border-amber-300/50 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-800">
+                Type <span className="font-mono font-bold">{requiredPhrase}</span> to confirm
+              </button>
               <input
                 type="text"
+                aria-label="Confirmation phrase"
+                title="Confirmation phrase"
                 value={confirmationText}
-                onChange={(event) => setConfirmationText(event.target.value)}
+                onChange={(e) => setConfirmationText(e.target.value)}
                 placeholder={requiredPhrase}
                 className="brand-input w-full rounded-md border border-amber-300 px-2 py-1.5 text-sm"
               />
-            </label>
+            </div>
           )}
 
           {mode === 'write' && selectedFunction.stateMutability === 'payable' && (
-            <label className="block">
-              <span className="mb-1 block text-xs text-[color:var(--brand-ink)]/75">Native value (ETH)</span>
+            <div>
+              <button type="button" className="mb-1 rounded-full border border-slate-900/10 bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--brand-ink)]/70">ETH value</button>
               <input
                 type="number"
+                aria-label="Native value in ETH"
+                title="Native value in ETH"
                 min="0"
                 step="0.000001"
                 value={payableValue}
-                onChange={(event) => setPayableValue(event.target.value)}
+                onChange={(e) => setPayableValue(e.target.value)}
                 className="brand-input w-full rounded-md border border-[color:var(--brand-leaf)]/35 px-2 py-1.5 text-sm"
               />
-            </label>
+            </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            {selectedFunction.inputs.length > 0 && (
+              <button
+                type="button"
+                onClick={() => applySmartTemplate('wallet-self')}
+                className="brand-pill text-[10px] text-[color:var(--brand-ink)]/65 hover:border-[color:var(--brand-forest)]/45"
+              >
+                Fill wallet
+              </button>
+            )}
             <button
               type="button"
               onClick={mode === 'read' ? runRead : runWrite}
               disabled={isBusy || !selectedFunctionName || blockedWrite}
-              className="brand-button rounded-md px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+              className={[
+                'rounded-xl px-4 py-1.5 text-sm font-semibold transition-all duration-150 disabled:opacity-50',
+                mode === 'write'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_2px_8px_rgba(245,158,11,0.3)] hover:shadow-[0_0_18px_rgba(245,158,11,0.45)]'
+                  : 'bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-[0_2px_8px_rgba(14,165,233,0.3)] hover:shadow-[0_0_18px_rgba(14,165,233,0.45)]',
+                isBusy ? 'animate-pulse' : '',
+              ].join(' ')}
             >
-              {isBusy ? 'Working...' : mode === 'read' ? 'Run Read' : 'Send Transaction'}
+              {isBusy ? '⏳ Working…' : mode === 'read' ? '🔍 Read' : '⚡ Execute'}
             </button>
-            <p className="text-xs text-[color:var(--brand-ink)]/70">{statusText}</p>
+            {statusText && (
+              <span className="text-[11px] text-[color:var(--brand-ink)]/55">{statusText}</span>
+            )}
           </div>
 
           {readResult && (
-            <pre className="max-h-48 overflow-auto rounded-md border border-[color:var(--brand-leaf)]/25 bg-[color:var(--brand-cream)]/70 p-2 text-xs text-[color:var(--brand-ink)]/85">
+            <pre className="max-h-48 overflow-auto rounded-xl border border-sky-200/50 bg-sky-50/70 p-2.5 text-xs text-[color:var(--brand-ink)]/85 shadow-inner">
               {readResult}
             </pre>
           )}
 
           {writeHash && (
-            <p className="text-xs text-[color:var(--brand-ink)]/75 break-all">
-              Tx hash: {writeHash}
-            </p>
+            <div className="rounded-xl border border-emerald-300/50 bg-emerald-50/70 px-3 py-2 text-xs font-semibold text-emerald-900 break-all">
+              ✓ {writeHash}
+            </div>
           )}
         </div>
       )}

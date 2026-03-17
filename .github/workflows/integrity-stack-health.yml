@@ -1,0 +1,55 @@
+name: Integrity Stack Health
+
+on:
+  pull_request:
+    paths:
+      - 'config/integrity/**'
+      - 'scripts/generate-integrity-foundation.mjs'
+      - 'scripts/validate-integrity-foundation.mjs'
+      - '.github/workflows/integrity-stack-health.yml'
+      - 'contracts/**'
+      - 'frontend/**'
+      - 'integrations/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'config/integrity/**'
+      - 'scripts/generate-integrity-foundation.mjs'
+      - 'scripts/validate-integrity-foundation.mjs'
+      - '.github/workflows/integrity-stack-health.yml'
+      - 'contracts/**'
+      - 'frontend/**'
+      - 'integrations/**'
+  workflow_dispatch:
+
+jobs:
+  integrity-stack-health:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+
+      - name: Verify integrity templates exist
+        run: |
+          test -f config/integrity/layerzero.interop.template.json
+          test -f config/integrity/chainbase.backend.template.json
+          test -f config/integrity/frontend.advancement.template.json
+          test -f config/integrity/dependency-integrity.template.json
+
+      - name: Validate integrity foundation (soft on PR, strict on push)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            node scripts/validate-integrity-foundation.mjs --soft
+          else
+            node scripts/validate-integrity-foundation.mjs
+          fi
+
+      - name: Run workspace guard strict
+        run: node scripts/workspace-guard.mjs --strict

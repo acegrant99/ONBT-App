@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-02-25T01:30:43.170Z",
+  "mode": "strict",
+  "failOn": "critical",
+  "thresholds": [
+    "high",
+    "critical"
+  ],
+  "aggregate": {
+    "high": 16,
+    "critical": 0,
+    "total": 100,
+    "advisoryCount": 100,
+    "skipped": 0
+  },
+  "targets": [
+    {
+      "target": "root",
+      "skipped": false,
+      "high": 16,
+      "critical": 0,
+      "total": 84,
+      "advisoryCount": 84,
+      "exitCode": 1,
+      "parseError": false,
+      "stderr": ""
+    },
+    {
+      "target": "frontend",
+      "skipped": false,
+      "high": 0,
+      "critical": 0,
+      "total": 16,
+      "advisoryCount": 16,
+      "exitCode": 0,
+      "parseError": false,
+      "stderr": ""
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import { governanceFeatureSlice } from '@/features/governance/slice';
 import { privateSaleFeatureSlice } from '@/features/privateSale/slice';
 import { stakingFeatureSlice } from '@/features/staking/slice';
 import { tokenFeatureSlice } from '@/features/token/slice';
+import { walletFeatureSlice } from '@/features/wallet/slice';
 
 export const FEATURE_SLICES: FeatureSlice[] = [
   tokenFeatureSlice,
@@ -12,6 +13,7 @@ export const FEATURE_SLICES: FeatureSlice[] = [
   stakingFeatureSlice,
   governanceFeatureSlice,
   privateSaleFeatureSlice,
+  walletFeatureSlice,
 ];
 
 export const FEATURE_TABS: TabMeta[] = FEATURE_SLICES.map((slice) => ({

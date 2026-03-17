@@ -2,13 +2,15 @@ import { NextResponse } from 'next/server';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { createPrivateKey } from 'node:crypto';
+import { isOriginPilotConfigured, callOriginPilotJSON } from '@/lib/ai/originPilot';
+import type { ChatMessage } from '@/lib/ai/originPilot';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 type Signal = 'risk-on' | 'caution';
-type ActiveTab = 'token' | 'bridge' | 'staking' | 'governance' | 'private-sale' | 'about';
+type ActiveTab = 'token' | 'bridge' | 'staking' | 'governance' | 'private-sale' | 'about' | 'quantum-ai' | 'wallet';
 
 type RequestBody = {
   prompt: string;
@@ -83,6 +85,45 @@ function normalizeEnvValue(value?: string): string | undefined {
   return out;
 }
 
+type EnvFallback = Record<string, string>;
+
+function parseEnvText(raw: string): EnvFallback {
+  const out: EnvFallback = {};
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const value = trimmed.slice(eq + 1).trim();
+    if (!key) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+async function loadServerEnvFallback(miniappRoot: string): Promise<EnvFallback> {
+  const candidatePaths = [
+    path.join(miniappRoot, '.env.local'),
+    path.join(miniappRoot, 'miniapp', '.env.local'),
+  ];
+
+  for (const candidatePath of candidatePaths) {
+    try {
+      const raw = await readFile(candidatePath, 'utf-8');
+      return parseEnvText(raw);
+    } catch {
+      // Continue to next candidate path.
+    }
+  }
+
+  return {};
+}
+
+function readEnvValue(key: string, fallback: EnvFallback): string | undefined {
+  return normalizeEnvValue(process.env[key] || fallback[key]);
+}
+
 function normalizeApiKeySecret(value?: string): string | undefined {
   const normalized = normalizeEnvValue(value);
   if (!normalized) return undefined;
@@ -127,16 +168,16 @@ function computeSecretFingerprint(value?: string): string | undefined {
   return unsigned.toString(16).padStart(8, '0');
 }
 
-function selectApiKeyId(): {
+function selectApiKeyId(envFallback: EnvFallback): {
   selected?: string;
   selectedSource: 'CDP_API_KEY_ID' | 'CDP_API_KEY_NAME' | 'CDP_CLIENT_API_KEY' | 'none';
   fromApiKeyId?: string;
   fromApiKeyName?: string;
   fromClientApiKey?: string;
 } {
-  const fromApiKeyId = normalizeEnvValue(process.env.CDP_API_KEY_ID);
-  const fromApiKeyName = normalizeEnvValue(process.env.CDP_API_KEY_NAME);
-  const fromClientApiKey = normalizeEnvValue(process.env.CDP_CLIENT_API_KEY);
+  const fromApiKeyId = readEnvValue('CDP_API_KEY_ID', envFallback);
+  const fromApiKeyName = readEnvValue('CDP_API_KEY_NAME', envFallback);
+  const fromClientApiKey = readEnvValue('CDP_CLIENT_API_KEY', envFallback);
 
   if (fromApiKeyId) {
     return {
@@ -177,16 +218,16 @@ function selectApiKeyId(): {
   };
 }
 
-function selectApiKeySecret(): {
+function selectApiKeySecret(envFallback: EnvFallback): {
   selected?: string;
   selectedSource: 'CDP_API_KEY_SECRET' | 'CDP_SECRET_KEY' | 'PEM_ECDSA_PRIVATE_KEY' | 'none';
   fromApiKeySecret?: string;
   fromSecretKey?: string;
   fromPemEcdsaPrivateKey?: string;
 } {
-  const fromApiKeySecret = normalizeApiKeySecret(process.env.CDP_API_KEY_SECRET);
-  const fromSecretKey = normalizeApiKeySecret(process.env.CDP_SECRET_KEY);
-  const fromPemEcdsaPrivateKey = normalizeApiKeySecret(process.env.PEM_ECDSA_PRIVATE_KEY);
+  const fromApiKeySecret = normalizeApiKeySecret(readEnvValue('CDP_API_KEY_SECRET', envFallback));
+  const fromSecretKey = normalizeApiKeySecret(readEnvValue('CDP_SECRET_KEY', envFallback));
+  const fromPemEcdsaPrivateKey = normalizeApiKeySecret(readEnvValue('PEM_ECDSA_PRIVATE_KEY', envFallback));
 
   const candidateList: Array<{ source: 'CDP_API_KEY_SECRET' | 'CDP_SECRET_KEY' | 'PEM_ECDSA_PRIVATE_KEY'; value?: string }> = [
     { source: 'CDP_API_KEY_SECRET', value: fromApiKeySecret },
@@ -444,6 +485,7 @@ export async function POST(request: Request) {
     const activeTab = body.activeTab || 'about';
 
     const miniappRoot = process.cwd();
+    const envFallback = await loadServerEnvFallback(miniappRoot);
     const packagePath = path.join(miniappRoot, 'package.json');
     const rawPackage = await readFile(packagePath, 'utf-8');
     const pkg = JSON.parse(rawPackage) as PackageJson;
@@ -465,16 +507,16 @@ export async function POST(request: Request) {
     const missingCritical = criticalModules.filter((moduleName) => !hasModule(pkg, moduleName));
 
     const agentkitConfiguredInWorkspace = hasModule(pkg, '@coinbase/agentkit');
-    const apiKeySelection = selectApiKeyId();
+    const apiKeySelection = selectApiKeyId(envFallback);
     const cdpApiKeyId = apiKeySelection.selected;
-    const secretSelection = selectApiKeySecret();
+    const secretSelection = selectApiKeySecret(envFallback);
     const cdpApiKeySecret = secretSelection.selected;
-    const networkId = process.env.AGENTKIT_NETWORK_ID || 'base';
+    const networkId = readEnvValue('AGENTKIT_NETWORK_ID', envFallback) || 'base';
     const providerNetworkId = normalizeAgentkitNetworkId(networkId);
-    const walletSecretConfigured = Boolean(normalizeEnvValue(process.env.CDP_WALLET_SECRET));
-    const mnemonicConfigured = Boolean(normalizeEnvValue(process.env.MNEMONIC_PHRASE));
-    const baseAppOwner = normalizeEnvValue(process.env.NEXT_PUBLIC_BASE_APP_OWNER);
-    const projectId = normalizeEnvValue(process.env.CDP_PROJECT_ID);
+    const walletSecretConfigured = Boolean(readEnvValue('CDP_WALLET_SECRET', envFallback));
+    const mnemonicConfigured = Boolean(readEnvValue('MNEMONIC_PHRASE', envFallback));
+    const baseAppOwner = readEnvValue('NEXT_PUBLIC_BASE_APP_OWNER', envFallback);
+    const projectId = readEnvValue('CDP_PROJECT_ID', envFallback);
     const apiKeyIdDiagnostics = classifyApiKeyId(cdpApiKeyId);
     const secretFormat = detectSecretFormat(cdpApiKeySecret);
 
@@ -513,45 +555,43 @@ export async function POST(request: Request) {
 
     let agentkitLive = false;
     if (agentkitConfiguredInWorkspace && credentialsConfigured) {
-      if (walletSecretConfigured) {
-        try {
-          const { AgentKit, CdpEvmWalletProvider } = await import('@coinbase/agentkit');
-          const apiKeyIdCandidates = expandApiKeyIdCandidates(cdpApiKeyId);
+      try {
+        const { AgentKit, CdpEvmWalletProvider } = await import('@coinbase/agentkit');
+        const apiKeyIdCandidates = expandApiKeyIdCandidates(cdpApiKeyId);
 
-          let walletProvider: Awaited<ReturnType<typeof CdpEvmWalletProvider.configureWithWallet>> | null = null;
-          let lastError: unknown = null;
+        let walletProvider: Awaited<ReturnType<typeof CdpEvmWalletProvider.configureWithWallet>> | null = null;
+        let lastError: unknown = null;
 
-          for (const apiKeyIdCandidate of apiKeyIdCandidates) {
-            if (!apiKeyIdCandidate || !cdpApiKeySecret) continue;
-            try {
-              walletProvider = await CdpEvmWalletProvider.configureWithWallet({
-                apiKeyId: apiKeyIdCandidate,
-                apiKeySecret: cdpApiKeySecret,
-                networkId: providerNetworkId,
-              });
-              break;
-            } catch (candidateError) {
-              lastError = candidateError;
-            }
+        for (const apiKeyIdCandidate of apiKeyIdCandidates) {
+          if (!apiKeyIdCandidate || !cdpApiKeySecret) continue;
+          try {
+            walletProvider = await CdpEvmWalletProvider.configureWithWallet({
+              apiKeyId: apiKeyIdCandidate,
+              apiKeySecret: cdpApiKeySecret,
+              networkId: providerNetworkId,
+            });
+            break;
+          } catch (candidateError) {
+            lastError = candidateError;
           }
-
-          if (!walletProvider) {
-            throw lastError instanceof Error ? lastError : new Error('Unable to initialize AgentKit wallet provider');
-          }
-
-          const agentkit = await AgentKit.from({ walletProvider });
-
-          const actions = agentkit.getActions();
-          const uniqueNames = Array.from(new Set(actions.map((action) => action.name))).sort();
-          capabilities.actionCount = uniqueNames.length;
-          capabilities.actionNames = uniqueNames.slice(0, 24);
-          agentkitLive = true;
-        } catch (error) {
-          const details = sanitizeAgentError(error);
-          capabilities.initError = details.message || 'AgentKit initialization failed';
-          capabilities.initErrorDetails = details;
         }
-      } else if (mnemonicConfigured) {
+
+        if (!walletProvider) {
+          throw lastError instanceof Error ? lastError : new Error('Unable to initialize AgentKit wallet provider');
+        }
+
+        const agentkit = await AgentKit.from({ walletProvider });
+        const actions = agentkit.getActions();
+        const uniqueNames = Array.from(new Set(actions.map((action) => action.name))).sort();
+        capabilities.actionCount = uniqueNames.length;
+        capabilities.actionNames = uniqueNames.slice(0, 24);
+        agentkitLive = true;
+      } catch (error) {
+        const details = sanitizeAgentError(error);
+        capabilities.initError = details.message || 'AgentKit initialization failed';
+        capabilities.initErrorDetails = details;
+
+        if (mnemonicConfigured) {
         try {
           const { AgentKit, LegacyCdpWalletProvider } = await import('@coinbase/agentkit');
           const apiKeyIdCandidates = expandApiKeyIdCandidates(cdpApiKeyId);
@@ -588,14 +628,42 @@ export async function POST(request: Request) {
           capabilities.initError = details.message || 'Legacy AgentKit initialization failed';
           capabilities.initErrorDetails = details;
         }
-      } else {
-        capabilities.initError =
-          'Neither CDP_WALLET_SECRET nor MNEMONIC_PHRASE is configured. Set CDP_WALLET_SECRET for v2 live mode, or MNEMONIC_PHRASE for legacy fallback mode.';
+        }
       }
     }
 
-    const signal = body.quantum?.signal;
-    const confidence = body.quantum?.confidence;
+    // Backfill quantum context if the client request did not include one.
+    let quantum = body.quantum;
+    if (!quantum?.signal) {
+      try {
+        const baseOrigin = request.headers.get('origin') || new URL(request.url).origin;
+        const quantumResponse = await fetch(`${baseOrigin}/api/quantum/prediction`, {
+          method: 'GET',
+          cache: 'no-store',
+        });
+        if (quantumResponse.ok) {
+          const q = await quantumResponse.json() as {
+            prediction?: {
+              signal?: Signal;
+              confidence?: number;
+              recommendation?: string;
+            };
+          };
+          if (q?.prediction?.signal) {
+            quantum = {
+              signal: q.prediction.signal,
+              confidence: q.prediction.confidence,
+              recommendation: q.prediction.recommendation,
+            };
+          }
+        }
+      } catch {
+        // Leave quantum undefined; integrity check will report missing signal.
+      }
+    }
+
+    const signal = quantum?.signal;
+    const confidence = quantum?.confidence;
     const uxEnhancements = buildUxEnhancements(allModules, activeTab, signal);
     const suggestions = buildSuggestions(activeTab, signal, confidence);
 
@@ -615,10 +683,8 @@ export async function POST(request: Request) {
           ? `AgentKit live mode is active on ${networkId}. ${capabilities.actionCount || 0} actions available.`
           : Boolean(cdpApiKeyId && cdpApiKeySecret) && !isLikelyCdpSecretFormat(cdpApiKeySecret)
             ? 'CDP credentials found but secret format is invalid (must be PEM EC or base64 Ed25519).'
-            : !walletSecretConfigured && mnemonicConfigured
-            ? 'CDP_WALLET_SECRET is missing; advisor is using legacy mnemonic fallback path for AgentKit.'
-            : !walletSecretConfigured && !mnemonicConfigured
-            ? 'Neither CDP_WALLET_SECRET nor MNEMONIC_PHRASE is configured. Advisor remains in compatibility mode.'
+            : !mnemonicConfigured && !walletSecretConfigured
+            ? 'CDP wallet seed secrets are not configured. Advisor attempted API-key live mode; add MNEMONIC_PHRASE only if legacy fallback is required.'
             : capabilities.initError
             ? `AgentKit detected but failed to initialize: ${capabilities.initError}`
             : 'AgentKit package or CDP credentials not configured in miniapp runtime; using advisory mode.',
@@ -636,11 +702,79 @@ export async function POST(request: Request) {
       ? 'AgentKit is available. Advisor can orchestrate live onchain agent workflows with quantum context.'
       : 'Advisor running in compatibility mode. It still provides integrity and UX guidance from installed modules and quantum signals.';
 
-    const assistantText = [
+    // ── Origin Pilot: replace template text with real LLM responses ──────────
+    let assistantText = [
       summary,
       prompt ? `You asked: ${prompt}` : 'No explicit prompt provided. Generated proactive recommendations.',
       ...suggestions,
     ].join(' ');
+
+    let aiSuggestions = suggestions;
+    let aiUxEnhancements = uxEnhancements;
+    let aiSummary = summary;
+    let originPilotActive = false;
+
+    if (isOriginPilotConfigured()) {
+      try {
+        const systemPrompt = [
+          'You are the Quantum AI Advisor for the ONBT Mini App — an onchain DeFi and governance mini-application on Base.',
+          `Current active tab: ${activeTab}.`,
+          `Quantum signal: ${signal ?? 'unknown'}.`,
+          typeof confidence === 'number'
+            ? `Model confidence: ${(confidence * 100).toFixed(1)}%.`
+            : 'Model confidence: unavailable.',
+          agentkitLive
+            ? `AgentKit is LIVE on ${networkId}. ${capabilities.actionCount || 0} actions loaded.`
+            : 'AgentKit is in advisory/compatibility mode.',
+          `Installed modules (count): ${allModules.length}.`,
+          missingCritical.length > 0
+            ? `Missing critical packages: ${missingCritical.join(', ')}.`
+            : 'All critical Web3 packages are present.',
+          '',
+          'Return ONLY valid JSON with this exact shape (no markdown fences):',
+          '{',
+          '  "summary": "2–3 sentence advisor summary for the current state",',
+          '  "assistantText": "2–4 sentence conversational reply to the user prompt",',
+          '  "suggestions": ["string", "string", "string", "string"],',
+          '  "uxEnhancements": ["string", "string", "string"]',
+          '}',
+        ].join('\n');
+
+        const userContent = prompt
+          ? `User prompt: ${prompt}`
+          : `No explicit prompt. Generate proactive integrity and UX recommendations for the ${activeTab} tab.`;
+
+        const chatMessages: ChatMessage[] = [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent },
+        ];
+
+        interface AdvisorAIResponse {
+          summary?: string;
+          assistantText?: string;
+          suggestions?: string[];
+          uxEnhancements?: string[];
+        }
+
+        const aiResp = await callOriginPilotJSON<AdvisorAIResponse>(chatMessages, {
+          maxTokens: 600,
+          temperature: 0.7,
+        });
+
+        if (aiResp.summary) aiSummary = aiResp.summary;
+        if (aiResp.assistantText) assistantText = aiResp.assistantText;
+        if (Array.isArray(aiResp.suggestions) && aiResp.suggestions.length > 0) {
+          aiSuggestions = aiResp.suggestions;
+        }
+        if (Array.isArray(aiResp.uxEnhancements) && aiResp.uxEnhancements.length > 0) {
+          aiUxEnhancements = aiResp.uxEnhancements;
+        }
+        originPilotActive = true;
+      } catch {
+        // silently fall back to deterministic templates
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const history = body.history || [];
     const messages = [
@@ -659,14 +793,15 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      mode: agentkitLive ? 'agentkit-live' : 'agentkit-unavailable',
-      summary,
+      mode: agentkitLive ? 'agentkit-live' : originPilotActive ? 'origin-pilot' : 'agentkit-unavailable',
+      summary: aiSummary,
       integrityChecks,
-      uxEnhancements,
+      uxEnhancements: aiUxEnhancements,
       availableModules: allModules,
-      suggestions,
+      suggestions: aiSuggestions,
       messages,
       agentkit: capabilities,
+      originPilot: originPilotActive,
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {

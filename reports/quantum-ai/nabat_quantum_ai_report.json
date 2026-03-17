@@ -1,0 +1,8 @@
+{
+  "source": "synthetic",
+  "mode": "quantum",
+  "epochs": 10,
+  "samples": 120,
+  "train_accuracy": 0.947917,
+  "test_accuracy": 0.916667
+}

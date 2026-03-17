@@ -1,0 +1,5 @@
+
+> onbt-miniapp@1.0.0 type-check
+> tsc --noEmit --incremental false
+
+SUCCESS  
