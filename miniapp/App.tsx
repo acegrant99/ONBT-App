@@ -185,7 +185,10 @@ export function ONBTMiniApp() {
       <AppHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-9">
-        <HeroSection />
+        <HeroSection
+          backendOverview={backendOverview}
+          backendRefreshing={backendRefreshing}
+        />
 
         {globalTxStatus && <TxStatusBanner status={globalTxStatus} />}
 

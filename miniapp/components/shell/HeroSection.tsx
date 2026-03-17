@@ -3,22 +3,53 @@
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
-import type { AiTakeoverPlan } from '@/types/app-shell';
+import type { AiTakeoverPlan, BackendOverview } from '@/types/app-shell';
 import { PriceTicker } from './PriceTicker';
 import { ONBT_TOKEN_ADDRESS } from '@/config/contracts';
 
 const BENEFIT_BUTTONS = ['Trade ONBT', 'Bridge Fast', 'Stake Live', 'Vote Onchain'];
-const ROUTE_BUTTONS = ['Base 8453', 'Arbitrum 42161', 'OnchainKit + Wagmi'];
 
 type HeroSectionProps = {
   takeoverPlan?: AiTakeoverPlan;
+  backendOverview?: BackendOverview;
+  backendRefreshing?: boolean;
 };
 
-export function HeroSection({ takeoverPlan }: HeroSectionProps) {
+function formatBlockNumber(value?: string) {
+  if (!value) return '--';
+  const block = Number(value);
+  if (!Number.isFinite(block)) return value;
+  return block.toLocaleString();
+}
+
+export function HeroSection({ takeoverPlan, backendOverview, backendRefreshing = false }: HeroSectionProps) {
   const aiActive = Boolean(takeoverPlan?.enabled);
   const heading = aiActive
     ? takeoverPlan?.headline || 'RAYAY command mode'
     : 'Tap the ONBT flow you want.';
+
+  const baseHealthy = backendOverview?.chains.base.healthy;
+  const arbHealthy = backendOverview?.chains.arbitrum.healthy;
+  const routeCards = [
+    {
+      key: 'base',
+      label: 'Base 8453',
+      healthy: baseHealthy,
+      block: formatBlockNumber(backendOverview?.chains.base.blockNumber),
+    },
+    {
+      key: 'arbitrum',
+      label: 'Arbitrum 42161',
+      healthy: arbHealthy,
+      block: formatBlockNumber(backendOverview?.chains.arbitrum.blockNumber),
+    },
+    {
+      key: 'sync',
+      label: 'Data Sync',
+      healthy: backendOverview ? backendOverview.summary.healthyChains === backendOverview.summary.totalChains : undefined,
+      block: backendRefreshing ? 'Refreshing…' : 'Live',
+    },
+  ] as const;
 
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -88,14 +119,18 @@ export function HeroSection({ takeoverPlan }: HeroSectionProps) {
         </div>
 
         <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-3 sm:text-sm lg:max-w-[520px]">
-          {ROUTE_BUTTONS.map((item) => (
+          {routeCards.map((item) => (
             <button
-              key={item}
+              key={item.key}
               type="button"
               data-hero-metric
               className="motion-card metric-card rounded-2xl border border-slate-900/12 bg-white/95 px-4 py-3 text-left font-['IBM_Plex_Mono'] font-semibold text-slate-900"
             >
-              {item}
+              <div>{item.label}</div>
+              <div className="mt-1 text-[11px] text-slate-600">Block {item.block}</div>
+              <div className={`mt-1 text-[10px] ${item.healthy === false ? 'text-rose-700' : item.healthy === true ? 'text-emerald-700' : 'text-slate-500'}`}>
+                {item.healthy === false ? 'Unhealthy' : item.healthy === true ? 'Healthy' : 'Awaiting'}
+              </div>
             </button>
           ))}
         </div>
