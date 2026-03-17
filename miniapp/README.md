@@ -113,6 +113,29 @@ Required Vercel env vars:
 - `AGENTKIT_ADMIN_TOKEN`
 - `NEXT_PUBLIC_AGENTKIT_ADMIN_TOKEN`
 
+## Dependency Feature Coverage
+
+The miniapp intentionally maps dependencies to feature responsibilities:
+
+- `@coinbase/onchainkit`: MiniKit compatibility, wallet UX, identity components
+- `wagmi`: wallet connectors, chain switching, typed contract reads/writes
+- `viem`: ABI-safe argument formatting, parsing, and address checks
+- `@tanstack/react-query`: live polling, stale-time control, and smooth refresh UX
+- `next`: metadata tags + `/.well-known/farcaster.json` endpoint for discovery/indexing
+
+This mapping is reflected in the in-app About section under Runtime Readiness.
+
+## Base App Indexing Checklist
+
+To ensure the app is indexable in Base/Farcaster surfaces:
+
+1. Set a public HTTPS URL in `NEXT_PUBLIC_URL`
+2. Ensure `.well-known` manifest route is reachable:
+	- `https://<your-domain>/.well-known/farcaster.json`
+3. Set `NEXT_PUBLIC_BASE_APP_BUILDER_CODE` and `NEXT_PUBLIC_FARCASTER_FID`
+4. Keep `base:app_id` and `fc:miniapp` metadata tags enabled in `app/layout.tsx`
+5. Keep `minikit.config.ts` account association aligned with your production domain
+
 ## Notes
 
 - Contract addresses and supported chains are defined in `config/contracts.ts`

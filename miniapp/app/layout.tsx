@@ -24,8 +24,19 @@ const FC_MINIAPP = JSON.stringify({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(ROOT_URL),
+  applicationName: minikitConfig.miniapp.name,
   title: 'ONabat — Omnichain ONBT',
   description: minikitConfig.miniapp.description,
+  category: 'finance',
+  keywords: ['onbt', 'defi', 'base miniapp', 'farcaster miniapp', 'layerzero', 'staking', 'bridge'],
+  alternates: {
+    canonical: ROOT_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   icons: {
     icon: minikitConfig.miniapp.iconUrl,
     apple: minikitConfig.miniapp.iconUrl,
@@ -54,6 +65,9 @@ export const metadata: Metadata = {
   other: {
     'base:app_id': '69a3aa8e4036d91576063bba',
     'fc:miniapp': FC_MINIAPP,
+    'fc:frame': 'vNext',
+    'fc:frame:image': minikitConfig.miniapp.ogImageUrl,
+    'fc:frame:post_url': `${ROOT_URL}/.well-known/farcaster.json`,
   },
 };
 

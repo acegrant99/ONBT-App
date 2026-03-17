@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import type { TabType, TabMeta } from '@/types/app-shell';
 
 type TabsSectionProps = {
@@ -38,11 +39,12 @@ export function TabsSection({ tabs, activeTab, onChangeTab, featuredTabs = [], f
               : `age ${formatAge(freshness.ageMs ?? 0)}`
             : undefined;
           return (
-            <button
+            <motion.button
               key={tab.key}
               onClick={() => onChangeTab(tab.key)}
+              whileTap={{ scale: 0.98 }}
               aria-label={freshnessText ? `${tab.label} ${freshnessText}` : tab.label}
-              className={`tab-pill flex min-h-[56px] items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all duration-300 ${
+              className={`tab-pill relative flex min-h-[56px] items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all duration-300 ${
                 activeTab === tab.key ? 'tab-pill-active' : ''
               } ${
                 activeTab === tab.key
@@ -72,7 +74,14 @@ export function TabsSection({ tabs, activeTab, onChangeTab, featuredTabs = [], f
                   {freshnessText}
                 </span>
               )}
-            </button>
+              {activeTab === tab.key && (
+                <motion.span
+                  layoutId="active-tab-indicator"
+                  className="absolute inset-0 -z-10 rounded-2xl border border-slate-900/20"
+                  transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+                />
+              )}
+            </motion.button>
           );
         })}
       </div>

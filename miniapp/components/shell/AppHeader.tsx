@@ -3,6 +3,8 @@
 import React from 'react';
 import Image from 'next/image';
 import { Wallet, ConnectWallet, WalletDropdown, WalletDropdownDisconnect, WalletDropdownLink } from '@coinbase/onchainkit/wallet';
+import { Identity, Avatar, Name, Address, EthBalance } from '@coinbase/onchainkit/identity';
+import { useIsFetching } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 
@@ -15,6 +17,7 @@ type AppHeaderProps = {
 export function AppHeader({ aiTakeoverEnabled = false }: AppHeaderProps) {
   const { context } = useMiniKit();
   const { address } = useAccount();
+  const activeFetches = useIsFetching();
   const clientLabel = context?.client?.platformType || 'browser';
 
   return (
@@ -59,6 +62,16 @@ export function AppHeader({ aiTakeoverEnabled = false }: AppHeaderProps) {
                       RAYAY Takeover Active
                     </button>
                   )}
+                  <button
+                    type="button"
+                    className={`rounded-full border px-2.5 py-1 font-['IBM_Plex_Mono'] text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                      activeFetches > 0
+                        ? 'border-emerald-400/50 bg-emerald-50 text-emerald-900'
+                        : 'border-slate-900/10 bg-white/90 text-slate-700'
+                    }`}
+                  >
+                    {activeFetches > 0 ? `Live Sync ${activeFetches}` : 'Live Sync Idle'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -69,9 +82,14 @@ export function AppHeader({ aiTakeoverEnabled = false }: AppHeaderProps) {
                 <WalletDropdown>
                   {address && (
                     <div className="px-4 pb-2 pt-3">
-                      <p className="font-['IBM_Plex_Mono'] text-xs text-slate-500">
-                        {address.slice(0, 6)}…{address.slice(-4)}
-                      </p>
+                      <Identity address={address} className="rounded-xl border border-slate-200 bg-slate-50 p-2">
+                        <Avatar className="h-8 w-8" />
+                        <div className="min-w-0">
+                          <Name className="text-xs font-semibold text-slate-800" />
+                          <Address className="text-[11px] text-slate-600" />
+                          <EthBalance className="text-[11px] text-slate-600" />
+                        </div>
+                      </Identity>
                     </div>
                   )}
                   <WalletDropdownLink

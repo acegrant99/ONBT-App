@@ -1,5 +1,4 @@
 import React from 'react';
-import { OnchainSdkPanel } from '@/components';
 import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
 
 type AboutPanelProps = {
@@ -69,8 +68,6 @@ export function AboutPanel({
         <div className="p-4 bg-[color:var(--brand-sun)]/20 rounded-lg border border-[color:var(--brand-sun)]/40">
           <button type="button" className="w-full rounded-2xl border border-[color:var(--brand-sun)]/50 bg-white/92 px-3 py-2 text-left text-sm font-semibold text-[color:var(--brand-ink)]/85">⚡ LayerZero-Native: This miniapp exclusively features LayerZero-enabled contracts. All functionality leverages omnichain messaging for true cross-chain interoperability.</button>
         </div>
-
-        <OnchainSdkPanel />
       </div>
     </div>
   );
