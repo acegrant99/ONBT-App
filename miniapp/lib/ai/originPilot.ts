@@ -40,7 +40,7 @@ export function originPilotBaseUrl(): string {
 
 /** The default model to use. */
 export function originPilotModel(): string {
-  return process.env.ORIGIN_PILOT_MODEL?.trim() || 'qwen2.5-72b-instruct';
+  return process.env.ORIGIN_PILOT_MODEL?.trim() || 'Qwen2.5-72B-Instruct';
 }
 
 /**
