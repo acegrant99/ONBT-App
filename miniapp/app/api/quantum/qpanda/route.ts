@@ -67,7 +67,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiKey = process.env.ORIGIN_PILOT_API?.trim();
+    // Prefer dedicated QPANDA_PILOT_API; fall back to ORIGIN_PILOT_API for
+    // backward compatibility with deployments that haven't split the keys yet.
+    const apiKey =
+      process.env.QPANDA_PILOT_API?.trim() ||
+      process.env.ORIGIN_PILOT_API?.trim();
     const qpandaPilotUrl = process.env.QPANDA_PILOT_URL?.trim();
     const originPilotUrl = process.env.ORIGIN_PILOT_URL?.trim();
     const pilotUrl = qpandaPilotUrl || originPilotUrl;
@@ -78,7 +82,8 @@ export async function POST(request: Request) {
         {
           ok: false,
           mode: 'qpanda',
-          error: 'ORIGIN_PILOT_API is not configured.',
+          error: 'QPANDA_PILOT_API is not configured.',
+          hint: 'Add QPANDA_PILOT_API to miniapp/.env.local with your API key from https://console.originqc.com.cn/en/apikey',
         },
         { status: 400 }
       );
