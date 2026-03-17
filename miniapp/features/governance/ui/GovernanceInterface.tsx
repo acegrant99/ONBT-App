@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   useAccount,
   usePublicClient,
@@ -43,15 +44,6 @@ export function GovernanceInterface() {
   const [showCreateProposal, setShowCreateProposal] = useState(false);
   const [propTitle, setPropTitle] = useState('');
   const [propDesc, setPropDesc] = useState('');
-  const [recentProposals, setRecentProposals] = useState<Array<{
-    id: bigint;
-    title: string;
-    description: string;
-    state: number;
-    forVotes: bigint;
-    againstVotes: bigint;
-  }>>([]);
-  const [loadingProposals, setLoadingProposals] = useState(false);
   const publicClient = usePublicClient({ chainId: selectedChainId });
 
   useEffect(() => {
@@ -262,20 +254,16 @@ export function GovernanceInterface() {
     }
   }, [proposalError, isPropSubmitting, isPropConfirming, isPropConfirmed, proposalTxHash, explorerBaseUrl]);
 
-  // Trigger proposal loading whenever proposalCount changes or publicClient updates
-  useEffect(() => {
-    if (proposalCount !== undefined && publicClient) {
-      loadRecentProposals();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [proposalCount, publicClient]);
-
-  const loadRecentProposals = useCallback(async () => {
-    if (!publicClient || !proposalCount || !isSupportedChain) return;
-    setLoadingProposals(true);
-    try {
+  // Proposal list via React Query — refetches automatically when proposalCount changes
+  const { data: recentProposals = [], isLoading: loadingProposals } = useQuery({
+    queryKey: ['governance-proposals', governorAddress, String(proposalCount), selectedChainId],
+    enabled: !!publicClient && proposalCount !== undefined && isSupportedChain,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      if (!publicClient || !proposalCount || !isSupportedChain) return [];
       const count = Number(proposalCount);
-      if (count === 0) { setRecentProposals([]); setLoadingProposals(false); return; }
+      if (count === 0) return [];
       const ids = Array.from({ length: Math.min(count, 10) }, (_, i) => BigInt(count - i));
       const results = await Promise.all(
         ids.map(async (id) => {
@@ -286,11 +274,9 @@ export function GovernanceInterface() {
           return { id, title: details[1], description: details[2], state: Number(stateVal), forVotes: details[3], againstVotes: details[4] };
         })
       );
-      setRecentProposals(results);
-    } catch { /* proposals not indexed yet */ } finally {
-      setLoadingProposals(false);
-    }
-  }, [publicClient, proposalCount, governorAddress, isSupportedChain]);
+      return results;
+    },
+  });
 
   const handleCreateProposal = async () => {
     setValidationError(null);

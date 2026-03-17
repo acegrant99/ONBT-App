@@ -29,7 +29,7 @@ export function TabsSection({ tabs, activeTab, onChangeTab, featuredTabs = [], f
 
   return (
     <section className="brand-panel reveal-up mb-6 p-3 sm:p-4">
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+      <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-3 lg:grid-cols-6 sm:overflow-visible">
         {tabs.map((tab) => {
           const isFeatured = featuredTabs.includes(tab.key);
           const freshness = freshnessByTab[tab.key];
@@ -44,7 +44,7 @@ export function TabsSection({ tabs, activeTab, onChangeTab, featuredTabs = [], f
               onClick={() => onChangeTab(tab.key)}
               whileTap={{ scale: 0.98 }}
               aria-label={freshnessText ? `${tab.label} ${freshnessText}` : tab.label}
-              className={`tab-pill relative flex min-h-[56px] items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all duration-300 ${
+              className={`tab-pill relative flex min-h-[56px] shrink-0 items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all duration-300 sm:shrink ${
                 activeTab === tab.key ? 'tab-pill-active' : ''
               } ${
                 activeTab === tab.key

@@ -10,7 +10,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createChart, ColorType, AreaSeries } from 'lightweight-charts';
 
-type TimePoint = { time: string; value: number };
+type TimePoint = { time: string | number; value: number };
 
 type Props = {
   /** Override with real data once token lists on DEX */

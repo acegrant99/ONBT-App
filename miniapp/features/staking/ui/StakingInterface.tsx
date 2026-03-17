@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useAccount, usePublicClient, useReadContract, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import type { Abi } from 'viem';
 import { parseEther, formatEther, isAddress } from 'viem';
@@ -627,19 +628,29 @@ export function StakingInterface() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-[color:var(--brand-leaf)]/20 bg-[color:var(--brand-cream)]/55 p-1">
+      <div className="mb-6 flex flex-wrap gap-1 rounded-2xl border border-[color:var(--brand-leaf)]/20 bg-[color:var(--brand-cream)]/55 p-1">
         {(['stake', 'manage', 'rewards', 'delegate'] as const).map((tab) => (
-          <button
+          <motion.button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`rounded-xl px-4 py-2 font-medium transition-all ${
+            whileTap={{ scale: 0.97 }}
+            className={`relative rounded-xl px-4 py-2 font-medium transition-colors ${
               activeTab === tab
-              ? 'bg-gradient-to-r from-blue-700 via-sky-600 to-cyan-500 text-white shadow-[0_10px_20px_rgba(2,132,199,0.28)]'
+                ? 'text-white'
                 : 'text-[color:var(--brand-ink)]/60 hover:text-[color:var(--brand-leaf)]'
             }`}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
+            {activeTab === tab && (
+              <motion.span
+                layoutId="staking-tab-bg"
+                className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-700 via-sky-600 to-cyan-500 shadow-[0_10px_20px_rgba(2,132,199,0.28)]"
+                transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10">
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </span>
+          </motion.button>
         ))}
       </div>
 

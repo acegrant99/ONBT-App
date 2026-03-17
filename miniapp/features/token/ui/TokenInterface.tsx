@@ -26,6 +26,7 @@ import { ChainSelector } from '@/components/ChainSelector';
 import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
 import { WalletIdentityBadge } from '@/components/WalletIdentityBadge';
 import { PriceChart } from '@/components/charts';
+import { useOHLCVHistory } from '@/hooks/useOHLCVHistory';
 
 type TokenInterfaceProps = {
   quantumSignal?: 'risk-on' | 'caution';
@@ -61,6 +62,17 @@ export function TokenInterface({ quantumSignal = 'caution', quantumConfidence }:
   const explorerBase = isArbitrum ? CHAIN_CONFIG.arbitrum.blockExplorer : CHAIN_CONFIG.base.blockExplorer;
   const chainName = isArbitrum ? CHAIN_CONFIG.arbitrum.name : CHAIN_CONFIG.base.name;
   const cautionMode = quantumSignal === 'caution';
+
+  // Real OHLCV candles from DexScreener
+  const { data: ohlcvData } = useOHLCVHistory({
+    tokenAddress: activeTokenAddress,
+    chainId: selectedChainId,
+    timeframe: '1d',
+    limit: 90,
+  });
+  const chartData = ohlcvData?.candles?.length
+    ? ohlcvData.candles.map((bar) => ({ time: bar.time, value: bar.close }))
+    : undefined;
 
   const publicClient = usePublicClient({ chainId: selectedChainId });
   const selectedStakingAddress = (isArbitrum
@@ -510,7 +522,7 @@ export function TokenInterface({ quantumSignal = 'caution', quantumConfidence }:
       {activeTab === 'info' && (
         <div className="brand-stat-card rounded-xl p-4 space-y-4">
           {/* Price chart */}
-          <PriceChart heightClass="h-48" className="w-full" />
+          <PriceChart data={chartData} heightClass="h-48" className="w-full" />
 
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-2 text-left font-semibold text-[color:var(--brand-ink)]">{TOKEN_INFO.name}</button>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   useAccount,
   usePublicClient,
@@ -38,6 +39,43 @@ function formatCountdown(msRemaining: number) {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   return [hours, minutes, seconds].map(v => String(v).padStart(2, '0')).join(':');
+}
+
+// ── Animated countdown digit ──────────────────────────────────────────────
+function AnimatedDigit({ digit }: { digit: string }) {
+  return (
+    <span className="relative inline-block w-[0.6em] overflow-hidden leading-none">
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={digit}
+          initial={{ y: 8, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -8, opacity: 0 }}
+          transition={{ duration: 0.15, ease: 'easeInOut' }}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          {digit}
+        </motion.span>
+      </AnimatePresence>
+      {/* Invisible spacer so the container keeps its width */}
+      <span className="invisible">{digit}</span>
+    </span>
+  );
+}
+
+function AnimatedCountdown({ msRemaining }: { msRemaining: number }) {
+  const text = formatCountdown(msRemaining);
+  return (
+    <span className="font-mono tabular-nums">
+      {text.split('').map((ch, i) =>
+        ch === ':' ? (
+          <span key={i}>:</span>
+        ) : (
+          <AnimatedDigit key={i} digit={ch} />
+        )
+      )}
+    </span>
+  );
 }
 
 export function PrivateSaleInterface() {
@@ -440,8 +478,8 @@ export function PrivateSaleInterface() {
           <button type="button" className="w-full rounded-2xl border border-slate-900/10 bg-white/92 px-4 py-4 text-left font-semibold text-[color:var(--brand-forest)]">
             {isPaused ? '⏸️ Paused' : saleNotStarted ? 'Not Started' : saleEnded ? 'Ended' : saleActive ? 'Active' : 'Unknown'}
           </button>
-          {saleNotStarted && <button type="button" className="mt-2 rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/80">Starts in {formatCountdown(startsIn)}</button>}
-          {saleActive && <button type="button" className="mt-2 rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/80">Ends in {formatCountdown(endsIn)}</button>}
+          {saleNotStarted && <button type="button" className="mt-2 rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/80">Starts in <AnimatedCountdown msRemaining={startsIn} /></button>}
+          {saleActive && <button type="button" className="mt-2 rounded-full border border-slate-900/10 bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--brand-ink)]/80">Ends in <AnimatedCountdown msRemaining={endsIn} /></button>}
         </div>
 
         <div className="brand-stat-card p-4 rounded-lg">

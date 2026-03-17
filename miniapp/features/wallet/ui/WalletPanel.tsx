@@ -21,6 +21,8 @@ import {
 import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
 import { useWalletTransactions } from '@/hooks/useWalletTransactions';
 import { ONBT_TOKEN_ADDRESS, ONBT_TOKEN_ABI, CHAIN_CONFIG } from '@/config/contracts';
+import { PortfolioPanel } from './PortfolioPanel';
+import { AchievementsPanel } from './AchievementsPanel';
 
 const BASE_CHAIN_ID = 8453;
 
@@ -196,7 +198,7 @@ function TxHistoryPanel({ address }: { address: `0x${string}` }) {
           {txs.map((tx) => (
             <MiniAppExternalLink
               key={tx.hash}
-              href={`${CHAIN_CONFIG.base.blockExplorer}/tx/${tx.hash}`}
+              href={`${tx.chainId === 42161 ? CHAIN_CONFIG.arbitrum.blockExplorer : CHAIN_CONFIG.base.blockExplorer}/tx/${tx.hash}`}
               className="flex items-center justify-between rounded-2xl border border-slate-900/10 bg-white px-4 py-3 text-sm transition-colors hover:border-cyan-300/60"
             >
               <div className="flex items-center gap-3">
@@ -418,11 +420,11 @@ function EditProfilePanel({ address }: { address: `0x${string}` }) {
 
 // ─── Main WalletPanel ────────────────────────────────────────────────────────
 
-type WalletSection = 'receive' | 'history' | 'profile' | 'edit';
+type WalletSection = 'portfolio' | 'receive' | 'history' | 'achievements' | 'profile' | 'edit';
 
 export function WalletPanel() {
   const { address, isConnected } = useAccount();
-  const [section, setSection] = useState<WalletSection>('receive');
+  const [section, setSection] = useState<WalletSection>('portfolio');
 
   if (!isConnected || !address) {
     return (
@@ -438,8 +440,10 @@ export function WalletPanel() {
   }
 
   const navItems: { key: WalletSection; label: string; icon: string }[] = [
+    { key: 'portfolio', label: 'Portfolio', icon: '📊' },
     { key: 'receive', label: 'Receive', icon: '↓' },
     { key: 'history', label: 'Transactions', icon: '📋' },
+    { key: 'achievements', label: 'Achievements', icon: '🏆' },
     { key: 'profile', label: 'Profile', icon: '👤' },
     { key: 'edit', label: 'Edit Profile', icon: '✏️' },
   ];
@@ -467,8 +471,10 @@ export function WalletPanel() {
 
       {/* Active section */}
       <div className="rounded-2xl border border-slate-900/10 bg-white p-4 sm:p-5">
+        {section === 'portfolio' && <PortfolioPanel />}
         {section === 'receive' && <ReceivePanel address={address} />}
         {section === 'history' && <TxHistoryPanel address={address} />}
+        {section === 'achievements' && <AchievementsPanel />}
         {section === 'profile' && <ProfilePanel address={address} />}
         {section === 'edit' && <EditProfilePanel address={address} />}
       </div>
