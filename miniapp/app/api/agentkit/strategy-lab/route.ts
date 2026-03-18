@@ -326,11 +326,21 @@ export async function POST(request: Request) {
               .join('; ')
           : 'No feature pack data available.';
 
+        const vqnetFeatureLines = quantumPayload?.features
+          ? [
+              `VQNet features (from pyvqnet VQC classifier):`,
+              `  liquidity health: ${(((quantumPayload.features as Record<string, number>).liquidity_health ?? 0) * 100).toFixed(1)}%`,
+              `  bridge reliability: ${(((quantumPayload.features as Record<string, number>).bridge_reliability ?? 0) * 100).toFixed(1)}%`,
+              `  governance participation: ${(((quantumPayload.features as Record<string, number>).governance_participation ?? 0) * 100).toFixed(1)}%`,
+            ]
+          : [];
+
         const systemPrompt = [
-          'You are the Quantum Strategy Lab for the ONBT Mini App — an onchain DeFi + governance mini-app on Base.',
+          'You are RAYAY — the Quantum Strategy Lab for the ONBT Mini App, an onchain DeFi + governance mini-app on Base.',
           `Active tab: ${activeTab}.`,
-          `Quantum signal: ${signal}.`,
+          `Quantum signal (VQNet VQC model): ${signal}.`,
           `Confidence: ${(confidence * 100).toFixed(1)}%.`,
+          ...vqnetFeatureLines,
           weakComponents.length > 0
             ? `Weak confidence components: ${weakComponents.join(', ')}.`
             : 'All confidence components are healthy.',
