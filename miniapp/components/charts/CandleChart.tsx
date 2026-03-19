@@ -19,6 +19,11 @@ import {
 } from 'lightweight-charts';
 import type { OHLCVBar } from '@/hooks/useOHLCVHistory';
 
+// Precomputed skeleton bar widths (avoids inline styles)
+const SKELETON_WIDTHS = [
+  'w-[55%]', 'w-[72%]', 'w-[89%]', 'w-[66%]', 'w-[83%]', 'w-[60%]',
+];
+
 type Props = {
   candles?: OHLCVBar[];
   timeframe?: string;
@@ -141,11 +146,10 @@ export function CandleChart({
       {/* Loading skeleton */}
       {loading && !hasData && (
         <div className="absolute inset-0 flex flex-col gap-2 p-3">
-          {[...Array(6)].map((_, i) => (
+          {SKELETON_WIDTHS.map((w, i) => (
             <div
               key={i}
-              className="h-3 animate-pulse rounded bg-slate-100"
-              style={{ width: `${55 + ((i * 17) % 40)}%` }}
+              className={`h-3 animate-pulse rounded bg-slate-100 ${w}`}
             />
           ))}
         </div>

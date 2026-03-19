@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Safe-area padding for fixed bottom nav bar (Farcaster / iPhone home bar) */
+.mobile-nav-bar {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 html,
 body {
   margin: 0;

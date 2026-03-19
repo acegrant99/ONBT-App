@@ -33,8 +33,7 @@ export function MobileBottomNav({ activeTab, onChangeTab }: MobileBottomNavProps
     >
       {/* Frosted glass bar */}
       <div
-        className="flex items-stretch border-t border-slate-200/80 bg-white/92 backdrop-blur-md"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        className="mobile-nav-bar flex items-stretch border-t border-slate-200/80 bg-white/92 backdrop-blur-md"
       >
         {NAV_ITEMS.map((item) => {
           const isActive = activeTab === item.key;

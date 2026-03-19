@@ -21,9 +21,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 # ---------------------------------------------------------------------------
 # Optional: pyvqnet LLM integration (forward-compatible hook)
@@ -39,12 +38,8 @@ except Exception:
 # ---------------------------------------------------------------------------
 # HTTP fallback — standard OpenAI-compatible completions endpoint
 # ---------------------------------------------------------------------------
-try:
-    import urllib.request
-    import urllib.error
-    _HTTP_AVAILABLE = True
-except ImportError:
-    _HTTP_AVAILABLE = False
+# urllib is part of the Python stdlib and always available.
+_http_available: bool = True
 
 
 def _write_report(path: str, payload: Dict[str, Any]) -> None:
@@ -110,14 +105,15 @@ def _call_via_http(
             f"OriginQC LLM HTTP {exc.code}: {err_body}"
         ) from exc
 
-    data = json.loads(raw)
+    data: Dict[str, Any] = cast(Dict[str, Any], json.loads(raw))
 
     # OpenAI-compatible response shape
-    choices = data.get("choices") or []
+    choices: List[Dict[str, Any]] = cast(List[Dict[str, Any]], data.get("choices") or [])
     if not choices:
         raise RuntimeError(f"No choices in OriginQC response: {data}")
 
-    content = choices[0].get("message", {}).get("content", "")
+    message: Dict[str, Any] = cast(Dict[str, Any], choices[0].get("message") or {})
+    content: str = cast(str, message.get("content") or "")
     return content
 
 
