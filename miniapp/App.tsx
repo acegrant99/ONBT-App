@@ -16,6 +16,7 @@ import {
   HeroSection,
   MiniAppActionPanel,
   MiniAppNotificationCard,
+  MobileBottomNav,
   QuantumAgentKitPanel,
   QuantumAiLauncher,
   QuantumSignalPanel,
@@ -187,10 +188,11 @@ export function ONBTMiniApp() {
       <ShellStyles />
       <AppHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-9">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-9 pb-20 sm:pb-9">
         <HeroSection
           backendOverview={backendOverview}
           backendRefreshing={backendRefreshing}
+          onNavigate={setActiveTab}
         />
 
         {globalTxStatus && <TxStatusBanner status={globalTxStatus} />}
@@ -246,6 +248,8 @@ export function ONBTMiniApp() {
         activeTab={activeTab}
         prediction={quantumPrediction}
       />
+
+      <MobileBottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
 
       <AppFooter />
     </div>

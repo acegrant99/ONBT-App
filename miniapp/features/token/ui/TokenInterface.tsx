@@ -25,8 +25,9 @@ import { publishGlobalTxStatus } from '@/lib/txStatus';
 import { ChainSelector } from '@/components/ChainSelector';
 import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
 import { WalletIdentityBadge } from '@/components/WalletIdentityBadge';
-import { PriceChart } from '@/components/charts';
+import { CandleChart } from '@/components/charts';
 import { useOHLCVHistory } from '@/hooks/useOHLCVHistory';
+import type { OHLCVBar } from '@/hooks/useOHLCVHistory';
 
 type TokenInterfaceProps = {
   quantumSignal?: 'risk-on' | 'caution';
@@ -45,6 +46,7 @@ export function TokenInterface({ quantumSignal = 'caution', quantumConfidence }:
   const [transferTo, setTransferTo] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [activeTab, setActiveTab] = useState<'transfer' | 'info'>('transfer');
+  const [chartTimeframe, setChartTimeframe] = useState<'1h' | '4h' | '1d'>('1d');
   // Keep first paint deterministic across SSR/client, then sync to connected wallet chain.
   const [selectedChainId, setSelectedChainId] = useState<8453 | 42161>(8453);
   const [reviewArmedKey, setReviewArmedKey] = useState<string | null>(null);
@@ -64,15 +66,14 @@ export function TokenInterface({ quantumSignal = 'caution', quantumConfidence }:
   const cautionMode = quantumSignal === 'caution';
 
   // Real OHLCV candles from DexScreener
-  const { data: ohlcvData } = useOHLCVHistory({
+  const limitByTimeframe: Record<string, number> = { '1h': 168, '4h': 90, '1d': 90 };
+  const { data: ohlcvData, isFetching: ohlcvFetching } = useOHLCVHistory({
     tokenAddress: activeTokenAddress,
     chainId: selectedChainId,
-    timeframe: '1d',
-    limit: 90,
+    timeframe: chartTimeframe,
+    limit: limitByTimeframe[chartTimeframe] ?? 90,
   });
-  const chartData = ohlcvData?.candles?.length
-    ? ohlcvData.candles.map((bar) => ({ time: bar.time, value: bar.close }))
-    : undefined;
+  const chartCandles: OHLCVBar[] | undefined = ohlcvData?.candles?.length ? ohlcvData.candles : undefined;
 
   const publicClient = usePublicClient({ chainId: selectedChainId });
   const selectedStakingAddress = (isArbitrum
@@ -521,8 +522,37 @@ export function TokenInterface({ quantumSignal = 'caution', quantumConfidence }:
       {/* Info Tab */}
       {activeTab === 'info' && (
         <div className="brand-stat-card rounded-xl p-4 space-y-4">
-          {/* Price chart */}
-          <PriceChart data={chartData} heightClass="h-48" className="w-full" />
+          {/* Timeframe selector */}
+          <div className="flex gap-1.5">
+            {(['1h', '4h', '1d'] as const).map((tf) => (
+              <button
+                key={tf}
+                type="button"
+                onClick={() => setChartTimeframe(tf)}
+                className={`rounded-full border px-3 py-1 font-['IBM_Plex_Mono'] text-[10px] font-bold uppercase tracking-wider transition-all ${
+                  chartTimeframe === tf
+                    ? 'border-violet-400 bg-violet-600 text-white shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-violet-300 hover:text-violet-600'
+                }`}
+              >
+                {tf}
+              </button>
+            ))}
+            {ohlcvData?.source && ohlcvData.source !== 'dex' && (
+              <span className="ml-auto rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-['IBM_Plex_Mono'] text-[10px] text-amber-700">
+                Pre-DEX
+              </span>
+            )}
+          </div>
+          {/* Candlestick chart + volume */}
+          <CandleChart
+            candles={chartCandles}
+            timeframe={chartTimeframe}
+            loading={ohlcvFetching}
+            source={ohlcvData?.source}
+            heightClass="h-64"
+            className="w-full"
+          />
 
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className="rounded-2xl border border-slate-900/10 bg-white/92 px-3 py-2 text-left font-semibold text-[color:var(--brand-ink)]">{TOKEN_INFO.name}</button>

@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///c:/ONBT-App/miniapp/lib/shims/noop.ts"],"sourcesContent":["// No-op shim for optional dependencies that should not be bundled at runtime.\r\nconst noopShim = {};\r\n\r\nexport default noopShim;\r\n"],"names":[],"mappings":";;;;AAAA,8EAA8E;AAC9E,MAAM,WAAW,CAAC;uCAEH"}}]
-}

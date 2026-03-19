@@ -63,10 +63,36 @@ export function MiniAppActionPanel({ backendOverview, backendRefreshing = false 
         ? 'border-rose-300 bg-rose-50 text-rose-900'
         : 'border-slate-200 bg-slate-50 text-slate-700';
 
+  const buildCastText = () => {
+    const parts: string[] = [];
+
+    // Personalized opener
+    if (user?.displayName || user?.username) {
+      parts.push(`${user.displayName || user.username} is tracking $ONBT omnichain.`);
+    } else {
+      parts.push('Tracking $ONBT omnichain via ONabat.');
+    }
+
+    // Chain health line
+    const baseStatus = backendOverview?.chains.base.healthy === true ? '✅ Base' : '🔴 Base';
+    const arbStatus = backendOverview?.chains.arbitrum.healthy === true ? '✅ Arb' : '🔴 Arb';
+    if (backendOverview) {
+      parts.push(`\n${baseStatus} · ${arbStatus} live.`);
+    }
+
+    // Wallet address hint
+    if (address) {
+      parts.push(`\nWallet ${address.slice(0, 6)}…${address.slice(-4)} connected.`);
+    }
+
+    parts.push('\nTrade, bridge, stake + govern ONBT in one Farcaster miniapp 👇');
+    return parts.join('');
+  };
+
     const composeCastMutation = useMutation({
       mutationFn: async () => {
         composeCast({
-          text: 'Tracking ONBT across Base and Arbitrum inside ONabat. Omnichain trading, bridging, staking, and governance in one miniapp.',
+          text: buildCastText(),
           embeds: [shareUrl],
         });
       },

@@ -3,6 +3,7 @@ export { CdpCliPanel } from './CdpCliPanel';
 export { HeroSection } from './HeroSection';
 export { MiniAppActionPanel } from './MiniAppActionPanel';
 export { MiniAppNotificationCard } from './MiniAppNotificationCard';
+export { MobileBottomNav } from './MobileBottomNav';
 export { TabsSection } from './TabsSection';
 export { TxStatusBanner } from './TxStatusBanner';
 export { AboutPanel } from './AboutPanel';

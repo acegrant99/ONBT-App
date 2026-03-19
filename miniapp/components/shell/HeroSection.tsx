@@ -3,16 +3,22 @@
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
-import type { AiTakeoverPlan, BackendOverview } from '@/types/app-shell';
+import type { AiTakeoverPlan, BackendOverview, TabType } from '@/types/app-shell';
 import { PriceTicker } from './PriceTicker';
 import { ONBT_TOKEN_ADDRESS } from '@/config/contracts';
 
-const BENEFIT_BUTTONS = ['Trade ONBT', 'Bridge Fast', 'Stake Live', 'Vote Onchain'];
+const BENEFIT_BUTTONS: { label: string; tab: TabType }[] = [
+  { label: 'Trade ONBT',  tab: 'token' },
+  { label: 'Bridge Fast', tab: 'bridge' },
+  { label: 'Stake Live',  tab: 'staking' },
+  { label: 'Vote Onchain', tab: 'governance' },
+];
 
 type HeroSectionProps = {
   takeoverPlan?: AiTakeoverPlan;
   backendOverview?: BackendOverview;
   backendRefreshing?: boolean;
+  onNavigate?: (tab: TabType) => void;
 };
 
 function formatBlockNumber(value?: string) {
@@ -22,7 +28,7 @@ function formatBlockNumber(value?: string) {
   return block.toLocaleString();
 }
 
-export function HeroSection({ takeoverPlan, backendOverview, backendRefreshing = false }: HeroSectionProps) {
+export function HeroSection({ takeoverPlan, backendOverview, backendRefreshing = false, onNavigate }: HeroSectionProps) {
   const aiActive = Boolean(takeoverPlan?.enabled);
   const heading = aiActive
     ? takeoverPlan?.headline || 'RAYAY command mode'
@@ -101,11 +107,12 @@ export function HeroSection({ takeoverPlan, backendOverview, backendRefreshing =
           <div className="flex flex-wrap gap-2 max-w-3xl" data-hero-cta>
             {BENEFIT_BUTTONS.map((item) => (
               <button
-                key={item}
+                key={item.label}
                 type="button"
-                className="cta-button rounded-2xl border border-slate-900/12 bg-white/95 px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_12px_24px_rgba(15,23,42,0.08)]"
+                onClick={() => onNavigate?.(item.tab)}
+                className="cta-button rounded-2xl border border-slate-900/12 bg-white/95 px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-95 transition-transform"
               >
-                {item}
+                {item.label}
               </button>
             ))}
           </div>
