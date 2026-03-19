@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+// @dev DEPRECATED — This contract is superseded by ONBTUniversalLiquidityPool.
+//      It supports only the ONBT/ETH pair, has no deadline/slippage protection,
+//      no TWAP accumulators, and no stable-curve support.
+//      Do NOT deploy new instances. Use ONBTUniversalLiquidityPool instead.
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
