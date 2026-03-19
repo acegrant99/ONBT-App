@@ -3,12 +3,13 @@
 /**
  * LeaderboardPanel — ONBT staking leaderboard feature.
  *
- * Reads top-10 stakers from Base and Arbitrum staking contracts,
- * merges them into a unified ranked list, and surfaces share-to-cast.
+ * Reads top-10 stakers from Base and Arbitrum staking contracts via two-step approach:
+ * 1. getTopStakers(10) → address[]
+ * 2. batch getStakeInfo(addr) → amounts
  * Social/gamification layer for the Farcaster MiniApp.
  */
 import React, { useState } from 'react';
-import { useReadContract } from 'wagmi';
+import { useReadContract, useReadContracts } from 'wagmi';
 import { formatEther } from 'viem';
 import { useComposeCast, useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount } from 'wagmi';
@@ -16,13 +17,14 @@ import {
   ONBT_STAKING_ADDRESS,
   ONBT_STAKING_ARBITRUM_ADDRESS,
   ONBT_STAKING_ABI,
+  CHAIN_CONFIG,
 } from '@/config/contracts';
 import { ChainSelector } from '@/components/ChainSelector';
 import { WalletIdentityBadge } from '@/components/WalletIdentityBadge';
 import { MiniAppExternalLink } from '@/components/MiniAppExternalLink';
-import { CHAIN_CONFIG } from '@/config/contracts';
 
 const TOP_N = 10n;
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
 
 type ChainId = 8453 | 42161;
 
@@ -59,7 +61,8 @@ function useTopStakers(chainId: ChainId) {
   const stakingContract = (chainId === 42161 ? ONBT_STAKING_ARBITRUM_ADDRESS : ONBT_STAKING_ADDRESS) as `0x${string}`;
   const chainLabel = chainId === 42161 ? 'Arbitrum' : 'Base';
 
-  const { data, isLoading, isError, refetch } = useReadContract({
+  // Step 1: get ordered address list
+  const { data: rawAddresses, isLoading: loadingAddrs, isError, refetch } = useReadContract({
     chainId,
     address: stakingContract,
     abi: ONBT_STAKING_ABI,
@@ -68,21 +71,31 @@ function useTopStakers(chainId: ChainId) {
     query: { refetchInterval: 60_000 },
   });
 
-  const stakers = data as [readonly `0x${string}`[], readonly bigint[]] | undefined;
-  const ranked: RankedStaker[] = [];
-  if (stakers) {
-    const addresses = stakers[0];
-    const amounts = stakers[1];
-    for (let i = 0; i < addresses.length; i++) {
-      const addr = addresses[i];
-      const amt = amounts[i];
-      if (addr && addr !== '0x0000000000000000000000000000000000000000' && amt > 0n) {
-        ranked.push({ address: addr, staked: amt, rank: i + 1, chain: chainLabel as 'Base' | 'Arbitrum' });
-      }
-    }
-  }
+  const addresses = (rawAddresses as readonly `0x${string}`[] | undefined) ?? [];
+  const validAddrs = addresses.filter((a) => a && a.toLowerCase() !== ZERO_ADDR);
 
-  return { ranked, isLoading, isError, refetch };
+  // Step 2: batch getStakeInfo for each address to get amounts
+  const stakeInfoContracts = validAddrs.map((addr) => ({
+    chainId,
+    address: stakingContract,
+    abi: ONBT_STAKING_ABI,
+    functionName: 'getStakeInfo' as const,
+    args: [addr] as const,
+  }));
+
+  const { data: stakeInfoResults, isLoading: loadingInfo } = useReadContracts({
+    contracts: stakeInfoContracts,
+    query: { enabled: validAddrs.length > 0, refetchInterval: 60_000 },
+  });
+
+  const ranked: RankedStaker[] = validAddrs.map((addr, i) => {
+    const result = stakeInfoResults?.[i];
+    // getStakeInfo returns tuple: [amount, startTime, lockupEnd, lockup, pendingRewards, isLocked]
+    const amount = result?.status === 'success' ? (result.result as readonly [bigint, bigint, bigint, number, bigint, boolean])[0] : 0n;
+    return { address: addr, staked: amount ?? 0n, rank: i + 1, chain: chainLabel as 'Base' | 'Arbitrum' };
+  });
+
+  return { ranked, isLoading: loadingAddrs || (loadingInfo && !stakeInfoResults), isError, refetch };
 }
 
 export function LeaderboardPanel() {
