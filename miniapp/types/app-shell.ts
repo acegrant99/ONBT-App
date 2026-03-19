@@ -9,7 +9,8 @@ export type TabType =
   | 'vault'
   | 'about'
   | 'quantum-ai'
-  | 'wallet';
+  | 'wallet'
+  | 'leaderboard';
 
 export type AiWalletRole = 'user' | 'deployer' | 'cdp';
 export type AiWalletMode = 'auto' | AiWalletRole;

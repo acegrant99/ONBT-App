@@ -15,7 +15,7 @@ type NavItem = { key: TabType; icon: string; label: string };
 const NAV_ITEMS: NavItem[] = [
   { key: 'token', icon: '💰', label: 'Token' },
   { key: 'staking', icon: '🔒', label: 'Stake' },
-  { key: 'bridge', icon: '🌉', label: 'Bridge' },
+  { key: 'leaderboard', icon: '🏆', label: 'Rank' },
   { key: 'wallet', icon: '👛', label: 'Wallet' },
   { key: 'quantum-ai', icon: '✦', label: 'AI' },
 ];

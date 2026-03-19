@@ -35,6 +35,7 @@ import { WalletPanel } from '@/features/wallet/ui/WalletPanel';
 import { DefiFactoryInterface } from '@/features/defiFactory/ui/DefiFactoryInterface';
 import { YieldDistributorInterface } from '@/features/yieldDistributor/ui/YieldDistributorInterface';
 import { VaultInterface } from '@/features/vault/ui/VaultInterface';
+import { LeaderboardPanel } from '@/features/leaderboard/ui/LeaderboardPanel';
 import type { TabType } from '@/types/app-shell';
 
 /**
@@ -110,6 +111,7 @@ export function ONBTMiniApp() {
         />
       </div>
     );
+    if (activeTab === 'leaderboard') return <LeaderboardPanel />;
     if (activeTab === 'wallet') return (
       <div className="space-y-6">
         <MiniAppNotificationCard
@@ -175,6 +177,7 @@ export function ONBTMiniApp() {
     'defi-factory': { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
     'yield-distributor': { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
     vault: { ageMs: backendAgeMs, refreshing: backendRefreshing, staleAfterMs: 30_000 },
+    leaderboard: { ageMs: 0, refreshing: false, staleAfterMs: 60_000 },
     about: { ageMs: Math.max(backendAgeMs, quantumAgeMs), refreshing: backendRefreshing || quantumRefreshing, staleAfterMs: 45_000 },
   };
 
