@@ -407,6 +407,33 @@ export const ONBT_DEFI_FACTORY_ABI = [
     stateMutability: 'nonpayable',
     type: 'function',
   },
+  {
+    inputs: [
+      { name: 'feeRecipient', type: 'address' },
+    ],
+    name: 'deployLiquidityPool',
+    outputs: [{ name: 'pool', type: 'address' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'rewardToken', type: 'address' },
+      { name: 'rewardRate', type: 'uint256' },
+      { name: 'minimumStake', type: 'uint256' },
+    ],
+    name: 'deployStaking',
+    outputs: [{ name: 'staking', type: 'address' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'contractAddress', type: 'address' }],
+    name: 'isDeployedContract',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ] as const;
 
 // ONBTYieldDistributor ABI (minimal live-data + claim interface)

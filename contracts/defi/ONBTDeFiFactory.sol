@@ -76,6 +76,8 @@ contract ONBTDeFiFactory is Ownable {
         uint256 rewardRate,
         uint256 minimumStake
     ) external onlyOwner returns (address staking) {
+        require(rewardToken != address(0), "Invalid reward token");
+        require(rewardRate > 0, "Reward rate must be > 0");
         // Deploy new staking contract
         ONBTStaking stakingContract = new ONBTStaking(
             onbtToken,
@@ -104,6 +106,7 @@ contract ONBTDeFiFactory is Ownable {
     function deployLiquidityPool(
         address feeRecipient
     ) external onlyOwner returns (address pool) {
+        require(feeRecipient != address(0), "Invalid fee recipient");
         // Deploy new liquidity pool
         ONBTLiquidityPool liquidityPool = new ONBTLiquidityPool(
             onbtToken,

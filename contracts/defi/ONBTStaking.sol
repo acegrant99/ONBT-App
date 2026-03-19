@@ -328,9 +328,7 @@ contract ONBTStaking is Ownable, ReentrancyGuard, Pausable {
      */
     function recoverToken(address token, uint256 amount) external onlyOwner {
         require(token != address(stakingToken), "Cannot recover staking token");
-        require(token != address(rewardToken) || 
-                IERC20(token).balanceOf(address(this)) > totalStaked + amount, 
-                "Cannot recover reward token reserves");
+        require(token != address(rewardToken), "Cannot recover reward token");
         
         IERC20(token).safeTransfer(owner(), amount);
     }
