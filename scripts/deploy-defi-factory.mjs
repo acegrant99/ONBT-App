@@ -1,7 +1,8 @@
 /**
  * deploy-defi-factory.mjs
  *
- * Deploys ONBTDeFiFactory to Base and Arbitrum mainnet.
+ * Deploys ONBTDeFiFactory registry to Base and/or Arbitrum mainnet,
+ * then pre-registers the already-deployed ecosystem contracts.
  *
  * Usage:
  *   node scripts/deploy-defi-factory.mjs base
@@ -23,11 +24,25 @@ const rootDir = resolve(__dirname, '..');
 
 dotenv.config({ path: resolve(rootDir, '.env') });
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-if (!PRIVATE_KEY) {
+const deployerKey = process.env['PRIVATE_KEY'];
+if (!deployerKey) {
   console.error('❌  PRIVATE_KEY not found in .env');
   process.exit(1);
 }
+
+// Already-deployed production contracts to pre-register in the factory
+const EXISTING_CONTRACTS = {
+  base: {
+    staking:     '0xf51Be12A17cb6B1B45Ae3c067be2f2A969c45Dfe', // ONBTOmnichainStaking
+    pool:        '0xb362Af3da1497A551C08F79bC03CbA12D2b7e908', // ONBTLiquidityManager
+    distributor: '0x8c91384EbF767C1C434d127c82020380F4A8afC7', // ONBTYieldDistributor
+  },
+  arbitrum: {
+    staking:     '0x4E8cF6632fdFD031019c748B041e1c2dC447fa44', // ONBTOmnichainStaking
+    pool:        '0x5889E566a2175C2d504d8e4D1Ad0A979dCa854a3', // ONBTLiquidityManager
+    distributor: '0x2085ca5081480e8634eF4295ef477fe8cE97B892', // ONBTYieldDistributor
+  },
+};
 
 const CHAINS = {
   base: {
@@ -48,7 +63,13 @@ const CHAINS = {
   },
 };
 
-// Load compiled ABI + bytecode from hardhat artifacts
+// Minimal ABI for post-deploy registration calls
+const REGISTER_ABI = [
+  'function registerStaking(address staking) external',
+  'function registerLiquidityPool(address pool) external',
+  'function registerYieldDistributor(address distributor) external',
+];
+
 function loadArtifact(contractName) {
   const artifactPath = resolve(rootDir, `artifacts/contracts/defi/${contractName}.sol/${contractName}.json`);
   try {
@@ -61,14 +82,15 @@ function loadArtifact(contractName) {
 
 async function deployToChain(chainKey) {
   const chain = CHAINS[chainKey];
+  const existing = EXISTING_CONTRACTS[chainKey];
   const artifact = loadArtifact('ONBTDeFiFactory');
 
   console.log(`\n${'═'.repeat(60)}`);
-  console.log(`  Deploying ONBTDeFiFactory → ${chain.name} (${chain.chainId})`);
+  console.log(`  Deploying ONBTDeFiFactory registry → ${chain.name} (${chain.chainId})`);
   console.log(`${'═'.repeat(60)}`);
 
   const provider = new ethers.JsonRpcProvider(chain.rpc, chain.chainId);
-  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+  const wallet = new ethers.Wallet(deployerKey, provider);
 
   console.log(`  Deployer: ${wallet.address}`);
   const balance = await provider.getBalance(wallet.address);
@@ -90,13 +112,32 @@ async function deployToChain(chainKey) {
   const deployTx = contract.deploymentTransaction();
   console.log(`  Tx hash: ${deployTx?.hash}`);
   console.log('  Waiting for confirmation…');
-
   await contract.waitForDeployment();
-  const address = await contract.getAddress();
 
-  console.log(`\n  ✅  Deployed!`);
-  console.log(`  Address: ${address}`);
+  const address = await contract.getAddress();
+  console.log(`\n  ✅  Deployed at ${address}`);
   console.log(`  Explorer: ${chain.explorer}${address}`);
+
+  // Pre-register existing production contracts
+  const registry = new ethers.Contract(address, REGISTER_ABI, wallet);
+  console.log('\n  Registering existing ecosystem contracts…');
+
+  const registrations = [
+    { fn: 'registerStaking',         addr: existing.staking,     label: 'ONBTOmnichainStaking' },
+    { fn: 'registerLiquidityPool',   addr: existing.pool,        label: 'ONBTLiquidityManager' },
+    { fn: 'registerYieldDistributor',addr: existing.distributor, label: 'ONBTYieldDistributor'  },
+  ];
+
+  for (const { fn, addr, label } of registrations) {
+    try {
+      const tx = await registry[fn](addr);
+      await tx.wait();
+      console.log(`  ✅  ${label} registered (${addr})`);
+    } catch (err) {
+      console.warn(`  ⚠️   ${label} registration failed: ${err.message}`);
+    }
+  }
+
   console.log(`\n  Add to miniapp/.env.local:`);
   console.log(`  ${chain.envKey}=${address}`);
 

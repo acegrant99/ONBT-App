@@ -10,7 +10,7 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract,
 } from 'wagmi';
-import { parseEther, isAddress } from 'viem';
+import { isAddress } from 'viem';
 import {
   CHAIN_CONFIG,
   ONBT_DEFI_FACTORY_ABI,
@@ -33,13 +33,10 @@ export function DefiFactoryInterface() {
   const [activeAction, setActiveAction] = useState<ActionKey>('distributor');
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // deployStaking inputs
-  const [rewardToken, setRewardToken] = useState('');
-  const [rewardRate, setRewardRate] = useState('');
-  const [minimumStake, setMinimumStake] = useState('');
-
-  // deployLiquidityPool inputs
-  const [feeRecipient, setFeeRecipient] = useState('');
+  // register* inputs — each takes a single contract address
+  const [stakingAddr, setStakingAddr] = useState('');
+  const [poolAddr, setPoolAddr] = useState('');
+  const [distributorAddr, setDistributorAddr] = useState('');
 
   const publicClient = usePublicClient({ chainId: selectedChainId });
 
@@ -126,73 +123,39 @@ export function DefiFactoryInterface() {
     return true;
   };
 
-  const handleDeployDistributor = async () => {
+  const handleRegister = async (action: ActionKey) => {
     setValidationError(null);
     resetWrite();
-    if (!canDeploy) { setValidationError('Connect wallet and configure factory address first.'); return; }
+    if (!canDeploy) { setValidationError('Connect wallet and configure registry address first.'); return; }
+    const addrMap: Record<ActionKey, string> = {
+      distributor: distributorAddr,
+      staking: stakingAddr,
+      pool: poolAddr,
+    };
+    const fnMap: Record<ActionKey, string> = {
+      distributor: 'registerYieldDistributor',
+      staking: 'registerStaking',
+      pool: 'registerLiquidityPool',
+    };
+    const argAddr = addrMap[action];
+    if (!argAddr || !isAddress(argAddr)) { setValidationError('Enter a valid contract address.'); return; }
     if (!ensureOnChain()) return;
+    const fnName = fnMap[action] as 'registerYieldDistributor' | 'registerStaking' | 'registerLiquidityPool';
     const preflight = await runActionPreflight({
-      actionLabel: 'Deploy Yield Distributor',
+      actionLabel: `Register ${action}`,
       account: address,
       connectedChainId: chain?.id,
       targetChainId: selectedChainId,
       publicClient,
-      request: { address: factoryAddress, abi: ONBT_DEFI_FACTORY_ABI, functionName: 'deployYieldDistributor' },
+      request: { address: factoryAddress, abi: ONBT_DEFI_FACTORY_ABI, functionName: fnName, args: [argAddr as `0x${string}`] },
     });
     if (!preflight.ok) { setValidationError(preflight.copy); return; }
-    writeContract({ chainId: selectedChainId, address: factoryAddress, abi: ONBT_DEFI_FACTORY_ABI, functionName: 'deployYieldDistributor' });
-  };
-
-  const handleDeployStaking = async () => {
-    setValidationError(null);
-    resetWrite();
-    if (!canDeploy) { setValidationError('Connect wallet and configure factory address first.'); return; }
-    if (!rewardToken || !isAddress(rewardToken)) { setValidationError('Enter a valid reward token address.'); return; }
-    if (!rewardRate || isNaN(Number(rewardRate)) || Number(rewardRate) <= 0) { setValidationError('Enter a valid reward rate (tokens/second, decimals ok).'); return; }
-    if (!minimumStake || isNaN(Number(minimumStake)) || Number(minimumStake) < 0) { setValidationError('Enter a valid minimum stake amount.'); return; }
-    if (!ensureOnChain()) return;
-    let rateWei: bigint;
-    let minStakeWei: bigint;
-    try {
-      rateWei = parseEther(rewardRate);
-      minStakeWei = parseEther(minimumStake);
-    } catch {
-      setValidationError('Could not parse numbers. Use decimal notation, e.g. 0.001.');
-      return;
-    }
-    const preflight = await runActionPreflight({
-      actionLabel: 'Deploy Staking Contract',
-      account: address,
-      connectedChainId: chain?.id,
-      targetChainId: selectedChainId,
-      publicClient,
-      request: { address: factoryAddress, abi: ONBT_DEFI_FACTORY_ABI, functionName: 'deployStaking', args: [rewardToken as `0x${string}`, rateWei, minStakeWei] },
-    });
-    if (!preflight.ok) { setValidationError(preflight.copy); return; }
-    writeContract({ chainId: selectedChainId, address: factoryAddress, abi: ONBT_DEFI_FACTORY_ABI, functionName: 'deployStaking', args: [rewardToken as `0x${string}`, rateWei, minStakeWei] });
-  };
-
-  const handleDeployPool = async () => {
-    setValidationError(null);
-    resetWrite();
-    if (!canDeploy) { setValidationError('Connect wallet and configure factory address first.'); return; }
-    if (!feeRecipient || !isAddress(feeRecipient)) { setValidationError('Enter a valid fee recipient address.'); return; }
-    if (!ensureOnChain()) return;
-    const preflight = await runActionPreflight({
-      actionLabel: 'Deploy Liquidity Pool',
-      account: address,
-      connectedChainId: chain?.id,
-      targetChainId: selectedChainId,
-      publicClient,
-      request: { address: factoryAddress, abi: ONBT_DEFI_FACTORY_ABI, functionName: 'deployLiquidityPool', args: [feeRecipient as `0x${string}`] },
-    });
-    if (!preflight.ok) { setValidationError(preflight.copy); return; }
-    writeContract({ chainId: selectedChainId, address: factoryAddress, abi: ONBT_DEFI_FACTORY_ABI, functionName: 'deployLiquidityPool', args: [feeRecipient as `0x${string}`] });
+    writeContract({ chainId: selectedChainId, address: factoryAddress, abi: ONBT_DEFI_FACTORY_ABI, functionName: fnName, args: [argAddr as `0x${string}`] });
   };
 
   const ACTION_TABS: { key: ActionKey; label: string; icon: string }[] = [
     { key: 'distributor', label: 'Yield Distributor', icon: '💸' },
-    { key: 'staking', label: 'Staking Contract', icon: '🔒' },
+    { key: 'staking', label: 'Staking', icon: '🔒' },
     { key: 'pool', label: 'Liquidity Pool', icon: '🌊' },
   ];
 
@@ -287,7 +250,7 @@ export function DefiFactoryInterface() {
 
       {/* Write actions */}
       <div className="rounded-xl border border-slate-900/10 bg-slate-50 p-4 space-y-4">
-        <p className="text-sm font-semibold text-slate-900">Deploy (owner only)</p>
+        <p className="text-sm font-semibold text-slate-900">Register contract (owner only)</p>
 
         {/* Action selector */}
         <div className="flex gap-2 flex-wrap">
@@ -307,101 +270,42 @@ export function DefiFactoryInterface() {
           ))}
         </div>
 
-        {/* Deploy Yield Distributor — no inputs */}
+        {/* Shared address input + register button for each action */}
         {activeAction === 'distributor' && (
           <div className="space-y-3">
-            <p className="text-xs text-slate-500">Deploys a new <strong>ONBTYieldDistributor</strong> using the factory's ONBT token. Ownership is automatically transferred to the factory owner.</p>
-            <motion.button
-              type="button"
-              whileHover={{ scale: canDeploy && !isBusy ? 1.02 : 1 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => void handleDeployDistributor()}
-              disabled={!canDeploy || isBusy}
-              className="rounded-lg bg-[color:var(--brand-forest)] px-4 py-2 text-white text-sm font-semibold disabled:opacity-50 transition-opacity"
-            >
-              {isPending ? 'Broadcasting...' : isConfirming ? 'Confirming...' : '💸 Deploy Yield Distributor'}
+            <p className="text-xs text-slate-500">Register an already-deployed <strong>ONBTYieldDistributor</strong> (e.g. <code className="font-mono">0x8c91…afC7</code> on Base). This records it in the registry; it does not deploy a new contract.</p>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Yield distributor address</label>
+              <input type="text" value={distributorAddr} onChange={(e) => setDistributorAddr(e.target.value.trim())} placeholder="0x…" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30" />
+            </div>
+            <motion.button type="button" whileHover={{ scale: canDeploy && !isBusy ? 1.02 : 1 }} whileTap={{ scale: 0.97 }} onClick={() => void handleRegister('distributor')} disabled={!canDeploy || isBusy} className="rounded-lg bg-[color:var(--brand-forest)] px-4 py-2 text-white text-sm font-semibold disabled:opacity-50 transition-opacity">
+              {isPending ? 'Broadcasting...' : isConfirming ? 'Confirming...' : '💸 Register Yield Distributor'}
             </motion.button>
           </div>
         )}
 
-        {/* Deploy Staking */}
         {activeAction === 'staking' && (
           <div className="space-y-3">
-            <p className="text-xs text-slate-500">Deploys an <strong>ONBTStaking</strong> contract. Reward token is separate from ONBT; rate and min-stake are in token base units.</p>
-            <div className="space-y-2">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Reward token address</label>
-                <input
-                  type="text"
-                  value={rewardToken}
-                  onChange={(e) => setRewardToken(e.target.value.trim())}
-                  placeholder="0x… (ERC-20)"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Reward rate (tokens/sec)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={rewardRate}
-                    onChange={(e) => setRewardRate(e.target.value)}
-                    placeholder="e.g. 0.001"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Minimum stake (tokens)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={minimumStake}
-                    onChange={(e) => setMinimumStake(e.target.value)}
-                    placeholder="e.g. 100"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
-                  />
-                </div>
-              </div>
+            <p className="text-xs text-slate-500">Register an already-deployed staking contract (e.g. <strong>ONBTOmnichainStaking</strong> at <code className="font-mono">0xf51B…cDfe</code> on Base).</p>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Staking contract address</label>
+              <input type="text" value={stakingAddr} onChange={(e) => setStakingAddr(e.target.value.trim())} placeholder="0x…" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30" />
             </div>
-            <motion.button
-              type="button"
-              whileHover={{ scale: canDeploy && !isBusy ? 1.02 : 1 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => void handleDeployStaking()}
-              disabled={!canDeploy || isBusy}
-              className="rounded-lg bg-[color:var(--brand-forest)] px-4 py-2 text-white text-sm font-semibold disabled:opacity-50 transition-opacity"
-            >
-              {isPending ? 'Broadcasting...' : isConfirming ? 'Confirming...' : '🔒 Deploy Staking Contract'}
+            <motion.button type="button" whileHover={{ scale: canDeploy && !isBusy ? 1.02 : 1 }} whileTap={{ scale: 0.97 }} onClick={() => void handleRegister('staking')} disabled={!canDeploy || isBusy} className="rounded-lg bg-[color:var(--brand-forest)] px-4 py-2 text-white text-sm font-semibold disabled:opacity-50 transition-opacity">
+              {isPending ? 'Broadcasting...' : isConfirming ? 'Confirming...' : '🔒 Register Staking Contract'}
             </motion.button>
           </div>
         )}
 
-        {/* Deploy Liquidity Pool */}
         {activeAction === 'pool' && (
           <div className="space-y-3">
-            <p className="text-xs text-slate-500">Deploys an <strong>ONBTLiquidityPool</strong>. The fee recipient receives protocol swap fees.</p>
+            <p className="text-xs text-slate-500">Register an already-deployed liquidity pool or liquidity manager contract (e.g. <strong>ONBTLiquidityManager</strong> at <code className="font-mono">0xb362…908</code> on Base).</p>
             <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Fee recipient address</label>
-              <input
-                type="text"
-                value={feeRecipient}
-                onChange={(e) => setFeeRecipient(e.target.value.trim())}
-                placeholder="0x… (receives protocol fees)"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
-              />
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Pool / liquidity manager address</label>
+              <input type="text" value={poolAddr} onChange={(e) => setPoolAddr(e.target.value.trim())} placeholder="0x…" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30" />
             </div>
-            <motion.button
-              type="button"
-              whileHover={{ scale: canDeploy && !isBusy ? 1.02 : 1 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => void handleDeployPool()}
-              disabled={!canDeploy || isBusy}
-              className="rounded-lg bg-[color:var(--brand-forest)] px-4 py-2 text-white text-sm font-semibold disabled:opacity-50 transition-opacity"
-            >
-              {isPending ? 'Broadcasting...' : isConfirming ? 'Confirming...' : '🌊 Deploy Liquidity Pool'}
+            <motion.button type="button" whileHover={{ scale: canDeploy && !isBusy ? 1.02 : 1 }} whileTap={{ scale: 0.97 }} onClick={() => void handleRegister('pool')} disabled={!canDeploy || isBusy} className="rounded-lg bg-[color:var(--brand-forest)] px-4 py-2 text-white text-sm font-semibold disabled:opacity-50 transition-opacity">
+              {isPending ? 'Broadcasting...' : isConfirming ? 'Confirming...' : '🌊 Register Liquidity Pool'}
             </motion.button>
           </div>
         )}
@@ -416,7 +320,7 @@ export function DefiFactoryInterface() {
               exit={{ opacity: 0, y: -4 }}
               className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"
             >
-              <p className="font-semibold">Deployment confirmed ✅</p>
+              <p className="font-semibold">Registration confirmed ✅</p>
               <MiniAppExternalLink href={`${explorerBase}/tx/${txHash}`} className="font-mono break-all text-emerald-700 hover:underline">
                 {txHash}
               </MiniAppExternalLink>

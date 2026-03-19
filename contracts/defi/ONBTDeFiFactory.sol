@@ -1,177 +1,110 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "./ONBTStaking.sol";
-import "./ONBTLiquidityPool.sol";
-import "./ONBTYieldDistributor.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title ONBTDeFiFactory
- * @dev Factory contract for deploying ONBT DeFi ecosystem contracts
- * 
- * Features:
- * - Deploy staking contracts
- * - Deploy liquidity pools
- * - Deploy yield distributors
- * - Track all deployments
- * - OnchainKit compatible for Base miniapp
+ * @dev Registry contract for the ONBT DeFi ecosystem.
+ *      Tracks already-deployed staking, liquidity pool, and yield distributor
+ *      contracts. The owner registers addresses of live contracts; no new
+ *      contracts are deployed by this registry.
  */
 contract ONBTDeFiFactory is Ownable {
-    
+
     // ============ State Variables ============
-    
-    /// @notice ONBT token address
+
+    /// @notice ONBT token address (informational reference)
     address public immutable onbtToken;
-    
-    /// @notice All deployed staking contracts
+
+    /// @notice Registered staking contracts
     address[] public stakingContracts;
-    
-    /// @notice All deployed liquidity pools
+
+    /// @notice Registered liquidity pools
     address[] public liquidityPools;
-    
-    /// @notice All deployed yield distributors
+
+    /// @notice Registered yield distributors
     address[] public yieldDistributors;
-    
-    /// @notice Mapping to verify if address is a deployed contract
-    mapping(address => bool) public isDeployedContract;
-    
+
+    /// @notice Whether an address is registered in this registry
+    mapping(address => bool) public isRegisteredContract;
+
     // ============ Events ============
-    
-    event StakingDeployed(
-        address indexed staking,
-        address indexed rewardToken,
-        uint256 rewardRate
-    );
-    
-    event LiquidityPoolDeployed(
-        address indexed pool,
-        address indexed token0,
-        address feeRecipient
-    );
-    
-    event YieldDistributorDeployed(
-        address indexed distributor,
-        address indexed token
-    );
-    
+
+    event StakingRegistered(address indexed staking);
+    event LiquidityPoolRegistered(address indexed pool);
+    event YieldDistributorRegistered(address indexed distributor);
+
     // ============ Constructor ============
-    
+
     constructor(address _onbtToken) {
         require(_onbtToken != address(0), "Invalid token address");
         onbtToken = _onbtToken;
     }
-    
-    // ============ Deployment Functions ============
-    
+
+    // ============ Registration Functions ============
+
     /**
-     * @notice Deploy a new staking contract
-     * @param rewardToken Address of reward token
-     * @param rewardRate Reward rate per second
-     * @param minimumStake Minimum stake amount
-     * @return staking Address of deployed staking contract
+     * @notice Register an already-deployed staking contract
+     * @param staking Address of the deployed staking contract
      */
-    function deployStaking(
-        address rewardToken,
-        uint256 rewardRate,
-        uint256 minimumStake
-    ) external onlyOwner returns (address staking) {
-        require(rewardToken != address(0), "Invalid reward token");
-        require(rewardRate > 0, "Reward rate must be > 0");
-        // Deploy new staking contract
-        ONBTStaking stakingContract = new ONBTStaking(
-            onbtToken,
-            rewardToken,
-            rewardRate,
-            minimumStake
-        );
-        
-        staking = address(stakingContract);
-        
-        // Track deployment
+    function registerStaking(address staking) external onlyOwner {
+        require(staking != address(0), "Invalid address");
+        require(!isRegisteredContract[staking], "Already registered");
         stakingContracts.push(staking);
-        isDeployedContract[staking] = true;
-        
-        // Transfer ownership to factory owner
-        stakingContract.transferOwnership(owner());
-        
-        emit StakingDeployed(staking, rewardToken, rewardRate);
+        isRegisteredContract[staking] = true;
+        emit StakingRegistered(staking);
     }
-    
+
     /**
-     * @notice Deploy a new liquidity pool
-     * @param feeRecipient Address to receive protocol fees
-     * @return pool Address of deployed liquidity pool
+     * @notice Register an already-deployed liquidity pool
+     * @param pool Address of the deployed liquidity pool
      */
-    function deployLiquidityPool(
-        address feeRecipient
-    ) external onlyOwner returns (address pool) {
-        require(feeRecipient != address(0), "Invalid fee recipient");
-        // Deploy new liquidity pool
-        ONBTLiquidityPool liquidityPool = new ONBTLiquidityPool(
-            onbtToken,
-            feeRecipient
-        );
-        
-        pool = address(liquidityPool);
-        
-        // Track deployment
+    function registerLiquidityPool(address pool) external onlyOwner {
+        require(pool != address(0), "Invalid address");
+        require(!isRegisteredContract[pool], "Already registered");
         liquidityPools.push(pool);
-        isDeployedContract[pool] = true;
-        
-        // Transfer ownership to factory owner
-        liquidityPool.transferOwnership(owner());
-        
-        emit LiquidityPoolDeployed(pool, onbtToken, feeRecipient);
+        isRegisteredContract[pool] = true;
+        emit LiquidityPoolRegistered(pool);
     }
-    
+
     /**
-     * @notice Deploy a new yield distributor
-     * @return distributor Address of deployed yield distributor
+     * @notice Register an already-deployed yield distributor
+     * @param distributor Address of the deployed yield distributor
      */
-    function deployYieldDistributor() external onlyOwner returns (address distributor) {
-        // Deploy new yield distributor
-        ONBTYieldDistributor yieldDistributor = new ONBTYieldDistributor(
-            onbtToken
-        );
-        
-        distributor = address(yieldDistributor);
-        
-        // Track deployment
+    function registerYieldDistributor(address distributor) external onlyOwner {
+        require(distributor != address(0), "Invalid address");
+        require(!isRegisteredContract[distributor], "Already registered");
         yieldDistributors.push(distributor);
-        isDeployedContract[distributor] = true;
-        
-        // Transfer ownership to factory owner
-        yieldDistributor.transferOwnership(owner());
-        
-        emit YieldDistributorDeployed(distributor, onbtToken);
+        isRegisteredContract[distributor] = true;
+        emit YieldDistributorRegistered(distributor);
     }
-    
+
     // ============ View Functions ============
-    
+
     /**
-     * @notice Get all deployed staking contracts
+     * @notice Get all registered staking contracts
      */
     function getStakingContracts() external view returns (address[] memory) {
         return stakingContracts;
     }
-    
+
     /**
-     * @notice Get all deployed liquidity pools
+     * @notice Get all registered liquidity pools
      */
     function getLiquidityPools() external view returns (address[] memory) {
         return liquidityPools;
     }
-    
+
     /**
-     * @notice Get all deployed yield distributors
+     * @notice Get all registered yield distributors
      */
     function getYieldDistributors() external view returns (address[] memory) {
         return yieldDistributors;
     }
-    
+
     /**
-     * @notice Get deployment counts
+     * @notice Get registered contract counts
      */
     function getDeploymentCounts() external view returns (
         uint256 stakingCount,
