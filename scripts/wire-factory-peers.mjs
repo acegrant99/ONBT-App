@@ -23,6 +23,7 @@ if (!deployerKey) { console.error('❌  PRIVATE_KEY not set'); process.exit(1); 
 const FACTORY_BASE     = '0xe3Fb063Fc96307CCB7E59D073A8C10cA96a52D95';
 const FACTORY_ARBITRUM = '0x31F3595D6d5F371bB3413F8E31237791FbfFcfdB';
 const POOL_BASE        = '0xfab5a9B2e0Fc2D2e4E1e4b1ceAa7e64511a0e03e';
+const POOL_ARBITRUM    = '0x884A26b195b5661B4e90a7b66350572fD3C3e02c';
 
 const CHAINS = {
   base: {
