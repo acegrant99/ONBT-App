@@ -30,6 +30,8 @@ const placeholderHints = [
   '<',
   '>',
   'xxx',
+  'process.env.',
+  'os.environ',
 ];
 
 const sensitiveEnvKeyPattern = /(?:^|_)(?:PRIVATE_KEY|API_KEY|SECRET|SECRET_KEY|MNEMONIC|SEED_PHRASE|ACCESS_TOKEN|AUTH_TOKEN|BEARER_TOKEN|JWT)(?:$|_)/i;

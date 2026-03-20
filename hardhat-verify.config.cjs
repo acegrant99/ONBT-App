@@ -6,14 +6,16 @@ const accounts = PRIVATE_KEY ? [PRIVATE_KEY] : [];
 
 module.exports = {
 	solidity: {
-		version: "0.8.22",
-		settings: {
-			optimizer: {
-				enabled: true,
-				runs: 1,
+		compilers: [
+			{
+				version: "0.8.22",
+				settings: { optimizer: { enabled: true, runs: 1 }, viaIR: true },
 			},
-			viaIR: true,
-		},
+			{
+				version: "0.8.24",
+				settings: { optimizer: { enabled: true, runs: 1 }, viaIR: true },
+			},
+		],
 	},
 	networks: {
 		base: {
@@ -38,7 +40,7 @@ module.exports = {
 				network: "base",
 				chainId: 8453,
 				urls: {
-					apiURL: "https://api.etherscan.io/v2/api",
+					apiURL: "https://api.etherscan.io/v2/api?chainid=8453",
 					browserURL: "https://basescan.org"
 				}
 			},
@@ -46,7 +48,7 @@ module.exports = {
 				network: "arbitrum",
 				chainId: 42161,
 				urls: {
-					apiURL: "https://api.etherscan.io/v2/api",
+					apiURL: "https://api.etherscan.io/v2/api?chainid=42161",
 					browserURL: "https://arbiscan.io"
 				}
 			}
