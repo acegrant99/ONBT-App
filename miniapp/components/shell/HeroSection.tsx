@@ -11,6 +11,7 @@ const BENEFIT_BUTTONS: { label: string; tab: TabType }[] = [
   { label: 'Trade ONBT',  tab: 'token' },
   { label: 'Bridge Fast', tab: 'bridge' },
   { label: 'Stake Live',  tab: 'staking' },
+  { label: 'Pool ONBT',   tab: 'liquidity-pool' },
   { label: 'Vote Onchain', tab: 'governance' },
 ];
 

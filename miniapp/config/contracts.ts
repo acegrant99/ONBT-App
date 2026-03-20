@@ -1315,3 +1315,114 @@ export const ONBT_DISTRIBUTOR_ABI = [
     name: 'RemainderWithdrawn', type: 'event',
   },
 ] as const;
+
+// ── USDC addresses ──────────────────────────────────────────────────────────
+export const USDC_BASE_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const;
+export const USDC_ARBITRUM_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' as const;
+
+// ── ONBTUniversalLiquidityPool ABI ─────────────────────────────────────────
+export const ONBT_UNIVERSAL_POOL_ABI = [
+  // ── Immutables ──
+  { inputs: [], name: 'token0', outputs: [{ name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'token1', outputs: [{ name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'stable', outputs: [{ name: '', type: 'bool' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'decimals0', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'decimals1', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  // ── State ──
+  { inputs: [], name: 'reserve0', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'reserve1', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'feeBps', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'totalSupply', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'feeRecipient', outputs: [{ name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'protocolFeeShare', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'lpFees0', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'lpFees1', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'price0CumulativeLast', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'price1CumulativeLast', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  // ── Per-user LP fee claimable ──
+  { inputs: [{ name: 'user', type: 'address' }], name: 'claimable0', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ name: 'user', type: 'address' }], name: 'claimable1', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ name: 'user', type: 'address' }], name: 'balanceOf', outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  // ── Quote helpers ──
+  {
+    inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'tokenInIsToken0', type: 'bool' }],
+    name: 'getAmountOut',
+    outputs: [{ name: 'amountOut', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [{ name: 'lpTokens', type: 'uint256' }],
+    name: 'getLiquidityValue',
+    outputs: [{ name: 'amount0', type: 'uint256' }, { name: 'amount1', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getReserves',
+    outputs: [{ name: '_reserve0', type: 'uint256' }, { name: '_reserve1', type: 'uint256' }, { name: '_ts', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  // ── Swap ──
+  {
+    inputs: [
+      { name: 'amountIn', type: 'uint256' },
+      { name: 'amountOutMin', type: 'uint256' },
+      { name: 'tokenInIsToken0', type: 'bool' },
+      { name: 'to', type: 'address' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+    name: 'swapExactTokensForTokens',
+    outputs: [{ name: 'amountOut', type: 'uint256' }],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  // ── Liquidity ──
+  {
+    inputs: [
+      { name: 'amount0Desired', type: 'uint256' },
+      { name: 'amount1Desired', type: 'uint256' },
+      { name: 'amount0Min', type: 'uint256' },
+      { name: 'amount1Min', type: 'uint256' },
+      { name: 'to', type: 'address' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+    name: 'addLiquidity',
+    outputs: [{ name: 'amount0', type: 'uint256' }, { name: 'amount1', type: 'uint256' }, { name: 'liquidity', type: 'uint256' }],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'liquidity', type: 'uint256' },
+      { name: 'amount0Min', type: 'uint256' },
+      { name: 'amount1Min', type: 'uint256' },
+      { name: 'to', type: 'address' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+    name: 'removeLiquidity',
+    outputs: [{ name: 'amount0', type: 'uint256' }, { name: 'amount1', type: 'uint256' }],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  // ── Fee claim ──
+  {
+    inputs: [],
+    name: 'claimFees',
+    outputs: [{ name: 'claimed0', type: 'uint256' }, { name: 'claimed1', type: 'uint256' }],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  // ── ERC20 approve (for LP tokens) ──
+  {
+    inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }],
+    name: 'approve',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }],
+    name: 'allowance',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  // ── Events ──
+  { anonymous: false, inputs: [{ indexed: true, name: 'provider', type: 'address' }, { indexed: false, name: 'amount0', type: 'uint256' }, { indexed: false, name: 'amount1', type: 'uint256' }, { indexed: false, name: 'liquidity', type: 'uint256' }], name: 'LiquidityAdded', type: 'event' },
+  { anonymous: false, inputs: [{ indexed: true, name: 'provider', type: 'address' }, { indexed: false, name: 'amount0', type: 'uint256' }, { indexed: false, name: 'amount1', type: 'uint256' }, { indexed: false, name: 'liquidity', type: 'uint256' }], name: 'LiquidityRemoved', type: 'event' },
+  { anonymous: false, inputs: [{ indexed: true, name: 'sender', type: 'address' }, { indexed: false, name: 'amount0In', type: 'uint256' }, { indexed: false, name: 'amount1In', type: 'uint256' }, { indexed: false, name: 'amount0Out', type: 'uint256' }, { indexed: false, name: 'amount1Out', type: 'uint256' }, { indexed: true, name: 'to', type: 'address' }], name: 'Swap', type: 'event' },
+] as const;

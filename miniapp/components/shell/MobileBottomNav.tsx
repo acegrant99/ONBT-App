@@ -13,11 +13,11 @@ import type { TabType } from '@/types/app-shell';
 type NavItem = { key: TabType; icon: string; label: string };
 
 const NAV_ITEMS: NavItem[] = [
-  { key: 'token', icon: '💰', label: 'Token' },
-  { key: 'staking', icon: '🔒', label: 'Stake' },
-  { key: 'leaderboard', icon: '🏆', label: 'Rank' },
-  { key: 'wallet', icon: '👛', label: 'Wallet' },
-  { key: 'quantum-ai', icon: '✦', label: 'AI' },
+  { key: 'token',         icon: '💰', label: 'Token'  },
+  { key: 'liquidity-pool', icon: '🌊', label: 'Pool'   },
+  { key: 'staking',       icon: '🔒', label: 'Stake'  },
+  { key: 'leaderboard',  icon: '🏆', label: 'Rank'   },
+  { key: 'quantum-ai',   icon: '✦',  label: 'AI'     },
 ];
 
 type MobileBottomNavProps = {

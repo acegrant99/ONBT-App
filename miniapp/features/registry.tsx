@@ -11,11 +11,13 @@ import { vaultFeatureSlice } from '@/features/vault/slice';
 import { walletFeatureSlice } from '@/features/wallet/slice';
 import { vestingFeatureSlice } from '@/features/vesting/slice';
 import { airdropFeatureSlice } from '@/features/airdrop/slice';
+import { liquidityPoolFeatureSlice } from '@/features/liquidityPool/slice';
 
 export const FEATURE_SLICES: FeatureSlice[] = [
   tokenFeatureSlice,
   bridgeFeatureSlice,
   stakingFeatureSlice,
+  liquidityPoolFeatureSlice,
   governanceFeatureSlice,
   privateSaleFeatureSlice,
   defiFactoryFeatureSlice,

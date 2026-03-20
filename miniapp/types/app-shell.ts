@@ -2,6 +2,7 @@ export type TabType =
   | 'token'
   | 'bridge'
   | 'staking'
+  | 'liquidity-pool'
   | 'governance'
   | 'private-sale'
   | 'defi-factory'

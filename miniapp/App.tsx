@@ -38,6 +38,7 @@ import { VaultInterface } from '@/features/vault/ui/VaultInterface';
 import { VestingInterface } from '@/features/vesting/ui/VestingInterface';
 import { AirdropInterface } from '@/features/airdrop/ui/AirdropInterface';
 import { LeaderboardPanel } from '@/features/leaderboard/ui/LeaderboardPanel';
+import { LiquidityPoolInterface } from '@/features/liquidityPool/ui/LiquidityPoolInterface';
 import type { TabType } from '@/types/app-shell';
 
 /**
@@ -90,6 +91,7 @@ export function ONBTMiniApp() {
     if (activeTab === 'token') return <TokenInterface />;
     if (activeTab === 'bridge') return <BridgeInterface />;
     if (activeTab === 'staking') return <StakingInterface />;
+    if (activeTab === 'liquidity-pool') return <LiquidityPoolInterface />;
     if (activeTab === 'governance') return <GovernanceInterface />;
     if (activeTab === 'private-sale') return <PrivateSaleInterface />;
     if (activeTab === 'defi-factory') return <DefiFactoryInterface />;
