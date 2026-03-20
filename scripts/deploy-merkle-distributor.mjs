@@ -81,7 +81,7 @@ async function deployToChain(chainKey) {
     chain.lzEndpoint,
     chain.onbtToken,
     chain.lzEid,
-    { gasLimit: 3_000_000 }
+    { gasLimit: 6_000_000 }
   );
 
   console.log(`   TX hash:  ${contract.deploymentTransaction()?.hash}`);
