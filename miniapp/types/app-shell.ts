@@ -7,6 +7,8 @@ export type TabType =
   | 'defi-factory'
   | 'yield-distributor'
   | 'vault'
+  | 'vesting'
+  | 'airdrop'
   | 'about'
   | 'quantum-ai'
   | 'wallet'

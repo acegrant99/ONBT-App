@@ -145,6 +145,22 @@ export const ONBT_DEFI_FACTORY_ARBITRUM_ADDRESS =
   (process.env.NEXT_PUBLIC_ONBT_DEFI_FACTORY_ARBITRUM_ADDRESS as `0x${string}`) ||
   '0x0000000000000000000000000000000000000000';
 
+// Token Vesting — deployed after TGE
+export const ONBT_VESTING_BASE_ADDRESS =
+  (process.env.NEXT_PUBLIC_ONBT_VESTING_BASE_ADDRESS as `0x${string}`) ||
+  '0x0000000000000000000000000000000000000000';
+export const ONBT_VESTING_ARBITRUM_ADDRESS =
+  (process.env.NEXT_PUBLIC_ONBT_VESTING_ARBITRUM_ADDRESS as `0x${string}`) ||
+  '0x0000000000000000000000000000000000000000';
+
+// Merkle Distributor — airdrop/campaign distributions
+export const ONBT_DISTRIBUTOR_BASE_ADDRESS =
+  (process.env.NEXT_PUBLIC_ONBT_DISTRIBUTOR_BASE_ADDRESS as `0x${string}`) ||
+  '0x0000000000000000000000000000000000000000';
+export const ONBT_DISTRIBUTOR_ARBITRUM_ADDRESS =
+  (process.env.NEXT_PUBLIC_ONBT_DISTRIBUTOR_ARBITRUM_ADDRESS as `0x${string}`) ||
+  '0x0000000000000000000000000000000000000000';
+
 // LayerZero Endpoint IDs
 export const LZ_ENDPOINT_ID = {
   BASE: 30184,
@@ -897,3 +913,397 @@ export const TOKEN_INFO = {
   website: 'https://nabat.finance',
   description: 'ONabat (ONBT) is an immutable omnichain fungible token built on LayerZero'
 } as const;
+
+// ─────────────────────────────────────────────────────────────
+// ONBTTokenVesting ABI
+// ─────────────────────────────────────────────────────────────
+export const ONBT_VESTING_ABI = [
+  // ── Views ──
+  {
+    inputs: [{ name: 'scheduleId', type: 'bytes32' }],
+    name: 'schedules',
+    outputs: [{
+      components: [
+        { name: 'active',          type: 'bool'    },
+        { name: 'revocable',       type: 'bool'    },
+        { name: 'revoked',         type: 'bool'    },
+        { name: 'beneficiary',     type: 'address' },
+        { name: 'totalAmount',     type: 'uint256' },
+        { name: 'claimedAmount',   type: 'uint256' },
+        { name: 'startTime',       type: 'uint256' },
+        { name: 'cliffDuration',   type: 'uint256' },
+        { name: 'vestingDuration', type: 'uint256' },
+        { name: 'originEid',       type: 'uint32'  },
+      ],
+      name: '', type: 'tuple',
+    }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [{ name: 'scheduleId', type: 'bytes32' }],
+    name: 'vestedAmount',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [{ name: 'scheduleId', type: 'bytes32' }],
+    name: 'claimableAmount',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [{ name: 'beneficiary', type: 'address' }],
+    name: 'getScheduleIds',
+    outputs: [{ name: '', type: 'bytes32[]' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'totalSchedules',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'offset', type: 'uint256' },
+      { name: 'limit',  type: 'uint256' },
+    ],
+    name: 'getSchedulesPaginated',
+    outputs: [{ name: 'page', type: 'bytes32[]' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [{ name: 'scheduleId', type: 'bytes32' }],
+    name: 'quoteScheduleSync',
+    outputs: [{ name: 'totalFee', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'localEid',
+    outputs: [{ name: '', type: 'uint32' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'syncEnabled',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'defaultLzReceiveGas',
+    outputs: [{ name: '', type: 'uint128' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getPeerEids',
+    outputs: [{ name: '', type: 'uint32[]' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'onbtToken',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view', type: 'function',
+  },
+  // ── Writes ──
+  {
+    inputs: [
+      { name: 'beneficiary',      type: 'address' },
+      { name: 'totalAmount',      type: 'uint256' },
+      { name: 'startTime',        type: 'uint256' },
+      { name: 'cliffDuration',    type: 'uint256' },
+      { name: 'vestingDuration',  type: 'uint256' },
+      { name: 'revocable',        type: 'bool'    },
+    ],
+    name: 'createSchedule',
+    outputs: [{ name: 'scheduleId', type: 'bytes32' }],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'scheduleId', type: 'bytes32' }],
+    name: 'claim',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'scheduleId', type: 'bytes32' }],
+    name: 'revoke',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'broadcastUser',
+    outputs: [],
+    stateMutability: 'payable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'eid',  type: 'uint32'  }],
+    name: 'addPeerEid',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'eid',  type: 'uint32'  }],
+    name: 'removePeerEid',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: '_eid', type: 'uint32' }, { name: '_peer', type: 'bytes32' }],
+    name: 'setPeer',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'enabled', type: 'bool' }],
+    name: 'setSyncEnabled',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'gas', type: 'uint128' }],
+    name: 'setDefaultLzReceiveGas',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  // ── Events ──
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  name: 'scheduleId',      type: 'bytes32' },
+      { indexed: true,  name: 'beneficiary',     type: 'address' },
+      { indexed: false, name: 'totalAmount',     type: 'uint256' },
+      { indexed: false, name: 'startTime',       type: 'uint256' },
+      { indexed: false, name: 'cliffDuration',   type: 'uint256' },
+      { indexed: false, name: 'vestingDuration', type: 'uint256' },
+      { indexed: false, name: 'revocable',       type: 'bool'    },
+      { indexed: false, name: 'originEid',       type: 'uint32'  },
+    ],
+    name: 'ScheduleCreated', type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  name: 'scheduleId',  type: 'bytes32' },
+      { indexed: true,  name: 'beneficiary', type: 'address' },
+      { indexed: false, name: 'amount',      type: 'uint256' },
+    ],
+    name: 'Claimed', type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  name: 'scheduleId',    type: 'bytes32' },
+      { indexed: true,  name: 'beneficiary',   type: 'address' },
+      { indexed: false, name: 'returnedAmount',type: 'uint256' },
+    ],
+    name: 'Revoked', type: 'event',
+  },
+] as const;
+
+// ─────────────────────────────────────────────────────────────
+// ONBTMerkleDistributor ABI
+// ─────────────────────────────────────────────────────────────
+export const ONBT_DISTRIBUTOR_ABI = [
+  // ── Views ──
+  {
+    inputs: [{ name: 'roundId', type: 'uint256' }],
+    name: 'getRound',
+    outputs: [{
+      components: [
+        { name: 'merkleRoot',    type: 'bytes32' },
+        { name: 'totalAmount',   type: 'uint256' },
+        { name: 'claimedAmount', type: 'uint256' },
+        { name: 'startTime',     type: 'uint256' },
+        { name: 'endTime',       type: 'uint256' },
+        { name: 'paused',        type: 'bool'    },
+        { name: 'closed',        type: 'bool'    },
+        { name: 'mirrorOnly',    type: 'bool'    },
+        { name: 'description',   type: 'string'  },
+        { name: 'originEid',     type: 'uint32'  },
+      ],
+      name: '', type: 'tuple',
+    }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'roundId',     type: 'uint256' },
+      { name: 'beneficiary', type: 'address' },
+    ],
+    name: 'claimed',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [{ name: 'roundId', type: 'uint256' }],
+    name: 'remainingAmount',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'nextRoundId',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [{ name: 'roundId', type: 'uint256' }],
+    name: 'quoteRoundSync',
+    outputs: [{ name: 'totalFee', type: 'uint256' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'roundId',     type: 'uint256'   },
+      { name: 'beneficiary', type: 'address'   },
+      { name: 'amount',      type: 'uint256'   },
+      { name: 'proof',       type: 'bytes32[]' },
+    ],
+    name: 'verifyProof',
+    outputs: [{ name: 'valid', type: 'bool' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'localEid',
+    outputs: [{ name: '', type: 'uint32' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'syncEnabled',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getPeerEids',
+    outputs: [{ name: '', type: 'uint32[]' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'onbtToken',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view', type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view', type: 'function',
+  },
+  // ── Writes ──
+  {
+    inputs: [
+      { name: 'merkleRoot',   type: 'bytes32' },
+      { name: 'totalAmount',  type: 'uint256' },
+      { name: 'startTime',    type: 'uint256' },
+      { name: 'endTime',      type: 'uint256' },
+      { name: 'description',  type: 'string'  },
+    ],
+    name: 'createRound',
+    outputs: [{ name: 'roundId', type: 'uint256' }],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'roundId', type: 'uint256' },
+      { name: 'paused',  type: 'bool'    },
+    ],
+    name: 'setRoundPaused',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'roundId', type: 'uint256' }],
+    name: 'withdrawRemainder',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'roundId', type: 'uint256'   },
+      { name: 'amount',  type: 'uint256'   },
+      { name: 'proof',   type: 'bytes32[]' },
+    ],
+    name: 'claim',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'eid',  type: 'uint32'  }],
+    name: 'addPeerEid',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'eid',  type: 'uint32'  }],
+    name: 'removePeerEid',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: '_eid', type: 'uint32' }, { name: '_peer', type: 'bytes32' }],
+    name: 'setPeer',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  {
+    inputs: [{ name: 'enabled', type: 'bool' }],
+    name: 'setSyncEnabled',
+    outputs: [],
+    stateMutability: 'nonpayable', type: 'function',
+  },
+  // ── Events ──
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  name: 'roundId',      type: 'uint256' },
+      { indexed: false, name: 'merkleRoot',   type: 'bytes32' },
+      { indexed: false, name: 'totalAmount',  type: 'uint256' },
+      { indexed: false, name: 'startTime',    type: 'uint256' },
+      { indexed: false, name: 'endTime',      type: 'uint256' },
+      { indexed: false, name: 'description',  type: 'string'  },
+      { indexed: false, name: 'mirrorOnly',   type: 'bool'    },
+      { indexed: false, name: 'originEid',    type: 'uint32'  },
+    ],
+    name: 'RoundCreated', type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  name: 'roundId',     type: 'uint256' },
+      { indexed: true,  name: 'beneficiary', type: 'address' },
+      { indexed: false, name: 'amount',      type: 'uint256' },
+    ],
+    name: 'Claimed', type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  name: 'roundId', type: 'uint256' },
+      { indexed: false, name: 'paused',  type: 'bool'    },
+    ],
+    name: 'RoundPaused', type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  name: 'roundId', type: 'uint256' },
+      { indexed: false, name: 'amount',  type: 'uint256' },
+    ],
+    name: 'RemainderWithdrawn', type: 'event',
+  },
+] as const;

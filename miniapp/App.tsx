@@ -35,6 +35,8 @@ import { WalletPanel } from '@/features/wallet/ui/WalletPanel';
 import { DefiFactoryInterface } from '@/features/defiFactory/ui/DefiFactoryInterface';
 import { YieldDistributorInterface } from '@/features/yieldDistributor/ui/YieldDistributorInterface';
 import { VaultInterface } from '@/features/vault/ui/VaultInterface';
+import { VestingInterface } from '@/features/vesting/ui/VestingInterface';
+import { AirdropInterface } from '@/features/airdrop/ui/AirdropInterface';
 import { LeaderboardPanel } from '@/features/leaderboard/ui/LeaderboardPanel';
 import type { TabType } from '@/types/app-shell';
 
@@ -93,6 +95,8 @@ export function ONBTMiniApp() {
     if (activeTab === 'defi-factory') return <DefiFactoryInterface />;
     if (activeTab === 'yield-distributor') return <YieldDistributorInterface />;
     if (activeTab === 'vault') return <VaultInterface />;
+    if (activeTab === 'vesting') return <VestingInterface />;
+    if (activeTab === 'airdrop') return <AirdropInterface />;
     if (activeTab === 'quantum-ai') return (
       <div className="space-y-6">
         <QuantumSignalPanel

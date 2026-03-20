@@ -9,6 +9,8 @@ import { defiFactoryFeatureSlice } from '@/features/defiFactory/slice';
 import { yieldDistributorFeatureSlice } from '@/features/yieldDistributor/slice';
 import { vaultFeatureSlice } from '@/features/vault/slice';
 import { walletFeatureSlice } from '@/features/wallet/slice';
+import { vestingFeatureSlice } from '@/features/vesting/slice';
+import { airdropFeatureSlice } from '@/features/airdrop/slice';
 
 export const FEATURE_SLICES: FeatureSlice[] = [
   tokenFeatureSlice,
@@ -20,6 +22,8 @@ export const FEATURE_SLICES: FeatureSlice[] = [
   yieldDistributorFeatureSlice,
   vaultFeatureSlice,
   walletFeatureSlice,
+  vestingFeatureSlice,
+  airdropFeatureSlice,
 ];
 
 export const FEATURE_TABS: TabMeta[] = FEATURE_SLICES.map((slice) => ({
