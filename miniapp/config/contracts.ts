@@ -428,6 +428,118 @@ export const ONBT_DEFI_FACTORY_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  // ── User registration ──────────────────────────────────────────
+  {
+    inputs: [],
+    name: 'registerUser',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'registerUserFor',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'deregisterUser',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }, { name: 'newRole', type: 'uint8' }],
+    name: 'setUserRole',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'isRegisteredUser',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'user', type: 'address' }],
+    name: 'getUser',
+    outputs: [
+      {
+        components: [
+          { name: 'registered',     type: 'bool' },
+          { name: 'role',           type: 'uint8' },
+          { name: 'registeredAt',   type: 'uint256' },
+          { name: 'registrationId', type: 'uint256' },
+        ],
+        name: '',
+        type: 'tuple',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getUserCount',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getRegisteredUsers',
+    outputs: [{ name: '', type: 'address[]' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'offset', type: 'uint256' },
+      { name: 'limit',  type: 'uint256' },
+    ],
+    name: 'getUsersPaginated',
+    outputs: [{ name: 'page', type: 'address[]' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'EARLY_ADOPTER_THRESHOLD',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  // ── Events ─────────────────────────────────────────────────────
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  name: 'user',           type: 'address' },
+      { indexed: true,  name: 'registrationId', type: 'uint256' },
+      { indexed: false, name: 'role',           type: 'uint8'   },
+    ],
+    name: 'UserRegistered',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [{ indexed: true, name: 'user', type: 'address' }],
+    name: 'UserDeregistered',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  name: 'user',    type: 'address' },
+      { indexed: false, name: 'oldRole', type: 'uint8'   },
+      { indexed: false, name: 'newRole', type: 'uint8'   },
+    ],
+    name: 'UserRoleUpdated',
+    type: 'event',
+  },
 ] as const;
 
 // ONBTYieldDistributor ABI (minimal live-data + claim interface)
