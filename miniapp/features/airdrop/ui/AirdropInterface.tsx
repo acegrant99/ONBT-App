@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   useAccount,
+  usePublicClient,
   useReadContract,
   useSwitchChain,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from 'wagmi';
-import { formatUnits } from 'viem';
+import { formatUnits, keccak256, toBytes } from 'viem';
 import {
   CHAIN_CONFIG,
   ONBT_DISTRIBUTOR_ABI,
@@ -30,18 +31,18 @@ function fmt(wei: bigint | undefined, decimals = 18): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
 }
 
-interface RoundResult {
+interface Round {
+  active: boolean;
+  paused: boolean;
   merkleRoot: `0x${string}`;
   totalAmount: bigint;
   claimedAmount: bigint;
   startTime: bigint;
   endTime: bigint;
-  paused: boolean;
-  closed: boolean;
-  mirrorOnly: boolean;
   description: string;
-  originEid: number;
 }
+
+type AdminTab = 'create' | 'manage';
 
 export function AirdropInterface() {
   const { address, chain } = useAccount();
@@ -50,10 +51,19 @@ export function AirdropInterface() {
     chain?.id === 42161 ? 42161 : 8453,
   );
   const [roundIdInput, setRoundIdInput] = useState('0');
-  const [amountInput, setAmountInput] = useState('');
-  const [proofInput, setProofInput] = useState('');
-  const [proofError, setProofError] = useState<string | null>(null);
+  const [amountInput, setAmountInput]   = useState('');
+  const [proofInput, setProofInput]     = useState('');
+  const [proofError, setProofError]     = useState<string | null>(null);
   const [previewValid, setPreviewValid] = useState<boolean | null>(null);
+  const [adminOpen, setAdminOpen]       = useState(false);
+  const [adminTab, setAdminTab]         = useState<AdminTab>('create');
+  const [newRoot, setNewRoot]           = useState('');
+  const [newTotal, setNewTotal]         = useState('');
+  const [newStart, setNewStart]         = useState('');
+  const [newEnd, setNewEnd]             = useState('');
+  const [newDesc, setNewDesc]           = useState('');
+  const [adminError, setAdminError]     = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const distributorAddress = (selectedChainId === 42161
     ? ONBT_DISTRIBUTOR_ARBITRUM_ADDRESS
@@ -61,385 +71,422 @@ export function AirdropInterface() {
 
   const isConfigured = distributorAddress.toLowerCase() !== ZERO_ADDRESS;
   const isWalletOnSelectedChain = chain?.id === selectedChainId;
-  const chainName = selectedChainId === 42161
-    ? CHAIN_CONFIG.arbitrum.name
-    : CHAIN_CONFIG.base.name;
-  const explorerUrl = selectedChainId === 42161
-    ? CHAIN_CONFIG.arbitrum.blockExplorer
-    : CHAIN_CONFIG.base.blockExplorer;
+  const chainName   = selectedChainId === 42161 ? CHAIN_CONFIG.arbitrum.name : CHAIN_CONFIG.base.name;
+  const explorerUrl = selectedChainId === 42161 ? CHAIN_CONFIG.arbitrum.blockExplorer : CHAIN_CONFIG.base.blockExplorer;
 
-  const roundId = BigInt(Number.isFinite(parseInt(roundIdInput, 10)) ? parseInt(roundIdInput, 10) : 0);
+  const publicClient = usePublicClient({ chainId: selectedChainId });
 
-  // ── Parse proof from textarea ─────────────────────────────────────────────
-  const parsedProof = useMemo((): `0x${string}`[] | null => {
-    const raw = proofInput.trim();
-    if (!raw) return [];
-    try {
-      // Accept JSON array or newline-separated hex strings
-      let arr: string[];
-      if (raw.startsWith('[')) {
-        arr = JSON.parse(raw) as string[];
-      } else {
-        arr = raw.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
-      }
-      if (!arr.every((h) => /^0x[0-9a-fA-F]{64}$/.test(h))) return null;
-      return arr as `0x${string}`[];
-    } catch {
-      return null;
-    }
-  }, [proofInput]);
+  // ── Contract reads ────────────────────────────────────────────────────
+  const { data: ownerData } = useReadContract({
+    chainId: selectedChainId, address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI,
+    functionName: 'owner',
+    query: { enabled: isConfigured, refetchInterval: 60_000 },
+  });
+  const contractOwner = ownerData as `0x${string}` | undefined;
+  const isOwner = Boolean(address && contractOwner && address.toLowerCase() === contractOwner.toLowerCase());
 
-  const proofIsValid = parsedProof !== null;
-  const parsedAmount = useMemo((): bigint | null => {
-    try {
-      return BigInt(amountInput);
-    } catch {
-      return null;
-    }
-  }, [amountInput]);
-
-  // ── Read: total rounds ──────────────────────────────────────────────────
-  const { data: nextRoundIdData } = useReadContract({
-    chainId: selectedChainId,
-    address: distributorAddress,
-    abi: ONBT_DISTRIBUTOR_ABI,
+  const { data: nextRoundIdRaw } = useReadContract({
+    chainId: selectedChainId, address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI,
     functionName: 'nextRoundId',
     query: { enabled: isConfigured, refetchInterval: 30_000 },
   });
-  const totalRounds = nextRoundIdData !== undefined ? Number(nextRoundIdData as bigint) : null;
+  const totalRounds = nextRoundIdRaw !== undefined ? Number(nextRoundIdRaw as bigint) : 0;
 
-  // ── Read: selected round ────────────────────────────────────────────────
-  const { data: roundData } = useReadContract({
-    chainId: selectedChainId,
-    address: distributorAddress,
-    abi: ONBT_DISTRIBUTOR_ABI,
-    functionName: 'getRound',
-    args: [roundId],
-    query: {
-      enabled: isConfigured && totalRounds !== null && Number(roundId) < (totalRounds ?? 0),
-      refetchInterval: 15_000,
-    },
+  // ── Derived values (MUST appear before any handler that uses them) ────
+  const roundId = useMemo(() => {
+    const n = parseInt(roundIdInput, 10);
+    return Number.isFinite(n) && n >= 0 ? BigInt(n) : 0n;
+  }, [roundIdInput]);
+
+  const parsedProof = useMemo<`0x${string}`[] | null>(() => {
+    const raw = proofInput.trim();
+    if (!raw) return null;
+    try {
+      const arr = JSON.parse(raw) as unknown;
+      if (!Array.isArray(arr)) throw new Error();
+      return arr as `0x${string}`[];
+    } catch {
+      try {
+        const lines = raw.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+        return lines as `0x${string}`[];
+      } catch {
+        return null;
+      }
+    }
+  }, [proofInput]);
+
+  const parsedAmount = useMemo<bigint | null>(() => {
+    try { const n = BigInt(amountInput); return n > 0n ? n : null; } catch { return null; }
+  }, [amountInput]);
+
+  const { data: roundRaw, refetch: refetchRound } = useReadContract({
+    chainId: selectedChainId, address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI,
+    functionName: 'getRound', args: [roundId],
+    query: { enabled: isConfigured && totalRounds > 0, refetchInterval: 15_000 },
   });
-  const round = roundData as RoundResult | undefined;
+  const round = roundRaw as Round | undefined;
 
-  // ── Read: user already claimed? ──────────────────────────────────────────
-  const { data: alreadyClaimed, refetch: refetchClaimed } = useReadContract({
-    chainId: selectedChainId,
-    address: distributorAddress,
-    abi: ONBT_DISTRIBUTOR_ABI,
-    functionName: 'claimed',
-    args: [roundId, address!],
-    query: { enabled: isConfigured && Boolean(address) && round !== undefined, refetchInterval: 15_000 },
+  const { data: alreadyClaimedRaw } = useReadContract({
+    chainId: selectedChainId, address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI,
+    functionName: 'claimed', args: [roundId, address!],
+    query: { enabled: isConfigured && Boolean(address) && totalRounds > 0, refetchInterval: 15_000 },
   });
+  const alreadyClaimed = Boolean(alreadyClaimedRaw);
 
-  // ── Read: verify proof (dry-run) ─────────────────────────────────────────
   const { data: verifyData, refetch: refetchVerify } = useReadContract({
-    chainId: selectedChainId,
-    address: distributorAddress,
-    abi: ONBT_DISTRIBUTOR_ABI,
-    functionName: 'verifyProof',
-    args: [roundId, address!, parsedAmount ?? 0n, parsedProof ?? []],
-    query: {
-      enabled:
-        isConfigured &&
-        Boolean(address) &&
-        proofIsValid &&
-        parsedAmount !== null &&
-        parsedAmount > 0n,
-      refetchInterval: false,
-    },
+    chainId: selectedChainId, address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI,
+    functionName: 'verifyProof', args: [roundId, address!, parsedAmount!, parsedProof!],
+    query: { enabled: isConfigured && Boolean(address) && parsedAmount !== null && parsedProof !== null, gcTime: 0 },
   });
 
-  // ── Write ─────────────────────────────────────────────────────────────────
-  const { data: txHash, writeContract, isPending, reset: resetWrite } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash: txHash,
-  });
+  const now = Date.now();
+  const roundActive = round
+    ? !round.paused && round.active && Number(round.startTime) * 1000 <= now && now < Number(round.endTime) * 1000
+    : false;
+
+  const roundLabel = !round ? '—'
+    : round.paused  ? 'Paused'
+    : !round.active ? 'Closed'
+    : Number(round.startTime) * 1000 > now ? 'Upcoming'
+    : roundActive   ? 'Active'
+    : 'Ended';
+
+  const claimedPercent = round && round.totalAmount > 0n
+    ? Math.min(100, Number(round.claimedAmount * 10000n / round.totalAmount) / 100)
+    : 0;
+
+  // ── Write contract ────────────────────────────────────────────────────
+  const { data: txHash, writeContract, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
+
+  useEffect(() => {
+    if (isConfirmed) { void refetchRound(); setAdminError(null); }
+  }, [isConfirmed, refetchRound]);
 
   const isBusy = isPending || isConfirming;
 
-  const handleClaim = () => {
+  // ── Handlers (placed AFTER derived constants) ─────────────────────────
+  const handleClaim = async () => {
+    if (!address || parsedAmount === null || parsedProof === null) {
+      setValidationError('Fill in amount and proof before claiming'); return;
+    }
+    if (!isWalletOnSelectedChain) { switchChain({ chainId: selectedChainId }); return; }
+    const pf = await runActionPreflight({
+      actionLabel: 'Claim airdrop tokens',
+      account: address, connectedChainId: chain?.id, targetChainId: selectedChainId, publicClient,
+      request: { address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI as never,
+        functionName: 'claim', args: [roundId, parsedAmount, parsedProof] },
+    });
+    if (!pf.ok) { setValidationError(pf.copy); return; }
+    setValidationError(null);
+    writeContract({ chainId: selectedChainId, address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI,
+      functionName: 'claim', args: [roundId, parsedAmount, parsedProof] });
+  };
+
+  const handleVerify = async () => {
     setProofError(null);
-    if (!parsedProof || parsedProof.length === 0) {
-      setProofError('Paste your Merkle proof first');
-      return;
-    }
-    if (!parsedAmount || parsedAmount <= 0n) {
-      setProofError('Enter a valid claimable amount (in wei)');
-      return;
-    }
-    const err = runActionPreflight({ address, isWalletOnSelectedChain });
-    if (err) {
-      if (!isWalletOnSelectedChain) switchChain({ chainId: selectedChainId });
-      return;
-    }
-    writeContract({
-      chainId: selectedChainId,
-      address: distributorAddress,
-      abi: ONBT_DISTRIBUTOR_ABI,
-      functionName: 'claim',
-      args: [roundId, parsedAmount, parsedProof],
-    });
+    if (!parsedProof) { setProofError('Enter a valid proof JSON array or hex list'); return; }
+    const result = await refetchVerify();
+    setPreviewValid(result.data === true);
   };
 
-  const handleVerify = () => {
-    setPreviewValid(null);
-    void refetchVerify().then((r) => {
-      setPreviewValid(r.data as boolean | null ?? false);
+  const handleCreateRound = async () => {
+    setAdminError(null);
+    if (!address) return;
+    if (!/^0x[0-9a-fA-F]{64}$/.test(newRoot)) { setAdminError('Enter a valid 32-byte merkle root (0x…)'); return; }
+    let total: bigint;
+    try { total = BigInt(newTotal); if (total <= 0n) throw new Error(); }
+    catch { setAdminError('Enter a valid total amount in wei'); return; }
+    if (!newStart || !newEnd) { setAdminError('Enter start and end times'); return; }
+    const startTs = BigInt(Math.floor(new Date(newStart).getTime() / 1000));
+    const endTs   = BigInt(Math.floor(new Date(newEnd).getTime()   / 1000));
+    if (endTs <= startTs) { setAdminError('End time must be after start time'); return; }
+    if (!isWalletOnSelectedChain) { switchChain({ chainId: selectedChainId }); return; }
+    const pf = await runActionPreflight({
+      actionLabel: 'Create airdrop round',
+      account: address, connectedChainId: chain?.id, targetChainId: selectedChainId, publicClient,
+      request: { address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI as never,
+        functionName: 'createRound', args: [newRoot as `0x${string}`, total, startTs, endTs, newDesc] },
     });
+    if (!pf.ok) { setAdminError(pf.copy); return; }
+    writeContract({ chainId: selectedChainId, address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI,
+      functionName: 'createRound', args: [newRoot as `0x${string}`, total, startTs, endTs, newDesc] });
   };
 
-  // ── Round status ─────────────────────────────────────────────────────────
-  const now = Math.floor(Date.now() / 1000);
-  const roundActive =
-    round &&
-    !round.paused &&
-    !round.closed &&
-    Number(round.startTime) <= now &&
-    now < Number(round.endTime);
+  const handlePause = async (pause: boolean) => {
+    if (!address) return;
+    if (!isWalletOnSelectedChain) { switchChain({ chainId: selectedChainId }); return; }
+    const pf = await runActionPreflight({
+      actionLabel: pause ? 'Pause round' : 'Unpause round',
+      account: address, connectedChainId: chain?.id, targetChainId: selectedChainId, publicClient,
+      request: { address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI as never,
+        functionName: 'setRoundPaused', args: [roundId, pause] },
+    });
+    if (!pf.ok) { setAdminError(pf.copy); return; }
+    writeContract({ chainId: selectedChainId, address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI,
+      functionName: 'setRoundPaused', args: [roundId, pause] });
+  };
 
-  const roundLabel = !round
-    ? '—'
-    : round.closed
-    ? 'Closed'
-    : round.paused
-    ? 'Paused'
-    : roundActive
-    ? 'Active'
-    : now < Number(round.startTime)
-    ? `Starts ${new Date(Number(round.startTime) * 1000).toLocaleDateString()}`
-    : 'Expired';
+  const handleWithdrawRemainder = async () => {
+    if (!address) return;
+    if (!isWalletOnSelectedChain) { switchChain({ chainId: selectedChainId }); return; }
+    const pf = await runActionPreflight({
+      actionLabel: 'Withdraw remainder',
+      account: address, connectedChainId: chain?.id, targetChainId: selectedChainId, publicClient,
+      request: { address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI as never,
+        functionName: 'withdrawRemainder', args: [roundId] },
+    });
+    if (!pf.ok) { setAdminError(pf.copy); return; }
+    writeContract({ chainId: selectedChainId, address: distributorAddress, abi: ONBT_DISTRIBUTOR_ABI,
+      functionName: 'withdrawRemainder', args: [roundId] });
+  };
 
-  const claimedPercent =
-    round && round.totalAmount > 0n
-      ? Math.min(100, Number((round.claimedAmount * 10000n) / round.totalAmount) / 100)
-      : 0;
-
+  // ── Render ────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="rounded-2xl bg-gradient-to-br from-emerald-900/40 to-cyan-900/40 border border-emerald-500/20 p-4">
+      <div className="rounded-2xl bg-gradient-to-br from-green-900/40 to-teal-900/40 border border-green-500/20 p-4">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-lg font-bold text-white">🪂 Airdrop Claim</h2>
-          <WalletIdentityBadge />
+          <h2 className="text-lg font-bold text-white">🪂 Airdrop</h2>
+          {address && <WalletIdentityBadge address={address} label="Wallet" />}
         </div>
-        <p className="text-xs text-gray-400">
-          Claim your ONBT from active Merkle distribution rounds
-        </p>
+        <p className="text-xs text-gray-400">Claim your ONBT airdrop allocation using a merkle proof</p>
       </div>
 
-      {/* Chain selector */}
-      <ChainSelector selectedChainId={selectedChainId} onChange={setSelectedChainId} label="Chain" />
+      <ChainSelector selectedChainId={selectedChainId} onSelectChain={setSelectedChainId} label="Chain" />
 
-      {/* Not configured */}
       {!isConfigured && (
         <div className="rounded-xl bg-yellow-900/30 border border-yellow-700/40 px-4 py-3 text-sm text-yellow-300">
-          Distributor not yet deployed on {chainName}.
+          Distributor contract not yet deployed on {chainName}.
         </div>
       )}
 
-      {isConfigured && (
+      {isConfigured && totalRounds === 0 && (
+        <div className="rounded-xl bg-gray-800/50 border border-gray-700/40 px-4 py-3 text-sm text-gray-400 text-center">
+          No airdrop rounds created yet on {chainName}.
+        </div>
+      )}
+
+      {isConfigured && totalRounds > 0 && (
         <>
           {/* Round selector */}
-          <div className="rounded-xl bg-gray-800/40 border border-gray-700/30 p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-400 shrink-0">Round ID</label>
-              <input
-                type="number"
-                min={0}
-                value={roundIdInput}
-                onChange={(e) => setRoundIdInput(e.target.value)}
-                className="w-24 bg-gray-700 text-white text-sm rounded-lg px-3 py-1.5 border border-gray-600 focus:outline-none focus:border-emerald-500"
-              />
-              {totalRounds !== null && (
-                <span className="text-[11px] text-gray-500">{totalRounds} round(s) total</span>
-              )}
-            </div>
+          <div className="rounded-xl bg-gray-800/40 border border-gray-700/30 p-3 flex items-center gap-3">
+            <label className="text-xs text-gray-400 whitespace-nowrap">Round ID</label>
+            <input type="number" min={0} max={totalRounds - 1} title="Round ID" value={roundIdInput}
+              onChange={(e) => { setRoundIdInput(e.target.value); setPreviewValid(null); }}
+              className="w-24 bg-gray-700 text-white text-sm rounded-lg px-2.5 py-1.5 border border-gray-600 focus:outline-none focus:border-green-500"
+            />
+            <span className="text-xs text-gray-500">of {totalRounds} round{totalRounds !== 1 ? 's' : ''}</span>
+            {round && (
+              <span className={`ml-auto px-2 py-0.5 rounded-full text-xs font-medium ${
+                roundLabel === 'Active'   ? 'bg-green-900/40 text-green-300' :
+                roundLabel === 'Paused'   ? 'bg-yellow-900/40 text-yellow-300' :
+                roundLabel === 'Upcoming' ? 'bg-blue-900/40 text-blue-300' :
+                'bg-gray-700 text-gray-400'
+              }`}>{roundLabel}</span>
+            )}
           </div>
 
-          {/* Round info */}
+          {/* Round detail card */}
           <AnimatePresence mode="wait">
             {round && (
-              <motion.div
-                key={roundIdInput}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="rounded-2xl bg-gray-800/40 border border-emerald-500/20 p-4 space-y-3"
+              <motion.div key={roundIdInput} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                className="rounded-2xl bg-gray-800/40 border border-green-500/20 p-4 space-y-4"
               >
-                {/* Status */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-white">
-                    {round.description || `Round #${roundIdInput}`}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      roundActive
-                        ? 'bg-green-900/40 text-green-300'
-                        : round.paused
-                        ? 'bg-yellow-900/40 text-yellow-300'
-                        : 'bg-gray-700 text-gray-400'
-                    }`}
-                  >
-                    {roundLabel}
-                  </span>
-                </div>
+                {round.description && (
+                  <p className="text-sm text-gray-200 font-medium">{round.description}</p>
+                )}
 
-                {/* Progress */}
                 <div>
                   <div className="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>Claimed</span>
-                    <span>
-                      {fmt(round.claimedAmount)} / {fmt(round.totalAmount)} ONBT ({claimedPercent.toFixed(1)}%)
-                    </span>
+                    <span>Distributed</span><span>{claimedPercent.toFixed(1)}%</span>
                   </div>
                   <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${claimedPercent}%` }}
-                      transition={{ duration: 0.8, ease: 'easeOut' }}
-                    />
+                    <motion.div className="h-full bg-gradient-to-r from-green-500 to-teal-500"
+                      initial={{ width: 0 }} animate={{ width: `${claimedPercent}%` }} transition={{ duration: 0.8 }} />
                   </div>
                 </div>
 
-                {/* Dates */}
-                <div className="grid grid-cols-2 gap-3 text-xs text-gray-400">
-                  <div>
-                    <p className="text-[10px] mb-0.5">Start</p>
-                    <p className="text-gray-300">{new Date(Number(round.startTime) * 1000).toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] mb-0.5">End</p>
-                    <p className="text-gray-300">{new Date(Number(round.endTime) * 1000).toLocaleString()}</p>
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Total', value: fmt(round.totalAmount) },
+                    { label: 'Claimed', value: fmt(round.claimedAmount) },
+                    { label: 'Start', value: new Date(Number(round.startTime) * 1000).toLocaleDateString() },
+                    { label: 'End',   value: new Date(Number(round.endTime)   * 1000).toLocaleDateString() },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-xl bg-gray-700/30 p-3">
+                      <p className="text-[10px] text-gray-400 mb-0.5">{label}</p>
+                      <p className="text-sm font-semibold text-white">{value}</p>
+                    </div>
+                  ))}
                 </div>
 
-                {/* Already claimed badge */}
                 {alreadyClaimed && (
-                  <div className="rounded-lg bg-green-900/30 border border-green-700/40 px-3 py-2 text-xs text-green-300 text-center">
+                  <div className="rounded-xl bg-green-900/20 border border-green-500/30 px-3 py-2 text-xs text-green-300">
                     ✓ You have already claimed from this round
                   </div>
                 )}
 
-                {/* Claim form */}
-                {!alreadyClaimed && address && roundActive && (
-                  <div className="space-y-3 pt-1">
-                    {/* Amount in wei */}
+                {!alreadyClaimed && (
+                  <div className="space-y-2">
                     <div>
-                      <label className="block text-xs text-gray-400 mb-1">
-                        Claimable amount <span className="text-gray-500">(wei)</span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 500000000000000000000"
-                        value={amountInput}
-                        onChange={(e) => setAmountInput(e.target.value)}
-                        className="w-full bg-gray-700 text-white text-sm rounded-xl px-3 py-2 border border-gray-600 focus:outline-none focus:border-emerald-500"
+                      <label className="block text-[11px] text-gray-400 mb-1">Your allocation <span className="text-gray-500">(wei)</span></label>
+                      <input type="text" placeholder="e.g. 1000000000000000000" value={amountInput}
+                        onChange={(e) => { setAmountInput(e.target.value); setPreviewValid(null); }}
+                        className="w-full bg-gray-700 text-white text-sm rounded-xl px-3 py-2 border border-gray-600 focus:outline-none focus:border-green-500"
                       />
-                      {parsedAmount !== null && parsedAmount > 0n && (
-                        <p className="text-[11px] text-gray-500 mt-0.5">
-                          ≈ {fmt(parsedAmount)} ONBT
-                        </p>
-                      )}
+                      {parsedAmount && <p className="text-[11px] text-gray-500 mt-0.5">≈ {fmt(parsedAmount)} ONBT</p>}
                     </div>
-
-                    {/* Proof */}
                     <div>
-                      <label className="block text-xs text-gray-400 mb-1">
-                        Merkle proof <span className="text-gray-500">(JSON array or one hash per line)</span>
-                      </label>
-                      <textarea
-                        rows={4}
-                        placeholder={'["0xabc...","0xdef..."]'}
-                        value={proofInput}
+                      <label className="block text-[11px] text-gray-400 mb-1">Merkle proof <span className="text-gray-500">(JSON array or one per line)</span></label>
+                      <textarea rows={3} placeholder={'["0xabc…","0xdef…"]'} value={proofInput}
                         onChange={(e) => { setProofInput(e.target.value); setPreviewValid(null); }}
-                        className="w-full bg-gray-700 text-white text-xs font-mono rounded-xl px-3 py-2 border border-gray-600 focus:outline-none focus:border-emerald-500 resize-none"
+                        className="w-full bg-gray-700 text-white text-xs rounded-xl px-3 py-2 border border-gray-600 focus:outline-none focus:border-green-500 font-mono resize-none"
                       />
-                      {!proofIsValid && proofInput.trim() && (
-                        <p className="text-[11px] text-red-400 mt-0.5">Invalid proof format — each element must be a 0x-prefixed 32-byte hex</p>
+                      {proofError && <p className="text-xs text-red-400">{proofError}</p>}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => void handleVerify()}
+                        className="flex-1 py-2 rounded-xl text-xs font-semibold border border-green-600 text-green-300 hover:bg-green-900/20 transition-colors"
+                      >Verify proof</button>
+                      {previewValid !== null && (
+                        <div className={`flex items-center gap-1 px-3 text-xs rounded-xl ${
+                          previewValid ? 'bg-green-900/20 text-green-300' : 'bg-red-900/20 text-red-400'
+                        }`}>
+                          {previewValid ? '✓ Valid' : '✗ Invalid'}
+                        </div>
                       )}
                     </div>
 
-                    {/* Verify button */}
-                    <button
-                      onClick={handleVerify}
-                      disabled={!proofIsValid || !parsedAmount || parsedAmount <= 0n || !address}
-                      className="w-full py-2 rounded-xl text-sm font-medium border border-emerald-600 text-emerald-400 hover:bg-emerald-900/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    {validationError && <p className="text-xs text-red-400">{validationError}</p>}
+
+                    <button disabled={isBusy || !roundActive || !address}
+                      onClick={() => void handleClaim()}
+                      className="w-full py-3 rounded-xl font-semibold text-sm transition-all bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      Verify proof (dry-run)
-                    </button>
-
-                    {previewValid !== null && (
-                      <p className={`text-xs text-center ${previewValid ? 'text-green-400' : 'text-red-400'}`}>
-                        {previewValid ? '✓ Proof is valid — ready to claim' : '✗ Proof invalid for your address / amount'}
-                      </p>
-                    )}
-
-                    {proofError && (
-                      <p className="text-xs text-red-400 text-center">{proofError}</p>
-                    )}
-
-                    {/* Claim button */}
-                    <button
-                      disabled={isBusy || !proofIsValid || !parsedAmount || parsedAmount <= 0n}
-                      onClick={handleClaim}
-                      className="w-full py-3 rounded-xl font-semibold text-sm transition-all
-                        bg-gradient-to-r from-emerald-600 to-cyan-600
-                        hover:from-emerald-500 hover:to-cyan-500
-                        disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {isBusy
-                        ? isConfirming
-                          ? 'Confirming…'
-                          : 'Claiming…'
+                      {isBusy ? (isConfirming ? 'Confirming…' : 'Claiming…')
+                        : !address ? 'Connect wallet'
+                        : !roundActive ? `Round ${roundLabel.toLowerCase()}`
                         : 'Claim tokens'}
                     </button>
-
-                    <AnimatePresence>
-                      {isConfirmed && txHash && (
-                        <motion.a
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          href={`${explorerUrl}/tx/${txHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block text-center text-xs text-green-400 hover:text-green-300 underline"
-                        >
-                          ✓ Claimed — view transaction ↗
-                        </motion.a>
-                      )}
-                    </AnimatePresence>
                   </div>
                 )}
 
-                {/* Not connected prompt */}
-                {!address && (
-                  <p className="text-xs text-gray-400 text-center pt-1">Connect wallet to claim</p>
-                )}
+                <AnimatePresence>
+                  {isConfirmed && txHash && (
+                    <motion.a initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      href={`${explorerUrl}/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
+                      className="block text-center text-xs text-green-400 hover:text-green-300 underline"
+                    >✓ Transaction confirmed ↗</motion.a>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
           </AnimatePresence>
-
-          {totalRounds === 0 && (
-            <div className="rounded-xl bg-gray-800/50 border border-gray-700/40 px-4 py-3 text-sm text-gray-400 text-center">
-              No distribution rounds on {chainName} yet.
-            </div>
-          )}
         </>
       )}
 
-      {/* Contract link */}
+      {/* ── Admin panel (owner only) ──────────────────────────────────────── */}
+      {isConfigured && isOwner && (
+        <div className="rounded-2xl border border-orange-500/30 bg-orange-950/20 p-4 space-y-3">
+          <button onClick={() => setAdminOpen((v) => !v)} className="flex items-center justify-between w-full">
+            <span className="text-sm font-semibold text-orange-300">⚙️ Admin</span>
+            <span className="text-xs text-orange-400">{adminOpen ? '▲ hide' : '▼ show'}</span>
+          </button>
+          <AnimatePresence>
+            {adminOpen && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }} className="overflow-hidden space-y-3"
+              >
+                <div className="flex gap-2">
+                  {(['create', 'manage'] as AdminTab[]).map((t) => (
+                    <button key={t} onClick={() => setAdminTab(t)}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                        adminTab === t ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >{t === 'create' ? '＋ New round' : '✎ Manage round'}</button>
+                  ))}
+                </div>
+
+                {adminTab === 'create' && (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] text-gray-400 mb-1">Merkle root</label>
+                      <input type="text" placeholder="0x…" value={newRoot} onChange={(e) => setNewRoot(e.target.value)}
+                        className="w-full bg-gray-700 text-white text-sm rounded-xl px-3 py-2 border border-gray-600 focus:outline-none focus:border-orange-500 font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-400 mb-1">Total allocation <span className="text-gray-500">(wei)</span></label>
+                      <input type="text" placeholder="e.g. 1000000000000000000000" value={newTotal} onChange={(e) => setNewTotal(e.target.value)}
+                        className="w-full bg-gray-700 text-white text-sm rounded-xl px-3 py-2 border border-gray-600 focus:outline-none focus:border-orange-500" />
+                      {(() => { try { const n = BigInt(newTotal); return n > 0n ? <p className="text-[11px] text-gray-500 mt-0.5">≈ {fmt(n)} ONBT</p> : null; } catch { return null; } })()}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] text-gray-400 mb-1">Start time</label>
+                        <input type="datetime-local" title="Round start time" value={newStart} onChange={(e) => setNewStart(e.target.value)}
+                          className="w-full bg-gray-700 text-white text-sm rounded-xl px-3 py-2 border border-gray-600 focus:outline-none focus:border-orange-500" />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-gray-400 mb-1">End time</label>
+                        <input type="datetime-local" title="Round end time" value={newEnd} onChange={(e) => setNewEnd(e.target.value)}
+                          className="w-full bg-gray-700 text-white text-sm rounded-xl px-3 py-2 border border-gray-600 focus:outline-none focus:border-orange-500" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-400 mb-1">Description <span className="text-gray-500">(optional)</span></label>
+                      <input type="text" placeholder="e.g. Community airdrop round 1" value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
+                        className="w-full bg-gray-700 text-white text-sm rounded-xl px-3 py-2 border border-gray-600 focus:outline-none focus:border-orange-500" />
+                    </div>
+                    {adminError && <p className="text-xs text-red-400">{adminError}</p>}
+                    <button disabled={isBusy} onClick={() => void handleCreateRound()}
+                      className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >{isBusy ? (isConfirming ? 'Confirming…' : 'Creating…') : 'Create round'}</button>
+                  </div>
+                )}
+
+                {adminTab === 'manage' && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-400">Managing round <span className="font-mono text-white">#{roundIdInput}</span></p>
+                    {!round && <p className="text-xs text-gray-500 italic">Select a round above first</p>}
+                    {round && (
+                      <>
+                        <div className="flex gap-2">
+                          <button disabled={isBusy || !round.active || round.paused} onClick={() => void handlePause(true)}
+                            className="flex-1 py-2 rounded-xl text-xs font-semibold bg-yellow-700 hover:bg-yellow-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >Pause</button>
+                          <button disabled={isBusy || !round.active || !round.paused} onClick={() => void handlePause(false)}
+                            className="flex-1 py-2 rounded-xl text-xs font-semibold bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >Unpause</button>
+                        </div>
+                        <button disabled={isBusy || !round.active} onClick={() => void handleWithdrawRemainder()}
+                          className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-800 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >Withdraw remainder</button>
+                        {adminError && <p className="text-xs text-red-400">{adminError}</p>}
+                        <p className="text-[11px] text-gray-500">Remaining: {fmt((round.totalAmount ?? 0n) - (round.claimedAmount ?? 0n))} ONBT</p>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <AnimatePresence>
+                  {isConfirmed && txHash && (
+                    <motion.a initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      href={`${explorerUrl}/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
+                      className="block text-center text-xs text-green-400 hover:text-green-300 underline"
+                    >✓ Done — view transaction ↗</motion.a>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
       {isConfigured && (
-        <a
-          href={`${explorerUrl}/address/${distributorAddress}`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <a href={`${explorerUrl}/address/${distributorAddress}`} target="_blank" rel="noopener noreferrer"
           className="block text-center text-[11px] text-gray-500 hover:text-gray-400 underline"
-        >
-          Distributor contract on {chainName} ↗
-        </a>
+        >Distributor contract on {chainName} ↗</a>
       )}
     </div>
   );
