@@ -48,6 +48,8 @@ const CHAINS = {
   base: {
     rpc: process.env.BASE_RPC_URL || 'https://mainnet.base.org',
     chainId: 8453,
+    lzEndpoint: '0x1a44076050125825900e736c501f859c50fE728c',
+    localEid: 30184,
     onbtToken: '0x05aA0C1753254dB789148250d2eC8A39B0b2EDB5',
     name: 'Base',
     envKey: 'NEXT_PUBLIC_ONBT_DEFI_FACTORY_BASE_ADDRESS',
@@ -56,6 +58,8 @@ const CHAINS = {
   arbitrum: {
     rpc: process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc',
     chainId: 42161,
+    lzEndpoint: '0x1a44076050125825900e736c501f859c50fE728c',
+    localEid: 30110,
     onbtToken: '0x169aC761Ebb210B5A93B68B44DA394776a7B230C',
     name: 'Arbitrum',
     envKey: 'NEXT_PUBLIC_ONBT_DEFI_FACTORY_ARBITRUM_ADDRESS',
@@ -70,8 +74,8 @@ const REGISTER_ABI = [
   'function registerYieldDistributor(address distributor) external',
 ];
 
-function loadArtifact(contractName) {
-  const artifactPath = resolve(rootDir, `artifacts/contracts/defi/${contractName}.sol/${contractName}.json`);
+function loadArtifact(contractName, subdir) {
+  const artifactPath = resolve(rootDir, `artifacts/contracts/${subdir}/${contractName}.sol/${contractName}.json`);
   try {
     return JSON.parse(readFileSync(artifactPath, 'utf8'));
   } catch {
@@ -83,7 +87,7 @@ function loadArtifact(contractName) {
 async function deployToChain(chainKey) {
   const chain = CHAINS[chainKey];
   const existing = EXISTING_CONTRACTS[chainKey];
-  const artifact = loadArtifact('ONBTDeFiFactory');
+  const artifact = loadArtifact('ONBTDeFiFactory', 'registry');
 
   console.log(`\n${'═'.repeat(60)}`);
   console.log(`  Deploying ONBTDeFiFactory registry → ${chain.name} (${chain.chainId})`);
@@ -107,8 +111,10 @@ async function deployToChain(chainKey) {
 
   const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet);
 
+  console.log(`  LZ Endpoint: ${chain.lzEndpoint}`);
+  console.log(`  Local EID:   ${chain.localEid}`);
   console.log('  Broadcasting deployment transaction…');
-  const contract = await factory.deploy(chain.onbtToken);
+  const contract = await factory.deploy(chain.lzEndpoint, chain.onbtToken, chain.localEid);
   const deployTx = contract.deploymentTransaction();
   console.log(`  Tx hash: ${deployTx?.hash}`);
   console.log('  Waiting for confirmation…');
@@ -144,15 +150,56 @@ async function deployToChain(chainKey) {
   return address;
 }
 
+const SET_PEER_ABI = [
+  'function setPeer(uint32 eid, bytes32 peer) external',
+];
+
+async function wirePeers(deployedAddresses) {
+  const keys = Object.keys(deployedAddresses);
+  if (keys.length < 2) return;
+
+  console.log('\n' + '═'.repeat(60));
+  console.log('  Wiring LZ peers between factory deployments…');
+  console.log('═'.repeat(60));
+
+  for (const srcKey of keys) {
+    const srcChain = CHAINS[srcKey];
+    const srcAddr  = deployedAddresses[srcKey];
+    const provider = new ethers.JsonRpcProvider(srcChain.rpc, srcChain.chainId);
+    const wallet   = new ethers.Wallet(deployerKey, provider);
+    const contract = new ethers.Contract(srcAddr, SET_PEER_ABI, wallet);
+
+    for (const dstKey of keys) {
+      if (dstKey === srcKey) continue;
+      const dstChain = CHAINS[dstKey];
+      const dstAddr  = deployedAddresses[dstKey];
+      const peerBytes32 = ethers.zeroPadValue(dstAddr, 32);
+      try {
+        const tx = await contract.setPeer(dstChain.localEid, peerBytes32);
+        await tx.wait();
+        console.log(`  ✅  ${srcChain.name} → ${dstChain.name} peer set (eid ${dstChain.localEid})`);
+      } catch (err) {
+        console.warn(`  ⚠️   setPeer failed (${srcChain.name}→${dstChain.name}): ${err.message}`);
+      }
+    }
+  }
+}
+
 const target = process.argv[2] ?? 'all';
 const targets = target === 'all' ? ['base', 'arbitrum'] : [target];
 
+const deployedAddresses = {};
 for (const key of targets) {
   if (!CHAINS[key]) {
     console.error(`❌  Unknown chain "${key}". Use: base | arbitrum | all`);
     process.exit(1);
   }
-  await deployToChain(key);
+  const addr = await deployToChain(key);
+  if (addr) deployedAddresses[key] = addr;
+}
+
+if (targets.length > 1) {
+  await wirePeers(deployedAddresses);
 }
 
 console.log('\n✅  Done. Copy the addresses above into miniapp/.env.local and restart the dev server.\n');
