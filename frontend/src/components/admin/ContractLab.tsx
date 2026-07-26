@@ -21,17 +21,17 @@ import ONBTLiquidityManagerABI from '@/contracts/abi/ONBTLiquidityManager.json';
 import ONBTRevenueRouterABI from '@/contracts/abi/ONBTRevenueRouter.json';
 import ONBTAchievementNFTABI from '@/contracts/abi/ONBTAchievementNFT.json';
 
-const CONTRACT_OPTIONS = [
-  { key: 'onbtToken', label: 'ONBT Token (OFT)', abi: OmnichainNabatOFTABI, addressKey: 'onbtToken' },
-  { key: 'staking', label: 'Omnichain Staking', abi: ONBTOmnichainStakingABI, addressKey: 'staking' },
-  { key: 'governor', label: 'Governor', abi: ONBTGovernorABI, addressKey: 'governor' },
-  { key: 'rewardsPool', label: 'Rewards Pool', abi: ONBTRewardsPoolABI, addressKey: 'rewardsPool' },
-  { key: 'liquidityManager', label: 'Liquidity Manager', abi: ONBTLiquidityManagerABI, addressKey: 'liquidityManager' },
-  { key: 'revenueRouter', label: 'Revenue Router', abi: ONBTRevenueRouterABI, addressKey: 'revenueRouter' },
-  { key: 'achievementNFT', label: 'Achievement NFT', abi: ONBTAchievementNFTABI, addressKey: 'achievementNFT' },
-] as const;
+type ContractOptionKey = 'onbtToken' | 'staking' | 'governor' | 'rewardsPool' | 'liquidityManager' | 'revenueRouter' | 'achievementNFT';
 
-type ContractOptionKey = typeof CONTRACT_OPTIONS[number]['key'];
+const CONTRACT_OPTIONS: { key: ContractOptionKey; label: string; abi: any[]; addressKey: string }[] = [
+  { key: 'onbtToken', label: 'ONBT Token (OFT)', abi: OmnichainNabatOFTABI.abi, addressKey: 'onbtToken' },
+  { key: 'staking', label: 'Omnichain Staking', abi: ONBTOmnichainStakingABI.abi, addressKey: 'staking' },
+  { key: 'governor', label: 'Governor', abi: ONBTGovernorABI.abi, addressKey: 'governor' },
+  { key: 'rewardsPool', label: 'Rewards Pool', abi: ONBTRewardsPoolABI.abi, addressKey: 'rewardsPool' },
+  { key: 'liquidityManager', label: 'Liquidity Manager', abi: ONBTLiquidityManagerABI.abi, addressKey: 'liquidityManager' },
+  { key: 'revenueRouter', label: 'Revenue Router', abi: ONBTRevenueRouterABI.abi, addressKey: 'revenueRouter' },
+  { key: 'achievementNFT', label: 'Achievement NFT', abi: ONBTAchievementNFTABI.abi, addressKey: 'achievementNFT' },
+];
 
 type Mode = 'write' | 'read';
 

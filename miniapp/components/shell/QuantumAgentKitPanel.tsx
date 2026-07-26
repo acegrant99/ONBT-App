@@ -638,7 +638,7 @@ export function QuantumAgentKitPanel({
     }, DEPENDENCY_CHECK_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- runDependencyHealth is intentionally not memoized; effect runs once on mount
 
   useEffect(() => {
     const clockId = window.setInterval(() => {
@@ -934,7 +934,7 @@ export function QuantumAgentKitPanel({
     if (lastAutoStrategyKey.current === key) return;
     lastAutoStrategyKey.current = key;
     void runStrategyLab(true);
-  }, [autoStrategyEnabled, activeTab, prediction]);
+  }, [autoStrategyEnabled, activeTab, prediction]); // eslint-disable-line react-hooks/exhaustive-deps -- runStrategyLab is intentionally not memoized; adding it would cause infinite re-runs
 
   // ─── Circuit presets ────────────────────────────────────────────────────────
   const CIRCUIT_PRESETS: Record<string, { label: string; ir: string }> = {

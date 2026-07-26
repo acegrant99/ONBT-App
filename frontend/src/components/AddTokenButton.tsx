@@ -58,7 +58,7 @@ export const AddTokenButton: FC<AddTokenButtonProps> = ({ className = '' }) => {
   }
 
   const getButtonStyles = () => {
-    let baseStyles = 'px-4 py-2 rounded-lg font-medium transition-all duration-200 '
+    const baseStyles = 'px-4 py-2 rounded-lg font-medium transition-all duration-200 '
     
     if (status === 'success') {
       return baseStyles + 'bg-green-500 text-white cursor-default'

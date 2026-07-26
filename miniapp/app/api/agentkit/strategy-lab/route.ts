@@ -24,6 +24,7 @@ type StrategyLabRequest = {
         trendAlignment?: number;
       };
     };
+    features?: Record<string, number>;
   };
 };
 

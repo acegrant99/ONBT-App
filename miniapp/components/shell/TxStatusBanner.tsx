@@ -9,6 +9,7 @@ type TxStatusBannerProps = {
 };
 
 export function TxStatusBanner({ status }: TxStatusBannerProps) {
+  // eslint-disable-next-line react-hooks/purity -- Date.now() intentionally re-evaluates each render for live age display
   const ageSeconds = Math.max(Math.floor((Date.now() - status.updatedAt) / 1000), 0);
   const tone =
     status.stage === 'error'

@@ -43,8 +43,9 @@ export function MiniAppActionPanel({ backendOverview, backendRefreshing = false 
   const shareUrl = 'https://www.nabat.finance';
   const baseHealthy = backendOverview?.chains.base.healthy;
   const arbitrumHealthy = backendOverview?.chains.arbitrum.healthy;
+  const nowMs = Date.now(); // eslint-disable-line react-hooks/purity -- intentional: re-evaluates each render for live age display
   const backendAgeSeconds = backendOverview?.generatedAt
-    ? Math.max(Math.floor((Date.now() - Date.parse(backendOverview.generatedAt)) / 1000), 0)
+    ? Math.max(Math.floor((nowMs - Date.parse(backendOverview.generatedAt)) / 1000), 0)
     : null;
 
   const statusPills = useMemo(

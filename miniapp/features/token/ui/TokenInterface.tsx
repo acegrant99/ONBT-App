@@ -158,7 +158,7 @@ export function TokenInterface({ quantumSignal = 'caution', quantumConfidence }:
     } catch {
       return [] as string[];
     }
-  }, [effectiveAddress, txHash, isConfirmed]);
+  }, [effectiveAddress, txHash, isConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps -- txHash/isConfirmed are intentional refresh triggers that re-read localStorage after tx confirmation
 
   const normalizedRecipient = transferTo.trim();
   const isRecipientValid = normalizedRecipient ? isAddress(normalizedRecipient) : false;

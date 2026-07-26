@@ -74,6 +74,10 @@ export function QuantumSignalPanel({
     about: 'Ecosystem posture',
     'quantum-ai': 'AI strategy readiness',
     wallet: 'Wallet activity',
+    'liquidity-pool': 'Liquidity pool readiness',
+    vesting: 'Vesting schedule status',
+    airdrop: 'Airdrop claim readiness',
+    leaderboard: 'Leaderboard standing',
   };
 
   const signal = prediction?.signal ?? 'caution';

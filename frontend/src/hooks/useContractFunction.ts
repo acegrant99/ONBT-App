@@ -54,7 +54,7 @@ export function useContractRead(
     refetchOnMount: options?.refetchOnMount ?? true,
     refetchInterval: options?.refetchInterval ?? false,
     staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes
-    cacheTime: options?.cacheTime ?? 10 * 60 * 1000, // 10 minutes
+    gcTime: options?.cacheTime ?? 10 * 60 * 1000, // 10 minutes
   });
 }
 
@@ -143,7 +143,7 @@ export function useMultipleContractReads(
     },
     enabled: Boolean(provider && calls.length > 0),
     staleTime: options?.staleTime ?? 5 * 60 * 1000,
-    cacheTime: options?.cacheTime ?? 10 * 60 * 1000,
+    gcTime: options?.cacheTime ?? 10 * 60 * 1000,
   });
 }
 
@@ -155,7 +155,7 @@ export function useContractEvents(
   abi: any[],
   eventName: string,
   provider?: ethers.providers.Provider,
-  filter?: ethers.EventFilter
+  fromBlock?: ethers.providers.BlockTag
 ): UseQueryResult<any[], Error> {
   return useQuery({
     queryKey: ['contractEvents', contractAddress, eventName],
@@ -165,7 +165,7 @@ export function useContractEvents(
       }
 
       const contract = new ethers.Contract(contractAddress, abi, provider);
-      const events = await contract.queryFilter(contract.filters[eventName]?.(), filter);
+      const events = await contract.queryFilter(contract.filters[eventName]?.(), fromBlock);
       return events;
     },
     enabled: Boolean(provider),

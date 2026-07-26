@@ -46,17 +46,20 @@ export function PrivateSaleReport({ chainId, contractAddress, saleAllocation, to
 
   // Build cumulative chart data
   const chartData = useMemo(() => {
-    let cumulative = 0;
-    return events.map((ev, i) => {
+    type Row = { index: number; label: string; purchase: number; cumulative: number };
+    return events.reduce<Row[]>((rows, ev, i) => {
       const purchased = Number(formatEther(ev.onbtOut));
-      cumulative += purchased;
-      return {
-        index: i + 1,
-        label: `#${i + 1}`,
-        purchase: Number(purchased.toFixed(2)),
-        cumulative: Number(cumulative.toFixed(2)),
-      };
-    });
+      const prevCumulative = rows[i - 1]?.cumulative ?? 0;
+      return [
+        ...rows,
+        {
+          index: i + 1,
+          label: `#${i + 1}`,
+          purchase: Number(purchased.toFixed(2)),
+          cumulative: Number((prevCumulative + purchased).toFixed(2)),
+        },
+      ];
+    }, []);
   }, [events]);
 
   const allocationNum = saleAllocation ? Number(formatEther(saleAllocation)) : 0;

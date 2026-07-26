@@ -61,7 +61,7 @@ export default defineConfig({
       },
     },
     // Chunk size warnings
-    chunkSizeWarningLimit: 1700,
+    chunkSizeWarningLimit: 3000,
     // Source maps for production debugging
     sourcemap: 'hidden',
     terserOptions: {

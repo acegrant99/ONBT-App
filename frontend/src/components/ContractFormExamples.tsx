@@ -30,7 +30,7 @@ export const TokenTransferForm: React.FC = () => {
 
       <ContractFunctionForm
         contractAddress={contracts.onbtToken}
-        abi={OmnichainNabatOFTABI}
+        abi={OmnichainNabatOFTABI.abi}
         functionName="transfer"
         signer={signer}
         submitButtonText="Send Tokens"
@@ -70,7 +70,7 @@ export const TokenBalanceForm: React.FC = () => {
 
       <ContractFunctionForm
         contractAddress={contracts.onbtToken}
-        abi={OmnichainNabatOFTABI}
+        abi={OmnichainNabatOFTABI.abi}
         functionName="balanceOf"
         provider={provider}
         submitButtonText="Read Balance"

@@ -119,7 +119,7 @@ function FormFieldComponent({
             {...register(field.name, {
               required: field.required ? `${field.label} is required` : false,
               validate: {
-                validNumber: v =>
+                validNumber: (v: string) =>
                   !isNaN(Number(v)) || 'Must be a valid number',
               },
             })}
@@ -131,7 +131,7 @@ function FormFieldComponent({
           />
           <p className="text-xs text-gray-500">Type: {field.solidityType}</p>
           {field.isArray && (
-            <p className="text-xs text-gray-400">Enter a JSON array (e.g., ["0x...", "0x..."])</p>
+            <p className="text-xs text-gray-400">Enter a JSON array (e.g., [&quot;0x...&quot;, &quot;0x...&quot;])</p>
           )}
           {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
         </div>

@@ -22,7 +22,8 @@ export function MiniAppNotificationCard({
   const sendNotification = useNotification();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<'neutral' | 'success' | 'error'>('neutral');
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
+  const [lastMutationAt, setLastMutationAt] = useState(0);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -68,6 +69,7 @@ export function MiniAppNotificationCard({
     mutationFn: async () => addFrame(),
     onMutate: () => {
       setFeedback(null);
+      setLastMutationAt(Date.now());
     },
     onSuccess: (details) => {
       if (details) {
@@ -92,6 +94,7 @@ export function MiniAppNotificationCard({
       }),
     onMutate: () => {
       setFeedback(null);
+      setLastMutationAt(Date.now());
     },
     onSuccess: (delivered) => {
       if (delivered) {
@@ -117,13 +120,6 @@ export function MiniAppNotificationCard({
         : addFrameMutation.isSuccess || sendTestMutation.isSuccess
           ? 'Last action succeeded'
           : 'No pending actions';
-
-  const lastMutationAt = Math.max(
-    addFrameMutation.submittedAt || 0,
-    sendTestMutation.submittedAt || 0,
-    addFrameMutation.dataUpdatedAt || 0,
-    sendTestMutation.dataUpdatedAt || 0
-  );
 
   const mutationAgeSec = lastMutationAt > 0 ? Math.max(Math.floor((now - lastMutationAt) / 1000), 0) : null;
 

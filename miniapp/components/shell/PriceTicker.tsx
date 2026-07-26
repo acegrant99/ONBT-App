@@ -47,6 +47,7 @@ export function PriceTicker({ tokenAddress, chainId = 8453, className = '' }: Pr
     const prev = prevPriceRef.current;
     if (prev !== null && prev !== data.priceUsd) {
       const dir = parseFloat(data.priceUsd) > parseFloat(prev) ? 'up' : 'down';
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: flash direction derived from price diff in effect
       setFlashDir(dir);
       const t = setTimeout(() => setFlashDir(null), 1000);
       prevPriceRef.current = data.priceUsd;
