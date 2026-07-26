@@ -2,8 +2,8 @@
 
 ## Repository hygiene
 
-- Canonical Hardhat config: `/home/runner/work/ONBT-App/ONBT-App/hardhat.config.cjs`
-- `/home/runner/work/ONBT-App/ONBT-App/hardhat.config.js` is a thin re-export entrypoint for tool compatibility.
+- Canonical Hardhat config: `hardhat.config.cjs`
+- `hardhat.config.js` is a thin re-export entrypoint for tool compatibility.
 - Deployment run artifacts (for example `deployment-v*.json`) should not be committed at repository root.
 
 ## Quality Gate (Strict)
