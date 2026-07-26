@@ -20,6 +20,8 @@ dist/
 build/
 out/
 *.log
+deployment-v*.json
+kill-output.txt
 
 # Testing
 test-results
