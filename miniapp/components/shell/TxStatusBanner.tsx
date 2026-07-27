@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GlobalTxStatus } from '@/lib/txStatus';
 import { TX_LABEL_BY_SOURCE, TX_MESSAGE_BY_STAGE } from '@/config/app-shell';
@@ -9,7 +9,16 @@ type TxStatusBannerProps = {
 };
 
 export function TxStatusBanner({ status }: TxStatusBannerProps) {
-  const ageSeconds = Math.max(Math.floor((Date.now() - status.updatedAt) / 1000), 0);
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const ageSeconds = now > 0
+    ? Math.max(Math.floor((now - status.updatedAt) / 1000), 0)
+    : 0;
   const tone =
     status.stage === 'error'
       ? 'border-rose-300 bg-rose-50/95 text-rose-900'

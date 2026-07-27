@@ -46,10 +46,11 @@ export function PrivateSaleReport({ chainId, contractAddress, saleAllocation, to
 
   // Build cumulative chart data
   const chartData = useMemo(() => {
-    let cumulative = 0;
-    return events.map((ev, i) => {
+    return events.map((ev, i, all) => {
       const purchased = Number(formatEther(ev.onbtOut));
-      cumulative += purchased;
+      const cumulative = all
+        .slice(0, i + 1)
+        .reduce((sum, e) => sum + Number(formatEther(e.onbtOut)), 0);
       return {
         index: i + 1,
         label: `#${i + 1}`,

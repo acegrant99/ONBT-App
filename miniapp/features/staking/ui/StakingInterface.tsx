@@ -414,7 +414,6 @@ export function StakingInterface() {
         checks: [{ ok: amount > 0n, reason: 'Stake amount must be greater than zero.' }],
       });
       if (!ok) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       stakeTokens({ address: stakingContract as `0x${string}`, abi: ONBT_STAKING_ABI, functionName: 'stakeWithFee', args: [amount, selectedLockup], value: lzFee } as any);
     } else {
       const ok = await runStakingPreflight({
@@ -424,7 +423,6 @@ export function StakingInterface() {
         checks: [{ ok: amount > 0n, reason: 'Stake amount must be greater than zero.' }],
       });
       if (!ok) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       stakeTokens({ address: stakingContract as `0x${string}`, abi: ONBT_STAKING_ABI, functionName: 'stake', args: [amount, selectedLockup] } as any);
     }
   };
@@ -448,7 +446,6 @@ export function StakingInterface() {
         checks: [{ ok: amount > 0n, reason: 'Unstake amount must be greater than zero.' }],
       });
       if (!ok) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       unstakeTokens({ address: stakingContract as `0x${string}`, abi: ONBT_STAKING_ABI, functionName: 'unstakeWithFee', args: [amount], value: lzFee } as any);
     } else {
       const ok = await runStakingPreflight({
@@ -458,7 +455,6 @@ export function StakingInterface() {
         checks: [{ ok: amount > 0n, reason: 'Unstake amount must be greater than zero.' }],
       });
       if (!ok) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       unstakeTokens({ address: stakingContract as `0x${string}`, abi: ONBT_STAKING_ABI, functionName: 'unstake', args: [amount] } as any);
     }
   };
@@ -494,12 +490,10 @@ export function StakingInterface() {
       const lzFee = (compoundFeeQuote as { nativeFee: bigint } | undefined)?.nativeFee ?? 0n;
       const ok = await runStakingPreflight({ actionLabel: 'Compound rewards', functionName: 'compoundWithFee', value: lzFee });
       if (!ok) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       compoundRewards({ address: stakingContract as `0x${string}`, abi: ONBT_STAKING_ABI, functionName: 'compoundWithFee', value: lzFee } as any);
     } else {
       const ok = await runStakingPreflight({ actionLabel: 'Compound rewards', functionName: 'compound' });
       if (!ok) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       compoundRewards({ address: stakingContract as `0x${string}`, abi: ONBT_STAKING_ABI, functionName: 'compound' } as any);
     }
   };

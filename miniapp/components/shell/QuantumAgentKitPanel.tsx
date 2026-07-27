@@ -638,6 +638,8 @@ export function QuantumAgentKitPanel({
     }, DEPENDENCY_CHECK_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
+    // runDependencyHealth and DEPENDENCY_CHECK_INTERVAL_MS are stable; interval only needs to start once.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -934,6 +936,8 @@ export function QuantumAgentKitPanel({
     if (lastAutoStrategyKey.current === key) return;
     lastAutoStrategyKey.current = key;
     void runStrategyLab(true);
+    // runStrategyLab is stable; only autoStrategyEnabled/activeTab/prediction should trigger re-run.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStrategyEnabled, activeTab, prediction]);
 
   // ─── Circuit presets ────────────────────────────────────────────────────────

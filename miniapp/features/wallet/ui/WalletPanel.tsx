@@ -65,7 +65,6 @@ function ethKeccak256(data: Uint8Array): Uint8Array {
   // We import it lazily so this file remains a valid module without top-level await.
   // For the UI, we use viem's keccak256 which is already bundled via wagmi.
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { keccak256 } = require('viem') as { keccak256: (d: Uint8Array) => `0x${string}` };
     const hex = keccak256(data);
     return Uint8Array.from(Buffer.from(hex.slice(2), 'hex'));

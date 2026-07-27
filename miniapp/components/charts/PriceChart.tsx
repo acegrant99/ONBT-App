@@ -8,9 +8,9 @@
  * Once DEX pairs exist the parent can pass real OHLCV data via `data` prop.
  */
 import React, { useEffect, useRef } from 'react';
-import { createChart, ColorType, AreaSeries } from 'lightweight-charts';
+import { createChart, ColorType, AreaSeries, type Time } from 'lightweight-charts';
 
-type TimePoint = { time: string | number; value: number };
+type TimePoint = { time: Time; value: number };
 
 type Props = {
   /** Override with real data once token lists on DEX */
@@ -85,8 +85,6 @@ export function PriceChart({ data, heightClass = 'h-48', className = '' }: Props
     chart.timeScale().fitContent();
 
     return () => { chart.remove(); };
-  // Only rebuild when external data changes; private-sale data is stable
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const isPrivateSale = !data;

@@ -25,14 +25,18 @@ export function deriveAbiRuntimeConfig(payload: AgentAbiConfiguratorResult): Abi
     token: [] as string[],
     bridge: [] as string[],
     staking: [] as string[],
+    'liquidity-pool': [] as string[],
     governance: [] as string[],
     'private-sale': [] as string[],
     'defi-factory': [] as string[],
     'yield-distributor': [] as string[],
     vault: [] as string[],
+    vesting: [] as string[],
+    airdrop: [] as string[],
     about: ['About tab is always enabled for fallback project and chain metadata.'],
     'quantum-ai': [] as string[],
     wallet: [] as string[],
+    leaderboard: [] as string[],
   } satisfies Record<TabType, string[]>;
 
   for (const tabConfig of payload.tabConfiguration) {

@@ -22,7 +22,7 @@ export function MiniAppNotificationCard({
   const sendNotification = useNotification();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<'neutral' | 'success' | 'error'>('neutral');
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -120,9 +120,7 @@ export function MiniAppNotificationCard({
 
   const lastMutationAt = Math.max(
     addFrameMutation.submittedAt || 0,
-    sendTestMutation.submittedAt || 0,
-    addFrameMutation.dataUpdatedAt || 0,
-    sendTestMutation.dataUpdatedAt || 0
+    sendTestMutation.submittedAt || 0
   );
 
   const mutationAgeSec = lastMutationAt > 0 ? Math.max(Math.floor((now - lastMutationAt) / 1000), 0) : null;

@@ -47,10 +47,13 @@ export function PriceTicker({ tokenAddress, chainId = 8453, className = '' }: Pr
     const prev = prevPriceRef.current;
     if (prev !== null && prev !== data.priceUsd) {
       const dir = parseFloat(data.priceUsd) > parseFloat(prev) ? 'up' : 'down';
-      setFlashDir(dir);
-      const t = setTimeout(() => setFlashDir(null), 1000);
+      const flashTimer = window.setTimeout(() => setFlashDir(dir), 0);
+      const clearTimer = window.setTimeout(() => setFlashDir(null), 1000);
       prevPriceRef.current = data.priceUsd;
-      return () => clearTimeout(t);
+      return () => {
+        window.clearTimeout(flashTimer);
+        window.clearTimeout(clearTimer);
+      };
     }
     prevPriceRef.current = data.priceUsd;
   }, [data?.priceUsd]);

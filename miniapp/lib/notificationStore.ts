@@ -92,7 +92,6 @@ const _g = globalThis as { __onbt_ioredis?: IRedisClient };
 
 function getIoRedisClient(): IRedisClient {
   if (_g.__onbt_ioredis) return _g.__onbt_ioredis;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { default: Redis } = require('ioredis') as { default: new (url: string, opts?: object) => IRedisClient };
   const client = new Redis(process.env.REDIS_URL!, {
     maxRetriesPerRequest: 3,

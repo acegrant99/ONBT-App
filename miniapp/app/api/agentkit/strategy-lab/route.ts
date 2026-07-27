@@ -15,6 +15,7 @@ type StrategyLabRequest = {
     signal?: SignalType;
     confidence?: number;
     recommendation?: string;
+    features?: Record<string, number>;
     confidenceEngine?: {
       components?: {
         modelMargin?: number;

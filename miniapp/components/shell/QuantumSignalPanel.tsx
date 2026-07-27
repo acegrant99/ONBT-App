@@ -66,14 +66,18 @@ export function QuantumSignalPanel({
     token: 'Transfer readiness',
     bridge: 'Bridge execution safety',
     staking: 'Staking opportunity quality',
+    'liquidity-pool': 'Liquidity pool positioning',
     governance: 'Governance participation quality',
     'private-sale': 'Private sale timing quality',
     'defi-factory': 'Factory operation readiness',
     'yield-distributor': 'Yield claim/distribution readiness',
     vault: 'Treasury and reserve readiness',
+    vesting: 'Vesting schedule readiness',
+    airdrop: 'Airdrop eligibility readiness',
     about: 'Ecosystem posture',
     'quantum-ai': 'AI strategy readiness',
     wallet: 'Wallet activity',
+    leaderboard: 'Leaderboard standing',
   };
 
   const signal = prediction?.signal ?? 'caution';

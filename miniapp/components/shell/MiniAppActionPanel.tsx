@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useComposeCast, useMiniKit, useOpenUrl, useViewProfile } from '@coinbase/onchainkit/minikit';
 import { useAccount } from 'wagmi';
@@ -27,6 +27,12 @@ export function MiniAppActionPanel({ backendOverview, backendRefreshing = false 
   const { address } = useAccount();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<'neutral' | 'success' | 'error'>('neutral');
+  const [now, setNow] = useState<number>(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const user = context?.user;
   const client = context?.client;
@@ -43,8 +49,8 @@ export function MiniAppActionPanel({ backendOverview, backendRefreshing = false 
   const shareUrl = 'https://www.nabat.finance';
   const baseHealthy = backendOverview?.chains.base.healthy;
   const arbitrumHealthy = backendOverview?.chains.arbitrum.healthy;
-  const backendAgeSeconds = backendOverview?.generatedAt
-    ? Math.max(Math.floor((Date.now() - Date.parse(backendOverview.generatedAt)) / 1000), 0)
+  const backendAgeSeconds = backendOverview?.generatedAt && now > 0
+    ? Math.max(Math.floor((now - Date.parse(backendOverview.generatedAt)) / 1000), 0)
     : null;
 
   const statusPills = useMemo(

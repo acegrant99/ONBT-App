@@ -36,7 +36,7 @@
 		"hardhat3:migration:compile:strict": "hardhat compile --config config/hardhat3-migration/hardhat3.migration.strict.config.cjs --show-stack-traces"
 	},
 	"engines": {
-		"node": ">=20 <22",
+		"node": ">=22.11.0",
 		"npm": ">=9.0.0"
 	},
 	"devDependencies": {

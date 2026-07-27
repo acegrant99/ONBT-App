@@ -158,7 +158,7 @@ export function TokenInterface({ quantumSignal = 'caution', quantumConfidence }:
     } catch {
       return [] as string[];
     }
-  }, [effectiveAddress, txHash, isConfirmed]);
+  }, [effectiveAddress]);
 
   const normalizedRecipient = transferTo.trim();
   const isRecipientValid = normalizedRecipient ? isAddress(normalizedRecipient) : false;
